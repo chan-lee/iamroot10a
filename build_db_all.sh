@@ -8,3 +8,5 @@
 if [ -f make.log ]; then
 	mv make.log make.db
 fi
+
+echo "DONE"
