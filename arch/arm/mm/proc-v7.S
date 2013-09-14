@@ -189,7 +189,8 @@ __v7_ca15mp_setup:
 	mov	r10, #0
 1:
 #ifdef CONFIG_SMP
-	ALT_SMP(mrc	p15, 0, r0, c1, c0, 1)
+	ALT_SMP(mrc	p15, 0, r0, c1, c0, 1)	@@ ACTLR, [6] SMP :
+										@@ 1 - Enables receiving of I-Cache, BTB, and TLB maintenance operations.
 	ALT_UP(mov	r0, #(1 << 6))		@ fake it for UP
 	tst	r0, #(1 << 6)			@ SMP/nAMP mode enabled?
 	orreq	r0, r0, #(1 << 6)		@ Enable SMP/nAMP mode
@@ -253,7 +254,7 @@ __v7_pj4b_setup:
 	mcr	p15, 1,	r0, c15, c1, 0
 
 #endif /* CONFIG_CPU_PJ4B */
-
+@@@START 130824
 __v7_setup:
 	adr	r12, __v7_setup_stack		@ the local stack
 	stmia	r12, {r0-r5, r7, r9, r11, lr}
@@ -267,7 +268,9 @@ __v7_setup:
 	and	r5, r0, #0x00f00000		@ variant
 	and	r6, r0, #0x0000000f		@ revision
 	orr	r6, r6, r5, lsr #20-4		@ combine variant and revision
-	ubfx	r0, r0, #4, #12			@ primary part number
+	ubfx	r0, r0, #4, #12			@ primary part number 
+									@@ r0에서 4번비트부터 12개 비트를 읽어서 
+	                                @@ destination 레지스터의 최하위 비트에 채운다. 나머진 0 으로 채운다. 
 
 	/* Cortex-A8 Errata */
 	ldr	r10, =0x00000c08		@ Cortex-A8 primary part number
@@ -336,8 +339,11 @@ __v7_setup:
 #ifdef CONFIG_MMU
 	mcr	p15, 0, r10, c8, c7, 0		@ invalidate I + D TLBs
 	v7_ttb_setup r10, r4, r8, r5		@ TTBCR, TTBRx setup
+	@@  2-level translation tables
+	@@  Pointed to by TTBR0 (user mappings) and TTBR1 (kernel mappings
+	@@  but with restrictions to the user/kernel memory split)
 	ldr	r5, =PRRR			@ PRRR
-	ldr	r6, =NMRR			@ NMRR
+	ldr	r6, =NMRR			@ NMRR @@ 메모리 속성 지정하는 부분
 	mcr	p15, 0, r5, c10, c2, 0		@ write PRRR
 	mcr	p15, 0, r6, c10, c2, 1		@ write NMRR
 #endif
@@ -355,6 +361,7 @@ __v7_setup:
 #endif
 	adr	r5, v7_crval
 	ldmia	r5, {r5, r6}
+	@@ r5 = clear, r6 = mmuset
 #ifdef CONFIG_CPU_ENDIAN_BE8
 	orr	r6, r6, #1 << 25		@ big-endian page tables
 #endif
@@ -392,6 +399,7 @@ __v7_setup_stack:
 	/*
 	 * Standard v7 proc info content
 	 */
+@@ proc_info_list 구조체는 아래의 정보를 이용하여 초기화 된다.
 .macro __v7_proc initfunc, mm_mmuflags = 0, io_mmuflags = 0, hwcaps = 0, proc_fns = v7_processor_functions
 	ALT_SMP(.long	PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_AP_READ | \
 			PMD_SECT_AF | PMD_FLAGS_SMP | \mm_mmuflags)

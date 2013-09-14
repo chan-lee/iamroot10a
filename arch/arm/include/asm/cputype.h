@@ -79,6 +79,11 @@
 extern unsigned int processor_id;
 
 #ifdef CONFIG_CPU_CP15
+// MRC p15, 0, <Rt>, c0, c0, 5 ; Read MPIDR into Rt
+// __stringify(reg) 는 reg 를 string 에 붙인다. 
+// =r 은 범용 레지스터 중 사용가능 한것을 할당한다. 이 레지스터에 있는 값 __val 에 넣는다.
+//@@Todo : cc 를 왜쓰지 ?
+//@@Todo :  맨 마지막줄의 __val 은 왜쓰지? 최종 평가된 __val 값이 리턴된다.
 #define read_cpuid(reg)							\
 	({								\
 		unsigned int __val;					\
@@ -189,6 +194,8 @@ static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)
 }
 
 static inline unsigned int __attribute_const__ read_cpuid_mpidr(void)
+// __attribute_const__ 는 __attribute__((__const__)) 임. 
+// __const 같은 경우 함수 내부에서 절대로 전역 변수에 접근할 수 없고, 포인터 인수를 받을 수도 없도록 한다.
 {
 	return read_cpuid(CPUID_MPIDR);
 }

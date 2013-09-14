@@ -92,11 +92,16 @@ struct thread_info {
  * how to get the thread information struct from C
  */
 static inline struct thread_info *current_thread_info(void) __attribute_const__;
+//@@ Todo : __attribute_const__ 는 함수이름 뒤에 붙이면 함수이름 앞에 붙이는 것과 의미가 다른가?
 
 static inline struct thread_info *current_thread_info(void)
 {
-	register unsigned long sp asm ("sp");
-	return (struct thread_info *)(sp & ~(THREAD_SIZE - 1));
+	register unsigned long sp asm ("sp"); // http://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Global-Reg-Vars.html 참고, sp 변수에 sp register 값을 가져온다. 
+	return (struct thread_info *)(sp & ~(THREAD_SIZE - 1)); // 현재 태스크를 나타내는 태스크 디스크립터 리턴 
+	// thread_info + stack 이 8k aligned 된 주소에 위치해 있기 때문에 sp 의 하위 13 bit 을 clear 하면
+	// thread_info 구조체 시작주소를 알 수 있다.
+	// @@ Todo : 8k aligned 되었다는것은 어떻게 알 수 있는지 ? 
+	// @@ Todo : kernel stack 과 thread info 구조체가 언제 초기화 되었는지? 
 }
 
 #define thread_saved_pc(tsk)	\

@@ -200,8 +200,8 @@ not_angel:
 		cmpcc	r4, r0
 		orrcc	r4, r4, #1		@ remember we skipped cache_on
 		blcs	cache_on
-
-restart:	adr	r0, LC0
+restart:	adr	r0, LC0 @@ adr 명령어는 add r0 pc+offset 으로 바뀌어서 수행된다.
+                                @@@ TODO : 여기서는 mmu 를 켠 상태인데 pc 에 어떻게 물리주소가 들어가지?							           --> mmu 를 켰어도 1:1 맵핑 이기때문에 물리주소가 들어간다.
 		ldmia	r0, {r1, r2, r3, r6, r10, r11, r12}
 		ldr	sp, [r0, #28]
 
@@ -218,25 +218,51 @@ restart:	adr	r0, LC0
 		 * decompressed kernel at the end of the compressed data
 		 * in little-endian form.
 		 */
-		ldrb	r9, [r10, #0]
+                @@ 압축 해제후 커널 사이즈 값 로드
+		ldrb	r9, [r10, #0] @@ r10 input_data_end
 		ldrb	lr, [r10, #1]
 		orr	r9, r9, lr, lsl #8
 		ldrb	lr, [r10, #2]
 		ldrb	r10, [r10, #3]
 		orr	r9, r9, lr, lsl #16
 		orr	r9, r9, r10, lsl #24
+        @@ 실제값 0x0A0B0C0D
+        @@ 리틀 엔디안 메모리 저장 상태 : 0D 0C 0B 0A
+        @@ ldrb    r9, [r10, #0]
+        @@     r9 = 00 00 00 0D
+        @@ ldrb    lr, [r10, #1]
+        @@     lr =  00 00 00 0C
+        @@ orr     r9, r9, lr, lsl #8
+        @@    r9 =  00 00 0C 0D
+        @@ ldrb    lr, [r10, #2]
+        @@    lr = 00 00 00 0B
+        @@ ldrb    r10, [r10, #3]
+        @@    r10 = 00 00 00 0A
+        @@  orr     r9, r9, lr, lsl #16
+        @@    r9 = 00 0B 0C 0D
+        @@ orr     r9, r9, r10, lsl #24
+        @@    r9 = 0A 0B 0C 0D
 
 #ifndef CONFIG_ZBOOT_ROM
+        @@ execute your compressed kernel image (zImage) directly from ROM or flash
 		/* malloc space is above the relocated stack (64k max) */
 		add	sp, sp, r0
 		add	r10, sp, #0x10000
+        @@ +------+
+        @@ |      |
+        @@ +------+ r10
+        @@ |64KB  |
+        @@ +------+  현재 SP
+        @@ | 4KB  |
+        @@ +------+ 유저 스페이스 스택 영역의 마지막 주소
 #else
+        @@ 압축된 커널을 램에 올리지 않고 바로 압축해제하는 경우
 		/*
 		 * With ZBOOT_ROM the bss/stack is non relocatable,
 		 * but someone could still run this code from RAM,
 		 * in which case our reference is _edata.
 		 */
-		mov	r10, r6
+		mov	r10, r6 @@ r6 = _edata
 #endif
 
 		mov	r5, #0			@ init dtb size to 0
@@ -260,14 +286,27 @@ restart:	adr	r0, LC0
  * dtb data will get relocated along with the kernel if necessary.
  */
 
-		ldr	lr, [r6, #0]
+		ldr	lr, [r6, #0]        @@ r6=_edata. 실제로는 bss의 시작 주소가 저장되어 있음
+		                        @@ bss의 첫번째 4바이트를 읽어 lr레지스터에 저장
+		@@ __ARMEB__ : 빅엔디안
+        @@ __ARMEL__ : 리틀엔디안
+        @@END 20130713
+        @@START 20130720        
 #ifndef __ARMEB__
 		ldr	r1, =0xedfe0dd0		@ sig is 0xd00dfeed big endian
 #else
-		ldr	r1, =0xd00dfeed
+		                        @@ dtb=device tree blob의 약자. 하드웨어 설정에 관한 정보가 들어있으며
+								@@@ 커널이 빌드된 후dtb 도 따로 빌드된다. 이후 u-boot 이 zImage 뒤에 dtb를 올린다. 
+		ldr	r1, =0xd00dfeed     @@ 0xd00dfeed는 빌드된 dtb바이너리 시작주소에 있는 매직 넘버. 커널 빌드후 
+		                        @@ zImage와 합쳐지게 되는데 bss시작주소가 이 dtb바이너리의 시작 주소를 가리키고 있음
+								@@ 0xd00dfeed값은 exynos dtb 파일 hexdump 명령으로 값이 들어있음 확인함
 #endif
-		cmp	lr, r1
+		cmp	lr, r1              @@ zImage 뒤에 dtb바이너리가 붙어있으면
+		                        @@ 아래 브랜치 실행하지 않음.
+
 		bne	dtb_check_done		@ not found
+								@@ dtb안쓰면 점프
+								@@ 요즘 추세는 dtb를 대부분 사용한다.
 
 #ifdef CONFIG_ARM_ATAG_DTB_COMPAT
 		/*
@@ -297,7 +336,7 @@ restart:	adr	r0, LC0
 		add	r0, r0, #0x100
 		mov	r1, r6
 		sub	r2, sp, r6
-		bleq	atags_to_fdt
+		bleq	atags_to_fdt @@ 우리는 리턴값이 0 이므로 branch 하지 않는다.
 
 		ldmfd	sp!, {r0-r3, ip, lr}
 		sub	sp, sp, #0x10000
@@ -311,14 +350,15 @@ restart:	adr	r0, LC0
 		 * kernel size to compensate if that .bss size is larger
 		 * than the relocated code.
 		 */
-		ldr	r5, =_kernel_bss_size
-		adr	r1, wont_overwrite
+		ldr	r5, =_kernel_bss_size	@@ r5 = 압축되지 않은 vmlinux의 bss 영역의 크기
+		adr	r1, wont_overwrite		@@ r1 = wont_overwrite:의 주소
 		sub	r1, r6, r1
 		subs	r1, r5, r1
-		addhi	r9, r9, r1
+		addhi	r9, r9, r1			@@ r5가 r1보다 크다면 명령 수행
+		@@END 20130720
 
 		/* Get the dtb's size */
-		ldr	r5, [r6, #4]
+		ldr	r5, [r6, #4]			@@ r5에 dtb size 를 넣는다.
 #ifndef __ARMEB__
 		/* convert r5 (dtb size) to little endian */
 		eor	r1, r5, r5, ror #16
@@ -328,13 +368,16 @@ restart:	adr	r0, LC0
 #endif
 
 		/* preserve 64-bit alignment */
-		add	r5, r5, #7
+		add	r5, r5, #7 @@ c팀 13.07.20 후기 참고할 것
+		               @@todo 그런데 왜 8byte align 을 하는가?
+					   @@answer -> stack 의 8byte align 을 위해 한다.
 		bic	r5, r5, #7
 
 		/* relocate some pointers past the appended dtb */
-		add	r6, r6, r5
-		add	r10, r10, r5
-		add	sp, sp, r5
+		add	r6, r6, r5	 @@ r6 = _edata + dtb size
+		add	r10, r10, r5 @@ r10 에 dtb size 를 더해서 r10 에 저장한다.
+						 @@ r10 에는 기존에 sp + 16k 가 들어있었다. 그런데 이것에 dtb size 를 더했다.
+		add	sp, sp, r5	 @@ sp 에 dtb size 를 증가시킴
 dtb_check_done:
 #endif
 
@@ -369,14 +412,15 @@ dtb_check_done:
 		 * ourself when the offset is small.
 		 */
 		add	r10, r10, #((reloc_code_end - restart + 256) & ~255)
-		bic	r10, r10, #255
-
+		bic	r10, r10, #255 @@align 을 의미함
+		
 		/* Get start of code we want to copy and align it down. */
 		adr	r5, restart
-		bic	r5, r5, #31
+		bic	r5, r5, #31 @@32의 배수로 주소를 align 하기위함 
 
 /* Relocate the hyp vector base if necessary */
 #ifdef CONFIG_ARM_VIRT_EXT
+@@ virtualization 은 안보고 넘어가기로..
 		mrs	r0, spsr
 		and	r0, r0, #MODE_MASK
 		cmp	r0, #HYP_MODE
@@ -432,7 +476,11 @@ wont_overwrite:
 		orrs	r1, r0, r5
 		beq	not_relocated
 
-		add	r11, r11, r0
+		@@@ 질문 : overwrite 하지 않아서 restart 코드를 수행하지 않았다면 왜 아래의 주소보정을 해야 하는지 ?
+		           overwrite 를 위한 코드가 수행되지 않았더라도, dtb 위로 bss, got 영역을 옮겨야 한다.
+		           그래서 주소 보정이 필요하다.
+
+		add	r11, r11, r0 @@파일 오프셋과 실제 메모리 주소상의 위치 차이 보정
 		add	r12, r12, r0
 
 #ifndef CONFIG_ZBOOT_ROM
@@ -441,13 +489,14 @@ wont_overwrite:
 		 * we need to fix up pointers into the BSS region.
 		 * Note that the stack pointer has already been fixed up.
 		 */
-		add	r2, r2, r0
+		add	r2, r2, r0 @@BSS 주소도 위치 차이 보정
 		add	r3, r3, r0
 
 		/*
 		 * Relocate all entries in the GOT table.
 		 * Bump bss entries to _edata + dtb size
 		 */
+                ;; @@재배열된 주소공간을 가르키는 GOT 엔트리 보정 
 1:		ldr	r1, [r11, #0]		@ relocate entries in the GOT
 		add	r1, r1, r0		@ This fixes up C references
 		cmp	r1, r2			@ if entry >= bss_start &&
@@ -475,7 +524,7 @@ wont_overwrite:
 		cmp	r11, r12
 		blo	1b
 #endif
-
+                                                @@bss 영역을 0으로 초기화
 not_relocated:	mov	r0, #0
 1:		str	r0, [r2], #4		@ clear bss
 		str	r0, [r2], #4
@@ -504,8 +553,9 @@ not_relocated:	mov	r0, #0
 		mov	r1, sp			@ malloc space above stack
 		add	r2, sp, #0x10000	@ 64k max
 		mov	r3, r7
-		bl	decompress_kernel
-		bl	cache_clean_flush
+		bl	decompress_kernel       @@ 함수 호출
+                                                @@ decompress_kernel(unsigned long output_start, unsigned long free_mem_ptr_p, unsigned long free_mem_ptr_end_p, int arch_id)
+		bl	cache_clean_flush // @@ 압축을 해제할때 cache 를 사용했으므로 cache flush 를 해준다. 
 		bl	cache_off
 		mov	r1, r7			@ restore architecture number
 		mov	r2, r8			@ restore atags pointer
@@ -570,12 +620,12 @@ params:		ldr	r0, =0x10000100		@ params_phys for RPC
  * This routine must preserve:
  *  r4, r7, r8
  */
-		.align	5				@@align 5 = 2^5 byte = 32byte = 4byte * 8개??
-		@@32byte 배수로 정렬한다.
-		@@Word 작업을 할 때 Ctrl+<Enter>를 누르는 효과라고 생각하면 될거 같다.
-		@@캐쉬사이즈 만큼 나눠서 히트율이나 성능을 높인다고 하는데....
-		@@\여기서 궁금한 사항을 TODO로 두기로 한다.
-		@@TODO:아직 캐쉬가 활성화 되기 전인거 같은데 align이 의미가 있을까???
+		.align	5				@@ align 5 = 2^5 byte = 32byte = 4byte * 8개??
+		@@ 32byte 배수로 정렬한다.
+		@@ Word 작업을 할 때 Ctrl+<Enter>를 누르는 효과라고 생각하면 될거 같다.
+		@@ 캐쉬사이즈 만큼 나눠서 히트율이나 성능을 높인다고 하는데....
+		@@\ 여기서 궁금한 사항을 TODO로 두기로 한다.
+		@@TODO : 아직 캐쉬가 활성화 되기 전인거 같은데 align이 의미가 있을까???
 cache_on:	mov	r3, #8			@ cache_on function
 		b	call_cache_fn
 
@@ -642,39 +692,47 @@ __armv3_mpu_cache_on:
 		mov	pc, lr
 
 #ifdef CONFIG_CPU_DCACHE_WRITETHROUGH
-#define CB_BITS 0x08 // data cache 가 writethrough 면 cache 에도 저장하고 메모리에도 저장한다. 즉 writebuffer 가 필요없다.
+#define CB_BITS 0x08 @@ data cache 가 writethrough 면 cache 에도 저장하고 메모리에도 저장한다. 즉 writebuffer 가 필요없다.
 #else
-#define CB_BITS 0x0c // writeback 이면 cache에 쓰고 writebuffer 에도 쓴다. 즉 writebuffer 가 필요 하다. 우리는 0x0c 를 쓴다.
+#define CB_BITS 0x0c @@ writeback 이면 cache에 쓰고 writebuffer 에도 쓴다. 즉 writebuffer 가 필요 하다. 우리는 0x0c 를 쓴다.
 #endif
 
-__setup_mmu:	sub	r3, r4, #16384		@ Page directory size @@16384=16kb
-				//r4 == 커널 이미지가 압축풀릴 시작 주소
-			    //r3 == 커널 이미지 주소-16kb == Page directory 시작주소
+__setup_mmu:	sub	r3, r4, #16384		@ Page directory size @@ 16384=16kb
+				@@ r4 == 커널 이미지가 압축풀릴 시작 주소
+			    @@ r3 == 커널 이미지가 압축풀릴 시작 주소-16kb == Page directory 시작주소
 		bic	r3, r3, #0xff		@ Align the pointer
-		bic	r3, r3, #0x3f00     // r3에 저장된 값에서 하위 14bit(0x3fff) clear하여 align 맞춤
+		bic	r3, r3, #0x3f00     @@ r3에 저장된 값에서 하위 14bit(0x3fff) clear하여 align 맞춤
 /*
  * Initialise the page tables, turning on the cacheable and bufferable
  * bits for the RAM area only.
  */
 		mov	r0, r3
 		mov	r9, r0, lsr #18
-		mov	r9, r9, lsl #18		@ start of RAM // 모기향 책 66페이지 참고r9 = 0x50000000
-		add	r10, r9, #0x10000000	@ a reasonable RAM size // r10 = 0x60000000, 즉 ram 영역은 0x50000000 ~ 0x60000000 이다.
+		mov	r9, r9, lsl #18		@ start of RAM
+                                @@ 모기향 책 66페이지 참고r9 = 0x50000000
+		add	r10, r9, #0x10000000	@ a reasonable RAM size
+									@@ r10 = 0x60000000, 즉 ram 영역은 0x50000000 ~ 0x60000000 이다.
 		mov	r1, #0x12		@ XN|U + section mapping
-		orr	r1, r1, #3 << 10	@ AP=11 // r1 = 0xC12, 즉 11000010 dm
-		add	r2, r3, #16384  @@ r2==커널 이미지 주소
+		orr	r1, r1, #3 << 10	@ AP=11
+		                        @@ r1 = 0xC12, 즉 11000010(b) 으로 세팅하여 section entry의 AP[11:10] set, \\
+								@@ Execute Never[4] set, section entry임을 나타내는 [1:0] 을 10으로 함. 
+		add	r2, r3, #16384  @@ r2==커널 이미지가 압축풀릴 시작 주소
 1:		cmp	r1, r9			@ if virt > start of RAM
 		cmphs	r10, r1			@   && end of RAM > virt
-		bic	r1, r1, #0x1c		@ clear XN|U + C + B // 일단 전부 초기화 시킨다.
+		bic	r1, r1, #0x1c		@ clear XN|U + C + B
+								@@ 일단 전부 초기화 시킨다.
 		orrlo	r1, r1, #0x10		@ Set XN|U for non-RAM
 		orrhs	r1, r1, r6		@ set RAM section settings
-								@@ r6=#CB_BITS | 0x02	@ !XN
-								@@ #define CB_BITS 0x08 아니면 0x0C
-								  // 0x08 이면 섹션테이블의 C=1, B=0 으로 세팅, 0x0C 이면 C=1, B=1 로 세팅. 즉 bufferable 인지 아닌지 세팅
-								@@ __setup_mmu를 호출하기전에 값 저장
-
-		str	r1, [r0], #4		@ 1:1 mapping // r1 을 r0 가 가리키는 곳에 저장하고, r0 의 값을 4 증가시킴. 즉 *r0 = r1; r0 = r0+4;
-		add	r1, r1, #1048576    @@ 1048576 == 1MB // r1 에 1MB 를 더해 1MB 섹션씩 점프하게 함  
+								@@ r6에는 __setup_mmul 호출 전에 #CB_BITS | 0x02 가 들어있었다.		
+								@@ r6 == (#CB_BITS | 0x02)	@ !XN
+								@@ #define CB_BITS 에 의해 0x08 아니면 0x0C
+								@@ 0x08 이면 섹션테이블의 C=1, B=0 으로 세팅, 0x0C 이면 C=1, B=1 로 세팅.
+								@@ 즉 bufferable 인지 아닌지 세팅
+		str	r1, [r0], #4		@ 1:1 mapping
+								@@ r1 을 r0 가 가리키는 곳에 저장하고, r0 의 값을 4 증가시킴. 즉 *r0 = r1; r0 = r0+4;
+								@@ r0 는 물리주소를 나타내고 r0 에 들어있는 값은 가상주소를 나타낸다.
+		add	r1, r1, #1048576    @@ 1048576 == 1MB 
+								@@ r1 에 1MB 를 더해 1MB 섹션씩 점프하게 함  
 		teq	r0, r2
 		bne	1b
 /*
@@ -683,12 +741,16 @@ __setup_mmu:	sub	r3, r4, #16384		@ Page directory size @@16384=16kb
  * so there is no map overlap problem for up to 1 MB compressed kernel.
  * If the execution is in RAM then we would only be duplicating the above.
  */
- // sector entry 2개 C, B 를 설정한다.
-		orr	r1, r6, #0x04		@ ensure B is set for this //r6=CB set
+@@ sector entry 2개 C, B 를 설정한다.
+@@ 4Gbyte 설정시 Ram 영역이외의 영역은 명시적으로 Bufferable/Cacheable을 diabled 했기 때문에 
+@@ Flash에 대해서 추가적으로 세팅해주는 것 같다.
+
+		orr	r1, r6, #0x04		@ ensure B is set for this
+								@@ r6=CB set
 		orr	r1, r1, #3 << 10
 		mov	r2, pc
-		mov	r2, r2, lsr #20 // r2 를 right shift 20번 한다.
-		orr	r1, r1, r2, lsl #20 // r2 를 left shift 20 번 해서 r1 과 or 연산해서 r1에 넣는다.
+		mov	r2, r2, lsr #20 	@@ r2 를 right shift 20번 한다.
+		orr	r1, r1, r2, lsl #20 @@ r2 를 left shift 20 번 해서 r1 과 or 연산해서 r1에 넣는다.
 		add	r0, r3, r2, lsl #2
 		str	r1, [r0], #4
 		add	r1, r1, #1048576
@@ -732,47 +794,81 @@ __armv4_mmu_cache_on:
 		mov	pc, r12
 
 __armv7_mmu_cache_on:
-		mov	r12, lr		@@r12에 lr을 저장 아마도.. bl cache_on인가???에서 저장되었던거???
+		mov	r12, lr		@@ r12에 lr을 저장 아마도.. bl cache_on인가???에서 저장되었던거???
 #ifdef CONFIG_MMU
 		mrc	p15, 0, r11, c0, c1, 4	@ read ID_MMFR0
 		tst	r11, #0xf		@ VMSA
-							@@tst = and 연산을 해서 0인지를 확인하는 건데.. 
-							@@\모두 0x0이 아니라면(MMU를 사용한다면) 아래 move를 하게 될것이다.
-							@@\그리고 그 아래인 bl도 할 것이다. 
+							@@ tst = and 연산을 해서 0인지를 확인하는 건데.. 
+							@@\ 모두 0x0이 아니라면(MMU를 사용한다면) 아래 move를 하게 될것이다.
+							@@\ 그리고 그 아래인 bl도 할 것이다. 
 		movne	r6, #CB_BITS | 0x02	@ !XN
 						@@ #define CB_BITS 0x08 아니면 0x0C
 		blne	__setup_mmu
 		mov	r0, #0
 		mcr	p15, 0, r0, c7, c10, 4	@ drain write buffer
+									@@@ drain write buffer 가 아니다. dsb 역할을 한다.
+                                                @@ ARM 캐시 관련 용어 정리
+                                                @@ flush : arm 에서는 flush 는 clean + invalidate 이다.
+												@@ invalidate : 메모리에 접근할 수 있는 다른 존재가 있을때 그 존재가 메모리에 어떠한 값을 섰을때 기존에 그 메모리 영역을 바라보고 있던 cache 는 invalidate 된다. 
+												
+                                                @@ clean : dirty 비트가 1인 데이터를 메모리에 반영한후 dirty bit 0으로 clear
+                                                @@ drain : 캐시 버퍼에 있는 내용을 메모리에 반영
+                                                
 		tst	r11, #0xf		@ VMSA
-		mcrne	p15, 0, r0, c8, c7, 0	@ flush I,D TLBs
+                                                @@ mmu사용 여부를 확인
+		mcrne	p15, 0, r0, c8, c7, 0	@ flush I,D TLBs @@@ flush 가 아니라 invalidate 이다. 
+		                                                 @@@ TLB 도 instruction, data 용으로 분리되어 있다. CA15 기준 I-TLB, Data Load-TLB, Data Store-TLB 로 구분되어져 있다. 
 #endif
 		mrc	p15, 0, r0, c1, c0, 0	@ read control reg
 		bic	r0, r0, #1 << 28	@ clear SCTLR.TRE
+                                                @@ SCTLR b4.1.130 참고
+                                                @@ ARM 메뉴얼 b3.8.2 참고
+                                                @@ 특정 OS들은 TEX리맵을 사용하여 2:1 비트를 자체적인 페이지 테이블 관리용도로 사용한다. 하지만 리눅스에서는 암에서 제공하는 기능만을 사용 리눅스에p서는 TEX 리맵을 사용하지 않음
 		orr	r0, r0, #0x5000		@ I-cache enable, RR cache replacement
+                                                @@ 인스트럭션 캐시 사용
+                                                @@ Round Robin select
+                                                @@ Predictable strategy 한 캐시 정책 사용
+
 		orr	r0, r0, #0x003c		@ write buffer
+                                                @@ 캐시와 memory barrier 사용
+                                                @@ 명령어 재배치 사용금지
 		bic	r0, r0, #2		@ A (no unaligned access fault)
+                                                @@ aligne check 기능 사용하지 않음
+                                                @@ ARM메뉴얼 A3.2.1 Unaligned data access
 		orr	r0, r0, #1 << 22	@ U (v6 unaligned access model)
 						@ (needed for ARM1176)
 #ifdef CONFIG_MMU
 #ifdef CONFIG_CPU_ENDIAN_BE8
 		orr	r0, r0, #1 << 25	@ big-endian page tables
+                                                @@ exception vector 주소의 엔디언 방식을 저장
 #endif
 		mrcne   p15, 0, r6, c2, c0, 2   @ read ttb control reg
+                                                @@ B4.1.153 TTBCR, Translation Table Base Control Register, VMSA
 		orrne	r0, r0, #1		@ MMU enabled
 		movne	r1, #0xfffffffd		@ domain 0 = client
 		bic     r6, r6, #1 << 31        @ 32-bit translation system
+                                                @@ Extended Address Enable set시 40비트 메모리 주소 공간 사용
 		bic     r6, r6, #3 << 0         @ use only ttbr0
-		mcrne	p15, 0, r3, c2, c0, 0	@ load page table pointer
+                                                @@ 최대 물리공간 주소로 32비트  사용 
+		mcrne	p15, 0, r3, c2, c0, 0	@ load page table pointer @@ coprocessor 입장에서는 load 다.
+		                                @@ __setup_mmu 에서 r3 에 page directory 시작주소를 넣었다.
 		mcrne	p15, 0, r1, c3, c0, 0	@ load domain access control
-		mcrne   p15, 0, r6, c2, c0, 2   @ load ttb control
+		mcrne   p15, 0, r6, c2, c0, 2   @ load ttb control @@ ttbcr 설정 
 #endif
-		mcr	p15, 0, r0, c7, c5, 4	@ ISB
-		mcr	p15, 0, r0, c1, c0, 0	@ load control register
+		mcr	p15, 0, r0, c7, c5, 4	@ ISB @@ isb를실행되는 시점에 파이프 라인을 비운다.
+                                                @@ 파이프라인, 캐쉬 플러쉬
+                                                @@ http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0204ik/CIHJFGFE.html
+		mcr	p15, 0, r0, c1, c0, 0	@ load control register @@ control register 에 값을 쓴다. 
 		mrc	p15, 0, r0, c1, c0, 0	@ and read it back
+
+@@git blame을 참고하여 내린 결론은 아래와 같습니다.
+@@- __common_mmu_cache_on 에서 load 후 read it back을 한 이유는, PAX27x를 위한 workaround이다. (http://goo.gl/KlIhV)
+@@- __armv7_mmu_cache_on 에서 load 후 read it back을 한 이유는, __common_mmu_cache_on을 copy&paste 했기 때문이다.
+@@
 		mov	r0, #0
 		mcr	p15, 0, r0, c7, c5, 4	@ ISB
-		mov	pc, r12
+		mov	pc, r12                 @@ restart: 로 복귀
+                                    @@@END 2013.07.06
 
 __fa526_cache_on:
 		mov	r12, lr
@@ -819,15 +915,19 @@ __common_mmu_cache_on:
  *  r9  = corrupted
  *  r12 = corrupted
  */
-@@프로세서 별로 캐쉬를 사용하는데 필요한 루틴을 수행하고 restart 구문으로 리턴
-call_cache_fn:	adr	r12, proc_types @@라벨 주소를 가져오는 명령어
+
+@@ 프로세서 별로 캐쉬를 사용하는데 필요한 루틴을 수행하고 restart 구문으로 리턴
+call_cache_fn:	adr	r12, proc_types @@ 라벨 주소를 가져오는 명령어
 #ifdef CONFIG_CPU_CP15
 		mrc	p15, 0, r9, c0, c0	@ get processor ID
+								@@@ processor type : ARMv7
+								@@@ machine type : board 마다 id 가 있다. 
+								@@@ arch/arm/tools/mach-type 에 등록된 machine id 가 있다.
 #else
 		ldr	r9, =CONFIG_PROCESSOR_ID
 #endif
-1:		ldr	r1, [r12, #0]		@ get value 
-		ldr	r2, [r12, #4]		@ get mask 
+1:		ldr	r1, [r12, #0]		@ get value
+		ldr	r2, [r12, #4]		@ get mask
 		eor	r1, r1, r9		@ (real ^ match)
 		tst	r1, r2			@       & mask
  ARM(		addeq	pc, r12, r3		) @ call cache function
@@ -979,10 +1079,10 @@ proc_types:
 		W(b)	__armv6_mmu_cache_flush
 
 		.word	0x000f0000		@ new CPU Id
-		.word	0x000f0000		@@우린 armV7이니까 여기 일거 같다.
+		.word	0x000f0000		@@ 우린 armV7이니까 여기 일거 같다.
 		W(b)	__armv7_mmu_cache_on
 		W(b)	__armv7_mmu_cache_off
-		W(b)	__armv7_mmu_cache_flush
+		W(b)	__armv7_mmu_cache_flush @ r3=16 이므로  
 
 		.word	0			@ unrecognised type
 		.word	0
@@ -1050,7 +1150,7 @@ __armv4_mmu_cache_off:
 __armv7_mmu_cache_off:
 		mrc	p15, 0, r0, c1, c0
 #ifdef CONFIG_MMU
-		bic	r0, r0, #0x000d
+		bic	r0, r0, #0x000d 
 #else
 		bic	r0, r0, #0x000c
 #endif
@@ -1123,18 +1223,33 @@ hierarchical:
 		stmfd	sp!, {r0-r7, r9-r11}
 		mrc	p15, 1, r0, c0, c0, 1	@ read clidr
 		ands	r3, r0, #0x7000000	@ extract loc from clidr
+                                                @@ flush 해줘야 할 클린 레벨
 		mov	r3, r3, lsr #23		@ left align loc bit field
+                                                @@ r3 = loc * 2
 		beq	finished		@ if loc is 0, then no need to clean
 		mov	r10, #0			@ start clean at cache level 0
 loop1:
-		add	r2, r10, r10, lsr #1	@ work out 3x current cache level
-		mov	r1, r0, lsr r2		@ extract cache type bits from clidr
-		and	r1, r1, #7		@ mask of the bits for current cache only
+		add          r2, r10, r10, lsr #1    @ work out 3x current cache level
+                                                     @@r2는 loop1을 돌때마다 3씩 증가
+		mov          r1, r0, lsr r2          @ extract cache type bits from clidr
+		and          r1, r1, #7              @ mask of the bits for current cache only
+        @@ +------+---------+
+        @@ |00    |no       |
+        @@ |      |cache    |
+        @@ +------+---------+
+        @@ |01    |icache   |
+        @@ +------+---------+
+        @@ |10    |data     |
+        @@ |      |cache    |
+        @@ +------+---------+
+        @@ |11    |I/D Cache|
+        @@ +------+---------+
 		cmp	r1, #2			@ see what cache we have at this level
+                                                
 		blt	skip			@ skip if no cache, or just i-cache
-		mcr	p15, 2, r10, c0, c0, 0	@ select current cache level in cssr
-		mcr	p15, 0, r10, c7, c5, 4	@ isb to sych the new cssr&csidr
-		mrc	p15, 1, r1, c0, c0, 0	@ read the new csidr
+		mcr	p15, 2, r10, c0, c0, 0	@ select current cache level in cssr @@ 메뉴얼 검색시 cssr 이 아니라 csselr 이다.
+		mcr	p15, 0, r10, c7, c5, 4	@ isb to sych the new cssr&csidr @@ csidr 이 아니라 ccsidr 이다.
+		mrc	p15, 1, r1, c0, c0, 0	@ read the new csidr @@ csselr 로 선택된 ccsidr 을 읽는다.
 		and	r2, r1, #7		@ extract the length of the cache lines
 		add	r2, r2, #4		@ add 4 (line length offset)
 		ldr	r4, =0x3ff
@@ -1147,19 +1262,23 @@ loop2:
 loop3:
  ARM(		orr	r11, r10, r9, lsl r5	) @ factor way and cache number into r11
  ARM(		orr	r11, r11, r7, lsl r2	) @ factor index number into r11
+                                                  @@ 메뉴얼 B.4.2.1 SET/WAY 레지스터 모양과 같은 형태를 만들어줌 
  THUMB(		lsl	r6, r9, r5		)
  THUMB(		orr	r11, r10, r6		) @ factor way and cache number into r11
  THUMB(		lsl	r6, r7, r2		)
  THUMB(		orr	r11, r11, r6		) @ factor index number into r11
 		mcr	p15, 0, r11, c7, c14, 2	@ clean & invalidate by set/way
+                                                @@ 웨이 안에 있는 한 라인 플러쉬 완료
 		subs	r9, r9, #1		@ decrement the way
-		bge	loop3
+                                                
+		bge	loop3                   @@ 현 웨이에서 - 1 웨이로 진입
 		subs	r7, r7, #1		@ decrement the index
+                                                @@ 현 인덱스에서 -1 인덱스로 진입
 		bge	loop2
 skip:
 		add	r10, r10, #2		@ increment cache number
 		cmp	r3, r10
-		bgt	loop1
+		bgt	loop1                 	@@다음 레벨 캐시로 진입
 finished:
 		ldmfd	sp!, {r0-r7, r9-r11}
 		mov	r10, #0			@ swith back to cache level 0
@@ -1310,12 +1429,14 @@ __hyp_reentry_vectors:
 
 __enter_kernel:
 		mov	r0, #0			@ must be 0
- ARM(		mov	pc, r4	)		@ call kernel
+ ARM(		mov	pc, r4	)		@ call kernel @@ kernel 의 시작 주소로 간다. arch/arm/kernel/head.S
+                                @@@END 130803
  THUMB(		bx	r4	)		@ entry point is always ARM
 
 reloc_code_end:
 
 		.align
 		.section ".stack", "aw", %nobits
+        @@TODO : 스택의 용도?? 커널 해제시만 사용 하는걸까?
 .L_user_stack:	.space	4096
 .L_user_stack_end:

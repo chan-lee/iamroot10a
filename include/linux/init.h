@@ -41,7 +41,12 @@
 
 /* These are for everybody (although not all archs will actually
    discard it in modules) */
-#define __init		__section(.init.text) __cold notrace
+#define __init	__section(.init.text) __cold notrace
+// The cold attribute on functions is used to inform the compiler that 
+// the function is unlikely to be executed.The function is optimized for size 
+// rather than speed and on many targets it is placed into special subsection of the text section 
+// so all cold functions appears close together improving code locality of non-cold parts of program.
+// notrace 는 성능 측정에 사용하지 않겠다는 의미.
 #define __initdata	__section(.init.data)
 #define __initconst	__constsection(.init.rodata)
 #define __exitdata	__section(.exit.data)
@@ -331,8 +336,3 @@ void __init parse_early_options(char *cmdline);
 
 #ifdef MODULE
 #define __exit_p(x) x
-#else
-#define __exit_p(x) NULL
-#endif
-
-#endif /* _LINUX_INIT_H */

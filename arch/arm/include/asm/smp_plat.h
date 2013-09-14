@@ -13,13 +13,15 @@
 /*
  * Return true if we are running on a SMP platform
  */
-static inline bool is_smp(void)
+static inline bool is_smp(void) //bool type은 C99 에서 정의되어 있음.
 {
 #ifndef CONFIG_SMP
 	return false;
-#elif defined(CONFIG_SMP_ON_UP)
+#elif defined(CONFIG_SMP_ON_UP) // 우리는 이곳으로 들어간다.
 	extern unsigned int smp_on_up;
-	return !!smp_on_up;
+	return !!smp_on_up; // arch/arm/kernel/head.S  smp_on_up에 .global 로 선언되어 있다.(1로 초기화)
+	// 그래서 c 파일에서 extern 변수를 써서 참조한다.
+	// !! 을 써서 어떤 수가 들어오든 1을 리턴하기 위함.
 #else
 	return true;
 #endif

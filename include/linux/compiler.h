@@ -55,6 +55,12 @@ extern void __chk_io_ptr(const volatile void __iomem *);
 #endif
 
 #define notrace __attribute__((no_instrument_function))
+// __attribute__ 는 gcc 메뉴얼의 Declaring Attributes of Functions 을 참고
+// http://blog.daum.net/english_100/5 참고
+// no_instrument_function 는 
+// If ‘-finstrument-functions’ is given, profiling function calls will be generated
+// at entry and exit of most user-compiled functions. Functions with this attribute
+// will not be so instrumented.
 
 /* Intel compiler defines __GNUC__. So we will overwrite implementations
  * coming from above header files here

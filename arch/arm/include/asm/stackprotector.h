@@ -31,7 +31,7 @@ static __always_inline void boot_init_stack_canary(void)
 	get_random_bytes(&canary, sizeof(canary));
 	canary ^= LINUX_VERSION_CODE;
 
-	current->stack_canary = canary;
+	current->stack_canary = canary; // current 매크로는 현재 태스크를 나타내는 태스크 디스크립터를 리턴.
 	__stack_chk_guard = current->stack_canary;
 }
 

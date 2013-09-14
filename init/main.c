@@ -442,6 +442,8 @@ static void __init boot_cpu_init(void)
 	set_cpu_possible(cpu, true);
 }
 
+// __weak 가 설정되지 않는 동일한 이름의 함수가 존재한다면 그 함수를 수행.
+// 그렇지 않다면 __weak 가 설정된 함수가 수행됨
 void __init __weak smp_setup_processor_id(void)
 {
 }
@@ -469,18 +471,29 @@ static void __init mm_init(void)
 	vmalloc_init();
 }
 
+//@@@ start 130907
+//asmlinkage 는 x86을 위한 코드. arm 에서는 별다른 역할 없다.
+// __init 은 특정 section 에 두고 부팅시만 쓰고 부팅이 끝나면 사라진다.
+// http://venkateshabbarapu.blogspot.kr/2012/09/init-call-mechanism-in-linux-kernel.html 참고
 asmlinkage void __init start_kernel(void)
 {
 	char * command_line;
 	extern const struct kernel_param __start___param[], __stop___param[];
+	//  __start___param[], __stop___param[] 변수는 linker script(include/asm-generic/vmlinux.lds.h) 에서 선언 및 초기화한 변수이다.
 
 	/*
 	 * Need to run as early as possible, to initialize the
 	 * lockdep hash:
 	 */
-	lockdep_init();
-	smp_setup_processor_id();
-	debug_objects_early_init();
+	lockdep_init(); // 아무 작업 안함.
+	smp_setup_processor_id(); // http://www.iamroot.org/xe/index.php?_filter=search&mid=Kernel_10_ARM&search_keyword=__weak&search_target=content&document_srl=181691 참고
+	// 아키텍쳐별로 함수를 정의해 놓고 사용할 수 있게 __weak 을 정의한다.
+	// gcc-nm 유틸을 이용해서 나온 결과가 
+	// T: global, t: local, W : weak 을 의미한다. 
+	// local 은 static keyword 가 붙었을때고, 안붙이면 global 이 된다.
+	// http://llvm.org/docs/CommandGuide/llvm-nm.html 참고 
+
+	debug_objects_early_init(); // CONFIG_DEBUG_OBJECTS 가 설정되어 있으면 수행.
 
 	/*
 	 * Set up the the initial canary ASAP:

@@ -103,6 +103,10 @@ static void merge_fdt_bootargs(void *fdt, const char *fdt_cmdline)
  *    = 1 -> bad ATAG (may retry with another possible ATAG pointer)
  *    < 0 -> error from libfdt
  */
++//@@ FDT = flattened device tree
+//@@ FDT와 DTB에 관한 설명 참조.  http://forum.fa linux.com/zbxe/index.php?document_srl=589850&mid=lecture_tip&order_type=desc&page=6&sort_index=readed_count 
+//@@ atags를 사용하게 되면 fdt형식으로 변환하며
+//@@ dtb를 사용하게 되면 함수는 바로 리턴한다.
 int atags_to_fdt(void *atag_list, void *fdt, int total_space)
 {
 	struct tag *atag = atag_list;
@@ -117,10 +121,13 @@ int atags_to_fdt(void *atag_list, void *fdt, int total_space)
 		return 1;
 
 	/* if we get a DTB here we're done already */
+	//@@ DTB를 사용하면 더 이상의 작업을 하지 않고 바로 리턴한다.
+	//@@ FDT_MAGIC=DTB시그니쳐값=0xd00dfeed
 	if (*(u32 *)atag_list == fdt32_to_cpu(FDT_MAGIC))
 	       return 0;
 
 	/* validate the ATAG */
+	//@@ atags는 반드시 core부터 시작되어야 함
 	if (atag->hdr.tag != ATAG_CORE ||
 	    (atag->hdr.size != tag_size(tag_core) &&
 	     atag->hdr.size != 2))

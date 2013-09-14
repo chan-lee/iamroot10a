@@ -45,7 +45,7 @@
 #define PG_DIR_SIZE	0x5000
 #define PMD_ORDER	3
 #else
-#define PG_DIR_SIZE	0x4000
+#define PG_DIR_SIZE	0x4000 @@ 0x4000=16KB
 #define PMD_ORDER	2
 #endif
 
@@ -53,7 +53,7 @@
 	.equ	swapper_pg_dir, KERNEL_RAM_VADDR - PG_DIR_SIZE
 
 	.macro	pgtbl, rd, phys
-	add	\rd, \phys, #TEXT_OFFSET - PG_DIR_SIZE
+	add	\rd, \phys, #TEXT_OFFSET - PG_DIR_SIZE @@ 0x8000-0x4000
 	.endm
 
 /*
@@ -91,7 +91,8 @@ ENTRY(stext)
 	safe_svcmode_maskall r9
 
 	mrc	p15, 0, r9, c0, c0		@ get processor id
-	bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
+	bl	__lookup_processor_type		@ r5=procinfo r9=cpuid @@ r5 는 __lookup_processor_type 수행후 설정된다. 
+	@@ __lookup_processor_type 수행 이후에는 r5 에 찾은 proc_info_list 구조체의 시작주소가 들어가있다.
 	movs	r10, r5				@ invalid processor (r5=0)?
  THUMB( it	eq )		@ force fixup-able long branch encoding
 	beq	__error_p			@ yes, error 'p'
@@ -106,9 +107,12 @@ ENTRY(stext)
 
 #ifndef CONFIG_XIP_KERNEL
 	adr	r3, 2f
-	ldmia	r3, {r4, r8}
-	sub	r4, r3, r4			@ (PHYS_OFFSET - PAGE_OFFSET)
-	add	r8, r8, r4			@ PHYS_OFFSET
+	ldmia	r3, {r4, r8} 
+	@@ r3 = 2: 의 물리주소
+	@@ r4 = . 이므로 compile time 때 결정된 가상주소 
+	@@ r8 = PAGE_OFFSET=0xc0000000 이다. 가상주소임.
+	sub	r4, r3, r4			@ (PHYS_OFFSET - PAGE_OFFSET) @@ r4 에는 물리주소와 가상주소의 차이가 들어간다.
+	add	r8, r8, r4			@ PHYS_OFFSET @@ ram 의 시작주소를 계산한다. 즉 0x40000000 번지가 ram 의 물리 시작주소이다.
 #else
 	ldr	r8, =PHYS_OFFSET		@ always constant in this case
 #endif
@@ -117,12 +121,12 @@ ENTRY(stext)
 	 * r1 = machine no, r2 = atags or dtb,
 	 * r8 = phys_offset, r9 = cpuid, r10 = procinfo
 	 */
-	bl	__vet_atags
+	bl	__vet_atags @@ atag 혹은 dtb 의 유효성 검사
 #ifdef CONFIG_SMP_ON_UP
-	bl	__fixup_smp
+	bl	__fixup_smp @@ multiprocessor 인지 uniprocessor 인지 검사
 #endif
 #ifdef CONFIG_ARM_PATCH_PHYS_VIRT
-	bl	__fixup_pv_table
+	bl	__fixup_pv_table @@ Todo : 의미 확실하지 않음. 추가 분석 필요. 130810
 #endif
 	bl	__create_page_tables
 
@@ -137,7 +141,7 @@ ENTRY(stext)
 						@ mmu has been enabled
 	adr	lr, BSYM(1f)			@ return (PIC) address
 	mov	r8, r4				@ set TTBR1 to swapper_pg_dir
- ARM(	add	pc, r10, #PROCINFO_INITFUNC	)
+ ARM(	add	pc, r10, #PROCINFO_INITFUNC	) @@ r10 에 proc_info_list 구조체의 시작주소 들어있다.
  THUMB(	add	r12, r10, #PROCINFO_INITFUNC	)
  THUMB(	mov	pc, r12				)
 1:	b	__enable_mmu
@@ -435,7 +439,7 @@ __enable_mmu:
 		      domain_val(DOMAIN_TABLE, DOMAIN_MANAGER) | \
 		      domain_val(DOMAIN_IO, DOMAIN_CLIENT))
 	mcr	p15, 0, r5, c3, c0, 0		@ load domain access register
-	mcr	p15, 0, r4, c2, c0, 0		@ load page table pointer
+	mcr	p15, 0, r4, c2, c0, 0		@ load page table pointer 	 @@ r4 를 ttbr0 에 저장 
 #endif
 	b	__turn_mmu_on
 ENDPROC(__enable_mmu)
@@ -457,12 +461,12 @@ ENDPROC(__enable_mmu)
 	.align	5
 	.pushsection	.idmap.text, "ax"
 ENTRY(__turn_mmu_on)
-	mov	r0, r0
-	instr_sync
+	mov	r0, r0 @@ r0 에 dependency 를 일부러 만들어서 명령어 수행순서를 보장한다.
+	instr_sync @@ isb
 	mcr	p15, 0, r0, c1, c0, 0		@ write control reg
-	mrc	p15, 0, r3, c0, c0, 0		@ read id reg
-	instr_sync
-	mov	r3, r3
+	mrc	p15, 0, r3, c0, c0, 0		@ read id reg @@ midr 을 r3에 읽어온다.
+	instr_sync @@ isb
+	mov	r3, r3 @@ r3에 out of order 에서 명령 수행 순서를 보장하기 위해 dependency 를 만든다.
 	mov	r3, r13
 	mov	pc, r3
 __turn_mmu_on_end:
@@ -471,10 +475,11 @@ ENDPROC(__turn_mmu_on)
 
 
 #ifdef CONFIG_SMP_ON_UP
+@@ SMP 를 위해 빌드한 커널을 UP 에서도 돌아가게 만들기 위한 옵션
 	__INIT
 __fixup_smp:
-	and	r3, r9, #0x000f0000	@ architecture version
-	teq	r3, #0x000f0000		@ CPU ID supported?
+	and	r3, r9, #0x000f0000	@ architecture version @@ MIDR register 의 16~19 bit 을 읽어온다.
+	teq	r3, #0x000f0000		@ CPU ID supported? @@ r3 가 1111 이면 cpu id scheme 에 따라 수행
 	bne	__fixup_smp_on_up	@ no, assume UP
 
 	bic	r3, r9, #0x00ff0000
@@ -488,7 +493,7 @@ __fixup_smp:
 	mrc	p15, 0, r0, c0, c0, 5	@ read MPIDR
 	and	r0, r0, #0xc0000000	@ multiprocessing extensions and
 	teq	r0, #0x80000000		@ not part of a uniprocessor system?
-	moveq	pc, lr			@ yes, assume SMP
+	moveq	pc, lr			@ yes, assume SMP @@ mpidr 의 30번 bit 가 0 이면 mp 이다. 
 
 __fixup_smp_on_up:
 	adr	r0, 1f
@@ -548,13 +553,19 @@ ENDPROC(fixup_smp)
 __fixup_pv_table:
 	adr	r0, 1f
 	ldmia	r0, {r3-r5, r7}
+	@@ r0 = 1: 의 물리 주소
+	@@ r3 = . 이므로 1: 의 가상주소
+	@@ r4 = __pv_table_begin
+	@@ r5 = __pv_table_end
+	@@ r7 = __pv_phys_offset
+	
 	sub	r3, r0, r3	@ PHYS_OFFSET - PAGE_OFFSET
 	add	r4, r4, r3	@ adjust table start address
 	add	r5, r5, r3	@ adjust table end address
 	add	r7, r7, r3	@ adjust __pv_phys_offset address
 	str	r8, [r7]	@ save computed PHYS_OFFSET to __pv_phys_offset
 	mov	r6, r3, lsr #24	@ constant for add/sub instructions
-	teq	r3, r6, lsl #24 @ must be 16MiB aligned
+	teq	r3, r6, lsl #24 @ must be 16MiB aligned @@ 물리주소와 가상주소의 차이 16MB 단위로 ALIGN 되어있는지 확인.
 THUMB(	it	ne		@ cross section branch )
 	bne	__error
 	str	r6, [r7, #4]	@ save to __pv_offset
@@ -591,13 +602,17 @@ __fixup_a_pv_table:
 	bcc	1b
 	bx	lr
 #else
+@@ 우리는 여기로.
 	b	2f
-1:	ldr	ip, [r7, r3]
+1:	ldr	ip, [r7, r3] @@ r7+r3 을 주소로 하여 그 주소에 있는 값을 ip 로 로드.
+                     @@ r7 : pv_phy_offset 의 물리주소, r3 : -0x80000000
 	bic	ip, ip, #0x000000ff
 	orr	ip, ip, r6	@ mask in offset bits 31-24
 	str	ip, [r7, r3]
-2:	cmp	r4, r5
-	ldrcc	r7, [r4], #4	@ use branch for delay slot
+2:	cmp	r4, r5 @@ r4-r5 한 결과에 의해 carry 가 설정될 수 있다.
+               @@ Todo : cc 를 왜썼을까? be 나 lo 를 안쓰고..
+			   @@ r4 가 r5 보다 크면 carry 가 발생하므로 ldrcc 를 수행하지 않음.
+	ldrcc	r7, [r4], #4	@ use branch for delay slot @@ cc 는 carry가 clear 일때 수행함을 의미.
 	bcc	1b
 	mov	pc, lr
 #endif

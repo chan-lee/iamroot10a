@@ -125,12 +125,13 @@ static void arch_decomp_error(const char *x)
 #define arch_error arch_decomp_error
 #endif
 
-#ifdef CONFIG_S3C_BOOT_UART_FORCE_FIFO
+#ifdef CONFIG_S3C_BOOT_UART_FORCE_FIFO // @@ 설정되어 있음 
 static inline void arch_enable_uart_fifo(void)
 {
 	u32 fifocon;
 
-	if (!config_enabled(CONFIG_DEBUG_LL))
+	if (!config_enabled(CONFIG_DEBUG_LL)) // @@ CONFIG_DEBUG_LL is not set. CONFIG_DEBUG_LL 은 빌드 후 
+	                                     // @@ 정의가 안되어 있으면 0, 되어있으면 1로 설정된다.
 		return;
 
 	fifocon = uart_rd(S3C2410_UFCON);
@@ -160,13 +161,13 @@ arch_decomp_setup(void)
 	 * after calling linux.
 	 */
 
-	arch_detect_cpu();
+	arch_detect_cpu(); // @@ chip id 를 찾아서 이에맞게 uart base 레지스터 주소를 얻는다. 
 
 	/* Enable the UART FIFOs if they where not enabled and our
 	 * configuration says we should turn them on.
 	 */
 
-	arch_enable_uart_fifo();
+	arch_enable_uart_fifo(); // @@ uart fifo 를 세팅한다. 
 }
 
 

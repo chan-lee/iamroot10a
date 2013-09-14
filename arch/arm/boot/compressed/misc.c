@@ -142,11 +142,17 @@ decompress_kernel(unsigned long output_start, unsigned long free_mem_ptr_p,
 	free_mem_end_ptr	= free_mem_ptr_end_p;
 	__machine_arch_type	= arch_id;
 
-	arch_decomp_setup();
+        // @@arch/arm/plat-samsung/include/plat/uncompress.h  
+	arch_decomp_setup(); // @@ uart 설정
+        
 
 	putstr("Uncompressing Linux...");
+	// @@ extern int do_decompress(u8 *input, int len, u8 *output, void (*error)(char *x));
+	// @@ input_data : piggy.gzip.S 에 정의
+	// @@ input_data_end : piggy.gzip.S 에 정의
+	// @@ error : debug 를 위한 함수포인터   
 	ret = do_decompress(input_data, input_data_end - input_data,
-			    output_data, error);
+			    output_data, error); 
 	if (ret)
 		error("decompressor returned an error");
 	else

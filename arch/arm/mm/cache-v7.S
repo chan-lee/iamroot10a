@@ -86,6 +86,7 @@ ENDPROC(v7_flush_icache_all)
  *
  *     Corrupted registers: r0-r7, r9-r11 (r6 only in Thumb mode)
  */
+ @@ PoC, PoU, LoUU, LoUIS 추후 조사 필요함.
 
 ENTRY(v7_flush_dcache_louis)
 	dmb					@ ensure ordering with previous memory accesses
@@ -102,9 +103,9 @@ ENTRY(v7_flush_dcache_louis)
 #endif
 	ALT_SMP(mov	r3, r3, lsr #20)	@ r3 = LoUIS * 2
 	ALT_UP(mov	r3, r3, lsr #26)	@ r3 = LoUU * 2
-	moveq	pc, lr				@ return if level == 0
+	moveq	pc, lr				@ return if level == 0 @@ LoUIS 가 0 이면 return, 아니면 flush_levels로
 	mov	r10, #0				@ r10 (starting level) = 0
-	b	flush_levels			@ start flushing cache levels
+	b	flush_levels			@ start flushing cache levels @@ arch/arm/boot/compressed/head.S 에 나온 cache flush 참조. 현규완님 후기 참조.
 ENDPROC(v7_flush_dcache_louis)
 
 /*
@@ -123,7 +124,7 @@ ENTRY(v7_flush_dcache_all)
 	mov	r3, r3, lsr #23			@ left align loc bit field
 	beq	finished			@ if loc is 0, then no need to clean
 	mov	r10, #0				@ start clean at cache level 0
-flush_levels:
+flush_levels: @@ r10 = 0  이 들어있다. 
 	add	r2, r10, r10, lsr #1		@ work out 3x current cache level
 	mov	r1, r0, lsr r2			@ extract cache type bits from clidr
 	and	r1, r1, #7			@ mask of the bits for current cache only

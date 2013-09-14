@@ -57,13 +57,13 @@ SECTIONS
   .pad			: { BYTE(0); . = ALIGN(8); }
   _edata = .;
 
-  . = BSS_START;
+  . = BSS_START; /* @@TODO : 어디서 정의 되었는지 확인해 볼것 */
   __bss_start = .;
   .bss			: { *(.bss) }
   _end = .;
 
   . = ALIGN(8);		/* the stack must be 64-bit aligned */
-  .stack		: { *(.stack) }
+  .stack		: { *(.stack) } /*@@ stack 은 8byte align 한 곳으로부터 시작 */
 
   .stab 0		: { *(.stab) }
   .stabstr 0		: { *(.stabstr) }

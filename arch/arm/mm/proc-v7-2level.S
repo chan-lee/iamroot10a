@@ -25,6 +25,11 @@
 
 /* PTWs cacheable, inner WBWA shareable, outer WBWA not shareable */
 #define TTB_FLAGS_SMP	TTB_IRGN_WBWA|TTB_S|TTB_NOS|TTB_RGN_OC_WBWA
+@@ TTB_IRGN_WBWA ((0 << 0) | (1 << 6)) -> Normal memory, Inner Write-Back Write-Allocate Cacheable.
+@@ TTB_S (1 << 1) -> Shareable.
+@@ TTB_NOS     (1 << 5) -> Inner Shareable.
+@@ TTB_RGN_OC_WBWA (1 << 3) -> Normal memory, Outer Write-Back Write-Allocate Cacheable.
+
 #define PMD_FLAGS_SMP	PMD_SECT_WBWA|PMD_SECT_S
 
 /*
@@ -170,3 +175,4 @@ ENDPROC(cpu_v7_set_pte_ext)
 	.type	v7_crval, #object
 v7_crval:
 	crval	clear=0x2120c302, mmuset=0x10c03c7d, ucset=0x00c01c7c
+        @@ v7_crval 레이블의 값은 clear이고 그 다음 4byte 값은 mmuset 이다.
