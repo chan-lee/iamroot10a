@@ -951,6 +951,12 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
  * external-to-structure pointer -after- you have completely initialized
  * the reader-accessible portions of the linked structure.
  */
+
+//typeof 변수의 타입을 반환하는 GCC 확장기능
+//#define __force __attribute__((force))
+// force sparse 타입 체크 툴에서 사용하기 위한 어트리뷰트
+//실제 컴파일 시 에는  #define __force 되어 사라짐
+
 #define RCU_INIT_POINTER(p, v) \
 	do { \
 		p = (typeof(*v) __force __rcu *)(v); \

@@ -1429,6 +1429,7 @@ static void init_cgroup_root(struct cgroupfs_root *root)
 	INIT_LIST_HEAD(&root->root_list);
 	root->number_of_cgroups = 1;
 	cgrp->root = root;
+        //cgrp->name 포인터에 root_cgroup_name 주소값 할당
 	RCU_INIT_POINTER(cgrp->name, &root_cgroup_name);
 	init_cgroup_housekeeping(cgrp);
 }
@@ -4879,8 +4880,11 @@ int __init cgroup_init_early(void)
 	int i;
 
 	atomic_set(&init_css_set.refcount, 1);
+        //더블 링크드 리스트 초기화 
 	INIT_LIST_HEAD(&init_css_set.cgrp_links);
 	INIT_LIST_HEAD(&init_css_set.tasks);
+        //HLIST는 HASH 구조체에서 성능을 높이기 위한 노드
+        //http://stackoverflow.com/questions/3058592/use-of-double-pointer-in-linux-kernel-hash-list-implementation
 	INIT_HLIST_NODE(&init_css_set.hlist);
 	css_set_count = 1;
 	init_cgroup_root(&cgroup_dummy_root);
