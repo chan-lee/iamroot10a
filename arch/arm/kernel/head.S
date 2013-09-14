@@ -1,3 +1,4 @@
+//2013.06.15 커널 스터디 시작 
 /*
  *  linux/arch/arm/kernel/head.S
  *
@@ -76,7 +77,7 @@
 	.arm
 
 	__HEAD
-ENTRY(stext)
+ENTRY(stext) 
 
  THUMB(	adr	r9, BSYM(1f)	)	@ Kernel is always entered in ARM.
  THUMB(	bx	r9		)	@ If this is a Thumb-2 kernel,

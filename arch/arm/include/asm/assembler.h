@@ -265,18 +265,22 @@
 .macro safe_svcmode_maskall reg:req
 #if __LINUX_ARM_ARCH__ >= 6
 	mrs	\reg , cpsr
-	eor	\reg, \reg, #HYP_MODE
-	tst	\reg, #MODE_MASK
-	bic	\reg , \reg , #MODE_MASK
+	eor	\reg, \reg, #HYP_MODE   //@@eor 비트가 같으면 0, 다르면 1
+								//@@ #define HYP_MODE	0x0000001a
+								//@@ 
+	tst	\reg, #MODE_MASK		//@@tst = and 연산인데 flag만 바뀌고 앞에 있는 reg에는 값이 들어가지 않는다.
+								//@@
+	bic	\reg , \reg , #MODE_MASK	//@@bic = bit clear 
+									//@@ #define MODE_MASK	0x0000001f
 	orr	\reg , \reg , #PSR_I_BIT | PSR_F_BIT | SVC_MODE
 THUMB(	orr	\reg , \reg , #PSR_T_BIT	)
-	bne	1f
+	bne	1f		//@@ 하이퍼 바이저 모드가 아니라면 1f로 이동 하고 아니라면 아래로 진행
 	orr	\reg, \reg, #PSR_A_BIT
 	adr	lr, BSYM(2f)
 	msr	spsr_cxsf, \reg
 	__MSR_ELR_HYP(14)
 	__ERET
-1:	msr	cpsr_c, \reg
+1:	msr	cpsr_c, \reg	//@@SVC 모드로 변경한다.
 2:
 #else
 /*

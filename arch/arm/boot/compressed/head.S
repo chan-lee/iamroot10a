@@ -121,13 +121,17 @@
 		.align
 		.arm				@ Always enter in ARM state
 start:
-		.type	start,#function
-		.rept	7
-		mov	r0, r0
+		.type	start,#function   @matching object and type??
+		.rept	7 	@http://www.iamroot.org/xe/QnA/23099 참조 
+              @rept [N] = N번 만큼 반복
+		mov	r0, r0 
 		.endr
    ARM(		mov	r0, r0		)
    ARM(		b	1f		)
- THUMB(		adr	r12, BSYM(1f)	)
+ THUMB(		adr	r12, BSYM(1f)	) @adr = 레이블의 주소를 레지스터에 넣기
+                              @BSYM = 메크로 인데 Thumb일 때는 +1을 해준다. 
+                              @그렇다고는 하지만 정확하게 왜 +1을 하는지는 모르겠다.
+                              @TODO(130622):BSYM에 왜 +1을 하는지 아시는 분은 여기에 적어주세요.
  THUMB(		bx	r12		)
 
 		.word	0x016f2818		@ Magic numbers to help the loader
@@ -147,11 +151,16 @@ start:
 		 * FIQs/IRQs (numeric definitions from angel arm.h source).
 		 * We only do this if we were in user mode on entry.
 		 */
+                /* angel은 디버가와 통신하는 타켓에서 돌고 있는 모니터 프로그램  */
+		@@ angel이라는 부트로더
 		mrs	r2, cpsr		@ get current mode
 		tst	r2, #3			@ not user?
-		bne	not_angel
+		bne	not_angel               
 		mov	r0, #0x17		@ angel_SWIreason_EnterSVC
- ARM(		swi	0x123456	)	@ angel_SWI_ARM
+        	/* 인터럽트 핸들러는 아직까지는 부트로더설정한 핸들러를 사용중 */
+                /* THUMB 매크로는 THUMB2 모드를 의미한다*/
+        
+ ARM(		swi	0x123456	)	@ angel_SWI_ARM  	 
  THUMB(		svc	0xab		)	@ angel_SWI_THUMB
 not_angel:
 		safe_svcmode_maskall r0
@@ -505,7 +514,8 @@ not_relocated:	mov	r0, #0
 		mrs	r0, spsr		@ Get saved CPU boot mode
 		and	r0, r0, #MODE_MASK
 		cmp	r0, #HYP_MODE		@ if not booted in HYP mode...
-		bne	__enter_kernel		@ boot kernel directly
+		bne
+        __enter_kernel		@ boot kernel directly
 
 		adr	r12, .L__hyp_reentry_vectors_offset
 		ldr	r0, [r12]
@@ -560,7 +570,12 @@ params:		ldr	r0, =0x10000100		@ params_phys for RPC
  * This routine must preserve:
  *  r4, r7, r8
  */
-		.align	5
+		.align	5				@@align 5 = 2^5 byte = 32byte = 4byte * 8개??
+		@@32byte 배수로 정렬한다.
+		@@Word 작업을 할 때 Ctrl+<Enter>를 누르는 효과라고 생각하면 될거 같다.
+		@@캐쉬사이즈 만큼 나눠서 히트율이나 성능을 높인다고 하는데....
+		@@\여기서 궁금한 사항을 TODO로 두기로 한다.
+		@@TODO:아직 캐쉬가 활성화 되기 전인거 같은데 align이 의미가 있을까???
 cache_on:	mov	r3, #8			@ cache_on function
 		b	call_cache_fn
 
@@ -627,32 +642,39 @@ __armv3_mpu_cache_on:
 		mov	pc, lr
 
 #ifdef CONFIG_CPU_DCACHE_WRITETHROUGH
-#define CB_BITS 0x08
+#define CB_BITS 0x08 // data cache 가 writethrough 면 cache 에도 저장하고 메모리에도 저장한다. 즉 writebuffer 가 필요없다.
 #else
-#define CB_BITS 0x0c
+#define CB_BITS 0x0c // writeback 이면 cache에 쓰고 writebuffer 에도 쓴다. 즉 writebuffer 가 필요 하다. 우리는 0x0c 를 쓴다.
 #endif
 
-__setup_mmu:	sub	r3, r4, #16384		@ Page directory size
+__setup_mmu:	sub	r3, r4, #16384		@ Page directory size @@16384=16kb
+				//r4 == 커널 이미지가 압축풀릴 시작 주소
+			    //r3 == 커널 이미지 주소-16kb == Page directory 시작주소
 		bic	r3, r3, #0xff		@ Align the pointer
-		bic	r3, r3, #0x3f00
+		bic	r3, r3, #0x3f00     // r3에 저장된 값에서 하위 14bit(0x3fff) clear하여 align 맞춤
 /*
  * Initialise the page tables, turning on the cacheable and bufferable
  * bits for the RAM area only.
  */
 		mov	r0, r3
 		mov	r9, r0, lsr #18
-		mov	r9, r9, lsl #18		@ start of RAM
-		add	r10, r9, #0x10000000	@ a reasonable RAM size
+		mov	r9, r9, lsl #18		@ start of RAM // 모기향 책 66페이지 참고r9 = 0x50000000
+		add	r10, r9, #0x10000000	@ a reasonable RAM size // r10 = 0x60000000, 즉 ram 영역은 0x50000000 ~ 0x60000000 이다.
 		mov	r1, #0x12		@ XN|U + section mapping
-		orr	r1, r1, #3 << 10	@ AP=11
-		add	r2, r3, #16384
+		orr	r1, r1, #3 << 10	@ AP=11 // r1 = 0xC12, 즉 11000010 dm
+		add	r2, r3, #16384  @@ r2==커널 이미지 주소
 1:		cmp	r1, r9			@ if virt > start of RAM
 		cmphs	r10, r1			@   && end of RAM > virt
-		bic	r1, r1, #0x1c		@ clear XN|U + C + B
+		bic	r1, r1, #0x1c		@ clear XN|U + C + B // 일단 전부 초기화 시킨다.
 		orrlo	r1, r1, #0x10		@ Set XN|U for non-RAM
 		orrhs	r1, r1, r6		@ set RAM section settings
-		str	r1, [r0], #4		@ 1:1 mapping
-		add	r1, r1, #1048576
+								@@ r6=#CB_BITS | 0x02	@ !XN
+								@@ #define CB_BITS 0x08 아니면 0x0C
+								  // 0x08 이면 섹션테이블의 C=1, B=0 으로 세팅, 0x0C 이면 C=1, B=1 로 세팅. 즉 bufferable 인지 아닌지 세팅
+								@@ __setup_mmu를 호출하기전에 값 저장
+
+		str	r1, [r0], #4		@ 1:1 mapping // r1 을 r0 가 가리키는 곳에 저장하고, r0 의 값을 4 증가시킴. 즉 *r0 = r1; r0 = r0+4;
+		add	r1, r1, #1048576    @@ 1048576 == 1MB // r1 에 1MB 를 더해 1MB 섹션씩 점프하게 함  
 		teq	r0, r2
 		bne	1b
 /*
@@ -661,11 +683,12 @@ __setup_mmu:	sub	r3, r4, #16384		@ Page directory size
  * so there is no map overlap problem for up to 1 MB compressed kernel.
  * If the execution is in RAM then we would only be duplicating the above.
  */
-		orr	r1, r6, #0x04		@ ensure B is set for this
+ // sector entry 2개 C, B 를 설정한다.
+		orr	r1, r6, #0x04		@ ensure B is set for this //r6=CB set
 		orr	r1, r1, #3 << 10
 		mov	r2, pc
-		mov	r2, r2, lsr #20
-		orr	r1, r1, r2, lsl #20
+		mov	r2, r2, lsr #20 // r2 를 right shift 20번 한다.
+		orr	r1, r1, r2, lsl #20 // r2 를 left shift 20 번 해서 r1 과 or 연산해서 r1에 넣는다.
 		add	r0, r3, r2, lsl #2
 		str	r1, [r0], #4
 		add	r1, r1, #1048576
@@ -709,11 +732,15 @@ __armv4_mmu_cache_on:
 		mov	pc, r12
 
 __armv7_mmu_cache_on:
-		mov	r12, lr
+		mov	r12, lr		@@r12에 lr을 저장 아마도.. bl cache_on인가???에서 저장되었던거???
 #ifdef CONFIG_MMU
 		mrc	p15, 0, r11, c0, c1, 4	@ read ID_MMFR0
 		tst	r11, #0xf		@ VMSA
+							@@tst = and 연산을 해서 0인지를 확인하는 건데.. 
+							@@\모두 0x0이 아니라면(MMU를 사용한다면) 아래 move를 하게 될것이다.
+							@@\그리고 그 아래인 bl도 할 것이다. 
 		movne	r6, #CB_BITS | 0x02	@ !XN
+						@@ #define CB_BITS 0x08 아니면 0x0C
 		blne	__setup_mmu
 		mov	r0, #0
 		mcr	p15, 0, r0, c7, c10, 4	@ drain write buffer
@@ -792,15 +819,15 @@ __common_mmu_cache_on:
  *  r9  = corrupted
  *  r12 = corrupted
  */
-
-call_cache_fn:	adr	r12, proc_types
+@@프로세서 별로 캐쉬를 사용하는데 필요한 루틴을 수행하고 restart 구문으로 리턴
+call_cache_fn:	adr	r12, proc_types @@라벨 주소를 가져오는 명령어
 #ifdef CONFIG_CPU_CP15
 		mrc	p15, 0, r9, c0, c0	@ get processor ID
 #else
 		ldr	r9, =CONFIG_PROCESSOR_ID
 #endif
-1:		ldr	r1, [r12, #0]		@ get value
-		ldr	r2, [r12, #4]		@ get mask
+1:		ldr	r1, [r12, #0]		@ get value 
+		ldr	r2, [r12, #4]		@ get mask 
 		eor	r1, r1, r9		@ (real ^ match)
 		tst	r1, r2			@       & mask
  ARM(		addeq	pc, r12, r3		) @ call cache function
@@ -952,7 +979,7 @@ proc_types:
 		W(b)	__armv6_mmu_cache_flush
 
 		.word	0x000f0000		@ new CPU Id
-		.word	0x000f0000
+		.word	0x000f0000		@@우린 armV7이니까 여기 일거 같다.
 		W(b)	__armv7_mmu_cache_on
 		W(b)	__armv7_mmu_cache_off
 		W(b)	__armv7_mmu_cache_flush
