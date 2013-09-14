@@ -1418,6 +1418,7 @@ static void init_cgroup_housekeeping(struct cgroup *cgrp)
 	mutex_init(&cgrp->pidlist_mutex);
 	INIT_LIST_HEAD(&cgrp->event_list);
 	spin_lock_init(&cgrp->event_list_lock);
+        // directory  Extended attributes handling.
 	simple_xattrs_init(&cgrp->xattrs);
 }
 
@@ -4897,6 +4898,7 @@ int __init cgroup_init_early(void)
 	list_add(&init_cgrp_cset_link.cgrp_link, &init_css_set.cgrp_links);
 
 	/* at bootup time, we don't worry about modular subsystems */
+        //cgroup_subsys 을 돌기 위한 매크로
 	for_each_builtin_subsys(ss, i) {
 		BUG_ON(!ss->name);
 		BUG_ON(strlen(ss->name) > MAX_CGROUP_TYPE_NAMELEN);

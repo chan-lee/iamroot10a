@@ -50,6 +50,7 @@ __mutex_init(struct mutex *lock, const char *name, struct lock_class_key *key)
 	atomic_set(&lock->count, 1);
 	spin_lock_init(&lock->wait_lock);
 	INIT_LIST_HEAD(&lock->wait_list);
+        //@@To Do : mutext ower = 프로세서 or 프로세스 ??
 	mutex_clear_owner(lock);
 #ifdef CONFIG_MUTEX_SPIN_ON_OWNER
 	lock->spin_mlock = NULL;

@@ -18,6 +18,14 @@ static struct sighand_struct init_sighand = INIT_SIGHAND(init_sighand);
 struct task_struct init_task = INIT_TASK(init_task);
 EXPORT_SYMBOL(init_task);
 
+// EXPORT_SYMBOL(sym)
+/* extern typeof(sym) sym;						 */
+/* extern void *__crc_##sym __attribute__((weak)); */
+/* static const unsigned long __kcrctab_##sym __attribute__((__used__)) __attribute__((section("___kcrctab"   "" "+" #sym), unused))	= (unsigned long) &__crc_##sym;					 */
+/* static const char __kstrtab_##sym[] __attribute__((section("__ksymtab_strings"), aligned(1))) = #sym;	 */
+/* static const struct kernel_symbol __ksymtab_##sym __attribute__((__used__)) __attribute__((section("___ksymtab"  "" "+" #sym), unused))		= { (unsigned long)&sym, __kstrtab_##sym }	 */
+// EXPORT_SYMBOL(sym)
+
 /*
  * Initial thread structure. Alignment of this is handled by a special
  * linker map entry.

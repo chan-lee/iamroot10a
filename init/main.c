@@ -504,6 +504,7 @@ asmlinkage void __init start_kernel(void)
         //디폴트 설정에서는 사용하지 않도록 되어 있지만 분석하기로 결정  2013.09.14
 	cgroup_init_early();
 
+        //cpsid i 인스트럭션 호출
 	local_irq_disable();
 	early_boot_irqs_disabled = true;
 
