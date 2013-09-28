@@ -505,6 +505,22 @@ int __init of_scan_flat_dt(int (*it)(unsigned long node,
  */
 unsigned long __init of_get_flat_dt_root(void)
 {
+
+
+    //flat_dt 자료 형태 추측??
+    /* +----------------+ */
+    /* |root|                  */
+    /* +----------------+ */
+    /* |string??         */
+    /* +----------------+ */
+    /* |OF_DT_BEGIN_NODE| */
+    /* +----------------+ */
+    /* |OF_DT_NOP       | */
+    /* +----------------+ */
+    /* |dt_struct       | */
+    /* +----------------+ */
+    
+
 	unsigned long p = ((unsigned long)initial_boot_params) +
 		be32_to_cpu(initial_boot_params->off_dt_struct);
 

@@ -254,6 +254,8 @@ int cpumask_any_but(const struct cpumask *mask, unsigned int cpu);
  */
 static inline void cpumask_set_cpu(unsigned int cpu, struct cpumask *dstp)
 {
+    //cpumask 구조체는 최소 cpu 갯수 이상의 비트를 가지고 있는 long 배열를 가지고 있는 구조체
+    //cpumask_bits는 cpumask구조체의 비트맵의 시작 위치를 반환
 	set_bit(cpumask_check(cpu), cpumask_bits(dstp));
 }
 

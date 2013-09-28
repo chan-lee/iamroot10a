@@ -193,7 +193,8 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 
 	if (!dt_phys)
 		return NULL;
-
+	//http://stackoverflow.com/questions/16909655/virtual-to-physical-address-conversion-in-linux-kernel
+	//To Do : 변환 원리를 이해 못함..
 	devtree = phys_to_virt(dt_phys);
 
 	/* check device tree validity */
@@ -201,6 +202,7 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 		return NULL;
 
 	/* Search the mdescs for the 'best' compatible value match */
+	//To Do: 호환 가능한 dtb 버전 찾는 과정
 	initial_boot_params = devtree;
 	dt_root = of_get_flat_dt_root();
 	for_each_machine_desc(mdesc) {

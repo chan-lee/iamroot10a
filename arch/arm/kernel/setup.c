@@ -310,7 +310,9 @@ static void __init cacheid_init(void)
 		if ((cachetype & (7 << 29)) == 4 << 29) {
 			/* ARMv7 register format */
 			arch = CPU_ARCH_ARMv7;
+			//CACHEID_VIPT_NONALIASING = 2
 			cacheid = CACHEID_VIPT_NONALIASING;
+			//Level 1 instruction cache policy.
 			switch (cachetype & (3 << 14)) {
 			case (1 << 14):
 				cacheid |= CACHEID_ASID_TAGGED;
@@ -329,6 +331,7 @@ static void __init cacheid_init(void)
 		if (cpu_has_aliasing_icache(arch))
 			cacheid |= CACHEID_VIPT_I_ALIASING;
 	} else {
+	    //CACHEID_VIVT = 1
 		cacheid = CACHEID_VIVT;
 	}
 
@@ -422,6 +425,8 @@ void notrace cpu_init(void)
 	 * This only works on resume and secondary cores. For booting on the
 	 * boot cpu, smp_prepare_boot_cpu is called after percpu area setup.
 	 */
+	//http://studyfoss.egloos.com/5375570
+	//percpu 영역 내에서 각 cpu 별로 실제 데이터가 존재하는 offset 값 설정
 	set_my_cpu_offset(per_cpu_offset(cpu));
 
 	cpu_proc_init();
@@ -568,8 +573,10 @@ static void __init setup_processor(void)
 	}
 
 	cpu_name = list->cpu_name;
+	//arm 아키텍쳐 버전 정보
 	__cpu_architecture = __get_cpu_architecture();
 
+	///일단 4개의 설정 모두 사용한다고 가정
 #ifdef MULTI_CPU
 	processor = *list->proc;
 #endif
@@ -587,12 +594,14 @@ static void __init setup_processor(void)
 	       cpu_name, read_cpuid_id(), read_cpuid_id() & 15,
 	       proc_arch[cpu_architecture()], cr_alignment);
 
+	//uts : univasal time sharing system
+	//init_uts_ns 구조체는 사용하는 UTS 시스템에 대한 간략한 정보를 담고 있음
 	snprintf(init_utsname()->machine, __NEW_UTS_LEN + 1, "%s%c",
 		 list->arch_name, ENDIANNESS);
 	snprintf(elf_platform, ELF_PLATFORM_SIZE, "%s%c",
 		 list->elf_name, ENDIANNESS);
 	elf_hwcap = list->elf_hwcap;
-
+	//elf_hwpcap : 하드웨어 지원 사항을 나타내는 flag
 	cpuid_init_hwcaps();
 
 #ifndef CONFIG_ARM_THUMB

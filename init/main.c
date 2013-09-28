@@ -436,6 +436,13 @@ static void __init boot_cpu_init(void)
 {
 	int cpu = smp_processor_id();
 	/* Mark the boot cpu "present", "online" etc for SMP and UP case */
+	//각 cpu 상태에 대한 자료 : http://studyfoss.egloos.com/5444259
+	// cpu_possible_mask - 해당 비트에 대한 CPU가 존재할 수 있다. */
+	// cpu_present_mask - 해당 비트에 대한 CPU가 존재한다. */
+	// cpu_online_mask - 해당 비트에 대한 CPU가 존재하며 스케줄러가 이를 관리한다. */
+	// cpu_active_mask - 해당 비트에 대한 CPU가 존재하며 task migration 시 이를 이용할 수 있다. */
+	// 참고로 CPU hotplug가 활성화되지 않은 환경이라면 present == possible이고 active == oneline이다. */
+	
 	set_cpu_online(cpu, true);
 	set_cpu_active(cpu, true);
 	set_cpu_present(cpu, true);
@@ -512,6 +519,7 @@ asmlinkage void __init start_kernel(void)
  * Interrupts are still disabled. Do necessary setups, then
  * enable them
  */
+	//cpu를 online, active, present, possible 상태로 초기화
 	boot_cpu_init();
 	page_address_init();
 	pr_notice("%s", linux_banner);
