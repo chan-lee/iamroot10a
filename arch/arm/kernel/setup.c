@@ -866,13 +866,14 @@ void __init setup_arch(char **cmdline_p)
 	setup_processor();
 	mdesc = setup_machine_fdt(__atags_pointer);
 	if (!mdesc)
+		// dtb 가 아닌 atag가 넘어왔을때 
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
 	machine_desc = mdesc;
 	machine_name = mdesc->name;
 
-	setup_dma_zone(mdesc);
+	setup_dma_zone(mdesc); // 우리는 실행 안함
 
-	if (mdesc->reboot_mode != REBOOT_HARD)
+	if (mdesc->reboot_mode != REBOOT_HARD) // hard reboot 아닌 경우에는 reboot 전에 값을 설정했을 것이다.
 		reboot_mode = mdesc->reboot_mode;
 
 	init_mm.start_code = (unsigned long) _text;
@@ -881,12 +882,18 @@ void __init setup_arch(char **cmdline_p)
 	init_mm.brk	   = (unsigned long) _end;
 
 	/* populate cmd_line too for later use, preserving boot_command_line */
+	// boot_command_line 에는 dtb 에서 읽어온 bootargs 가 들어있다.
 	strlcpy(cmd_line, boot_command_line, COMMAND_LINE_SIZE);
 	*cmdline_p = cmd_line;
 
+	// "earlycon=" 옵션과 "console=" 옵션을 파싱한다.
 	parse_early_param();
 
+	// memory bank 에서 시작 address로 정렬하는 함수
+	// meminfo 구조체 변수는 early_init_dt_add_memory_arch()에서 초기화 하였다.
 	sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
+
+	// 131005 end. sanity_shceck_meminfo 진입 후 끝남.
 	sanity_check_meminfo();
 	arm_memblock_init(&meminfo, mdesc);
 

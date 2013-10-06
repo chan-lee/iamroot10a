@@ -11,11 +11,11 @@
 #define SYS_POWER_OFF	0x0003	/* Notify of system power off */
 
 enum reboot_mode {
-	REBOOT_COLD = 0,
-	REBOOT_WARM,
+	REBOOT_COLD = 0, // power 가없는 상태에서 부팅하는것, hard reboot 가 같다. sudo shutdown
+	REBOOT_WARM, // power 가 있던 상태에서 재시작 하는것 (ctrl + alt + del), soft reboot 과 같다. sudo reboot
 	REBOOT_HARD,
 	REBOOT_SOFT,
-	REBOOT_GPIO,
+	REBOOT_GPIO, // gpio 로 pin 을 따로 빼서 reboot 을 할 수 있게 하는것.
 };
 extern enum reboot_mode reboot_mode;
 

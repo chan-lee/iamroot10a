@@ -24,6 +24,7 @@ static const struct tagtable __tagtable_##fn __tag = { tag, fn }
 /*
  * Memory map description
  */
+ // CONFIG_ARM_NR_BANKS=8
 #define NR_BANKS	CONFIG_ARM_NR_BANKS
 
 struct membank {

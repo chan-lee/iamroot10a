@@ -233,6 +233,8 @@ static void __init arm_adjust_dma_zone(unsigned long *size, unsigned long *hole,
 
 void __init setup_dma_zone(struct machine_desc *mdesc)
 {
+// CONFIG_ZONE_DMA not found
+// arm는에서는 ISA 버스를 사용하지 않기 때문에 zone_dma 를 사용하지 않는다.
 #ifdef CONFIG_ZONE_DMA
 	if (mdesc->dma_zone_size) {
 		arm_dma_zone_size = mdesc->dma_zone_size;
