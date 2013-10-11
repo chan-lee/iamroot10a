@@ -477,8 +477,8 @@ wont_overwrite:
 		beq	not_relocated
 
 		@@@ 질문 : overwrite 하지 않아서 restart 코드를 수행하지 않았다면 왜 아래의 주소보정을 해야 하는지 ?
-		           overwrite 를 위한 코드가 수행되지 않았더라도, dtb 위로 bss, got 영역을 옮겨야 한다.
-		           그래서 주소 보정이 필요하다.
+		@@         overwrite 를 위한 코드가 수행되지 않았더라도, dtb 위로 bss, got 영역을 옮겨야 한다.
+		@@         그래서 주소 보정이 필요하다.
 
 		add	r11, r11, r0 @@파일 오프셋과 실제 메모리 주소상의 위치 차이 보정
 		add	r12, r12, r0
@@ -564,8 +564,7 @@ not_relocated:	mov	r0, #0
 		mrs	r0, spsr		@ Get saved CPU boot mode
 		and	r0, r0, #MODE_MASK
 		cmp	r0, #HYP_MODE		@ if not booted in HYP mode...
-		bne
-        __enter_kernel		@ boot kernel directly
+		bne __enter_kernel		@ boot kernel directly
 
 		adr	r12, .L__hyp_reentry_vectors_offset
 		ldr	r0, [r12]

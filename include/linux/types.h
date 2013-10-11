@@ -183,7 +183,7 @@ typedef struct {
 #endif
 
 struct list_head {
-	struct list_hsead *next, *prev;
+	struct list_head *next, *prev;
 };
 
 struct hlist_head {

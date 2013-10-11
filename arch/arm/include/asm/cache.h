@@ -24,6 +24,6 @@
 #endif
 
 #define __read_mostly __attribute__((__section__(".data..read_mostly")))
-// 특정 section 에 저장해둔다. 
+/* 특정 section 에 저장해둔다. */
 
 #endif
