@@ -987,11 +987,11 @@ early_param("vmalloc", early_vmalloc);
 
 phys_addr_t arm_lowmem_limit __initdata = 0;
 
-void __init sanity_check_meminfo(void)
+void __init sanity_check_meminfo(void) //
 {
 	phys_addr_t memblock_limit = 0;
 	int i, j, highmem = 0;
-	phys_addr_t vmalloc_limit = __pa(vmalloc_min - 1) + 1;
+	phys_addr_t vmalloc_limit = __pa(vmalloc_min - 1) + 1; // vmalloc_limit은 HIMEM(896MB) 시작위치
 
 	for (i = 0, j = 0; i < meminfo.nr_banks; i++) {
 		struct membank *bank = &meminfo.bank[j];
@@ -1012,7 +1012,7 @@ void __init sanity_check_meminfo(void)
 		 * Split those memory banks which are partially overlapping
 		 * the vmalloc area greatly simplifying things later.
 		 */
-		if (!highmem && bank->size > size_limit) {
+		if (!highmem && bank->size > size_limit) { // 메모리 ZONE_HIMEM에 겹치는 메모리 뱅크를 재배치
 			if (meminfo.nr_banks >= NR_BANKS) {
 				printk(KERN_CRIT "NR_BANKS too low, "
 						 "ignoring high memory\n");

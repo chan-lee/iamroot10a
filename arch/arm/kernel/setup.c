@@ -894,7 +894,7 @@ void __init setup_arch(char **cmdline_p)
 	sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
 
 	// 131005 end. sanity_shceck_meminfo 진입 후 끝남.
-	sanity_check_meminfo();
+	sanity_check_meminfo(); // 2013.10.12 시작
 	arm_memblock_init(&meminfo, mdesc);
 
 	paging_init(mdesc);
