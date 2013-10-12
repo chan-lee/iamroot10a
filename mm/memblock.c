@@ -23,7 +23,8 @@
 static struct memblock_region memblock_memory_init_regions[INIT_MEMBLOCK_REGIONS] __initdata_memblock;
 static struct memblock_region memblock_reserved_init_regions[INIT_MEMBLOCK_REGIONS] __initdata_memblock;
 
-struct memblock memblock __initdata_memblock = {
+struct memblock memblock __initdata_memblock = { // __initdata_memblock 은 섹션 .meminit.data 에 넣는다.
+// 그러나 우리의 config 는 __initdata_memblock 특별히 정의하지 않았다. 
 	.memory.regions		= memblock_memory_init_regions,
 	.memory.cnt		= 1,	/* empty dummy entry */
 	.memory.max		= INIT_MEMBLOCK_REGIONS,
@@ -377,7 +378,7 @@ static int __init_memblock memblock_add_region(struct memblock_type *type,
 		WARN_ON(type->cnt != 1 || type->total_size);
 		type->regions[0].base = base;
 		type->regions[0].size = size;
-		memblock_set_region_node(&type->regions[0], nid);
+		memblock_set_region_node(&type->regions[0], nid); // 아무 작업 안함. 
 		type->total_size = size;
 		return 0;
 	}
@@ -403,7 +404,7 @@ repeat:
 		 * @rgn overlaps.  If it separates the lower part of new
 		 * area, insert that portion.
 		 */
-		if (rbase > base) {
+		if (rbase > base) { // 기존에 있던 region의 앞에 새로운 region 을 추가
 			nr_new++;
 			if (insert)
 				memblock_insert_region(type, i++, base,
@@ -414,7 +415,7 @@ repeat:
 	}
 
 	/* insert the remaining portion */
-	if (base < end) {
+	if (base < end) { // 기존에 있던 region의 뒤에 추가 
 		nr_new++;
 		if (insert)
 			memblock_insert_region(type, i, base, end - base, nid);
@@ -442,9 +443,10 @@ int __init_memblock memblock_add_node(phys_addr_t base, phys_addr_t size,
 	return memblock_add_region(&memblock.memory, base, size, nid);
 }
 
+// memblock_add(mi->bank[i].start, mi->bank[i].size);
 int __init_memblock memblock_add(phys_addr_t base, phys_addr_t size)
 {
-	return memblock_add_region(&memblock.memory, base, size, MAX_NUMNODES);
+	return memblock_add_region(&memblock.memory, base, size, MAX_NUMNODES); // MAX_NUMNODES==1
 }
 
 /**

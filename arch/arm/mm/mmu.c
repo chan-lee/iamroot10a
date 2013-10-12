@@ -1018,7 +1018,7 @@ void __init sanity_check_meminfo(void) //
 						 "ignoring high memory\n");
 			} else {
 				memmove(bank + 1, bank,
-					(meminfo.nr_banks - i) * sizeof(*bank));
+					(meminfo.nr_banks - i) * sizeof(*bank)); // overlap 되면 overlap된 bank와 그 이후 bank를 복사하여  이동한다.
 				meminfo.nr_banks++;
 				i++;
 				bank[1].size -= size_limit;

@@ -342,13 +342,15 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 	int i;
 
 	for (i = 0; i < mi->nr_banks; i++)
-		memblock_add(mi->bank[i].start, mi->bank[i].size);
+		memblock_add(mi->bank[i].start, mi->bank[i].size); // region 을 추가하고 합치는 함수 
+		// 조각모음??
 
 	/* Register the kernel text, kernel data and initrd with memblock. */
 #ifdef CONFIG_XIP_KERNEL
 	memblock_reserve(__pa(_sdata), _end - _sdata);
 #else
-	memblock_reserve(__pa(_stext), _end - _stext);
+	memblock_reserve(__pa(_stext), _end - _stext); // _end - _stext : kernel의 text와 bss size를 합친 크기
+	// text, bss 영역을 reserve 영역으로 설정 
 #endif
 #ifdef CONFIG_BLK_DEV_INITRD
 	if (phys_initrd_size &&
@@ -364,7 +366,8 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 		phys_initrd_start = phys_initrd_size = 0;
 	}
 	if (phys_initrd_size) {
-		memblock_reserve(phys_initrd_start, phys_initrd_size);
+		memblock_reserve(phys_initrd_start, phys_initrd_size); // initrd 영역을 reserve 영역으로 설정
+		//  bootargs = "root=/dev/ram0 rw ramdisk=8192 initrd=0x41000000,8M console=ttySAC2,115200 init=/linuxrc 가 arch/arm/boot/dts/exynos5250-smdk5250.dts 있음. initrd 의 물리시작주소와 크기가 나와있음 
 
 		/* Now convert initrd to virtual addresses */
 		initrd_start = __phys_to_virt(phys_initrd_start);
@@ -372,12 +375,14 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 	}
 #endif
 
-	arm_mm_memblock_reserve();
-	arm_dt_memblock_reserve();
+	arm_mm_memblock_reserve(); // swapper_pg_dir 영역 reserve을 로 설정 
+	arm_dt_memblock_reserve(); // device tree 내의 reserve 영역으로 설정된 부분 reserve으로 설정
 
 	/* reserve any platform specific memblock areas */
-	if (mdesc->reserve)
+	if (mdesc->reserve) // machine_desc 구조체 reserve 함수가 정의되어있는지 확인 
 		mdesc->reserve();
+
+		// 131012 end.
 
 	/*
 	 * reserve memory for DMA contigouos allocations,
