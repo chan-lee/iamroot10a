@@ -1053,7 +1053,7 @@ void __init sanity_check_meminfo(void) //
 			bank->size = size_limit;
 		}
 #endif
-		if (!bank->highmem) {
+		if (!bank->highmem) { // 뱅크의 마지막 주소를 지정한 후, bank->start와 bank->end를 1MB 정렬
 			phys_addr_t bank_end = bank->start + bank->size;
 
 			if (bank_end > arm_lowmem_limit)
