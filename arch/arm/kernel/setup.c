@@ -895,6 +895,9 @@ void __init setup_arch(char **cmdline_p)
 
 	// 131005 end. sanity_shceck_meminfo 진입 후 끝남.
 	sanity_check_meminfo(); // 2013.10.12 시작
+	// device tree 에 있는 물리 메모리 bank 를 기준으로 ZONE_NORMAL 과 ZONE_HIGHMEM 을 구분
+
+
 	arm_memblock_init(&meminfo, mdesc);
 
 	paging_init(mdesc);
