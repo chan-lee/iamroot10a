@@ -393,6 +393,7 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 	arm_memblock_steal_permitted = false;
 	memblock_allow_resize();
 	memblock_dump_all();
+	// 분석 다 햇음 2013.10.19
 }
 
 void __init bootmem_init(void)

@@ -33,6 +33,9 @@ static inline pte_t get_top_pte(unsigned long va)
 
 static inline pmd_t *pmd_off_k(unsigned long virt)
 {
+    //pgd_offset_k(virt) : ((&init_mm)->pgd + ((virt) >> 21))
+    //pud_offset : return (pud_t *)pgd;
+    //pmd_offset : 	return (pmd_t *)pud;
 	return pmd_offset(pud_offset(pgd_offset_k(virt), virt), virt);
 }
 

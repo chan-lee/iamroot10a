@@ -1125,6 +1125,10 @@ static inline void prepare_page_table(void)
 	/*
 	 * Clear out all the mappings below the kernel image.
 	 */
+	//#define MODULES_VADDR (PAGE_OFFSET - SZ_8M)
+	//리눅스 커널에서는 페이지 디렉토리 엔트리를 2메가 단위로 관리
+	//#define PMD_SIZE		(1UL << 21)
+	//실제 페이지 엔트리 크기는 1메가 이므로 , 2개의 배열 처럼 관리
 	for (addr = 0; addr < MODULES_VADDR; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
 
@@ -1149,6 +1153,7 @@ static inline void prepare_page_table(void)
 	for (addr = __phys_to_virt(end);
 	     addr < VMALLOC_START; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
+	// 2013.10.19 함수 분석
 }
 
 #ifdef CONFIG_ARM_LPAE
@@ -1313,6 +1318,8 @@ static void __init map_lowmem(void)
 
 		create_mapping(&map);
 	}
+	//물리 주소로 저장 되어 있던 주소를 가상주소로 변환
+	//2013.10.19 
 }
 
 /*
@@ -1323,9 +1330,9 @@ void __init paging_init(struct machine_desc *mdesc)
 {
 	void *zero_page;
 
-	build_mem_type_table();
+	build_mem_type_table(); //TO Do 페이지 타입 설정. 타입별 의미는 파악 못함
 	prepare_page_table();
-	map_lowmem();
+	Map_lowmem();
 	dma_contiguous_remap();
 	devicemaps_init(mdesc);
 	kmap_init();
