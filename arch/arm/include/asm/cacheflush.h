@@ -125,6 +125,8 @@ struct cpu_cache_fns {
 
 extern struct cpu_cache_fns cpu_cache;
 
+// arch/arm/mm/cache-v7.S 에 v7_function 형태로 정의되어 있음.
+
 #define __cpuc_flush_icache_all		cpu_cache.flush_icache_all
 #define __cpuc_flush_kern_all		cpu_cache.flush_kern_all
 #define __cpuc_flush_kern_louis		cpu_cache.flush_kern_louis

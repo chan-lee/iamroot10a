@@ -1202,7 +1202,7 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	 */
 	vectors = early_alloc(PAGE_SIZE * 2);
 
-	early_trap_init(vectors);
+	early_trap_init(vectors); // 인터럽트 벡터 테이블 초기화
 
 	for (addr = VMALLOC_START; addr; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));

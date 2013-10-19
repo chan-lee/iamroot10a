@@ -269,6 +269,8 @@ ENTRY(v7_coherent_kern_range)
  *	It is assumed that:
  *	- the Icache does not read data from the write buffer
  */
+
+@@.fnstart --> Marks the start of a function with an unwind table entry. 
 ENTRY(v7_coherent_user_range)
  UNWIND(.fnstart		)
 	dcache_line_size r2, r3
