@@ -1274,6 +1274,7 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 		mdesc->map_io();
 	else
 		debug_ll_io_init();
+	//@@ [2013.10.26] END
 	fill_pmd_gaps();
 
 	/* Reserve fixed i/o space in VMALLOC region */
