@@ -67,7 +67,8 @@ static inline void set_domain(unsigned val)
 	  : : "r" (val));
 	isb();
 }
-
+//페이지 테이블 접근 권한 설정
+//http://kth3321.blogspot.kr/2013/06/arm-cortex-2.html
 #define modify_domain(dom,type)					\
 	do {							\
 	struct thread_info *thread = current_thread_info();	\

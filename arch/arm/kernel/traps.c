@@ -849,6 +849,7 @@ void __init early_trap_init(void *vectors_base)
 	kuser_init(vectors_base);
 
 	flush_icache_range(vectors, vectors + PAGE_SIZE * 2);
+	//DOMAIN_USER 도메인은 페이지 테이블 권한을 체크하도록 설정
 	modify_domain(DOMAIN_USER, DOMAIN_CLIENT);
 #else /* ifndef CONFIG_CPU_V7M */
 	/*
