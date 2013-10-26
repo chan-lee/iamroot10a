@@ -169,6 +169,10 @@ static inline pmd_t *pmd_offset(pud_t *pud, unsigned long addr)
 		flush_pmd_entry(pmdpd);	\
 	} while (0)
 
+//리눅스 커널에서는 페이지 디렉토리 엔트리를 2메가 단위로 관리
+//#define PMD_SIZE		(1UL << 21)
+//실제 페이지 엔트리 크기는 1메가 이므로 , 2개의 배열 처럼 관리
+//페이지 엔트리를 모두 0으로 초기화 하고 TLB 버퍼 초기화 
 #define pmd_clear(pmdp)			\
 	do {				\
 		pmdp[0] = __pmd(0);	\
