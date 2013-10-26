@@ -70,8 +70,8 @@
  * on ARMv7.
  */
 	.macro	dcache_line_size, reg, tmp
-	mrc	p15, 0, \tmp, c0, c0, 1		@ read ctr
-	lsr	\tmp, \tmp, #16
+	mrc	p15, 0, \tmp, c0, c0, 1		@ read ctr //	4.3.2 Cache Type Register
+	lsr	\tmp, \tmp, #16 
 	and	\tmp, \tmp, #0xf		@ cache line size encoding
 	mov	\reg, #4			@ bytes per word
 	mov	\reg, \reg, lsl \tmp		@ actual cache line size

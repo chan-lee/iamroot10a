@@ -273,17 +273,18 @@ ENTRY(v7_coherent_kern_range)
 @@.fnstart --> Marks the start of a function with an unwind table entry. 
 ENTRY(v7_coherent_user_range)
  UNWIND(.fnstart		)
-	dcache_line_size r2, r3
+	dcache_line_size r2, r3 //D-cache 라인의 최소수
 	sub	r3, r2, #1
-	bic	r12, r0, r3
+	bic	r12, r0, r3  
 #ifdef CONFIG_ARM_ERRATA_764369
 	ALT_SMP(W(dsb))
 	ALT_UP(W(nop))
 #endif
 1:
- USER(	mcr	p15, 0, r12, c7, c11, 1	)	@ clean D line to the point of unification
+        @@ToDo  USER 매크로의 역할은 무엇인가
+ USER(	mcr	p15, 0, r12, c7, c11, 1	)	@ clean D line to the point of unification 
 	add	r12, r12, r2
-	cmp	r12, r1
+	cmp	r12, r1                         @@r1 은 벡터 사이즈
 	blo	1b
 	dsb
 	icache_line_size r2, r3

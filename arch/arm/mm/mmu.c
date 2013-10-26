@@ -1269,6 +1269,7 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	/*
 	 * Ask the machine support to map in the statically mapped devices.
 	 */
+	//@@ToDo 디바이스트리에서의 설정과 무엇이 다른가???
 	if (mdesc->map_io)
 		mdesc->map_io();
 	else
