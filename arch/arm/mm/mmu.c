@@ -885,6 +885,7 @@ static void __init fill_pmd_gaps(void)
 	unsigned long addr, next = 0;
 	pmd_t *pmd;
 
+	//가상주소의 시작 또는 끝이 PMD의 경계에 있을 경우 앞 혹은 뒤에 빈 PMD생성
 	list_for_each_entry(svm, &static_vmlist, list) {
 		vm = &svm->vm;
 		addr = (unsigned long)vm->addr;
@@ -1338,6 +1339,7 @@ void __init paging_init(struct machine_desc *mdesc)
 	dma_contiguous_remap();
 	devicemaps_init(mdesc);
 	kmap_init();
+	//cortex a15는 tcm지원 하지 않음
 	tcm_init();
 
 	top_pmd = pmd_off_k(0xffff0000);

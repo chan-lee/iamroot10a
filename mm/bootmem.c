@@ -67,8 +67,14 @@ static unsigned long __init bootmap_bytes(unsigned long pages)
  */
 unsigned long __init bootmem_bootmap_pages(unsigned long pages)
 {
-	unsigned long bytes = bootmap_bytes(pages);
-
+    //페이지를 비트맵으로 표현하는데 필요한 바이트 수
+    	unsigned long bytes = bootmap_bytes(pages);
+    /* #define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE) */
+    /* #define ALIGN(x, a)		__ALIGN_KERNEL((x), (a)) */
+    /* #define __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1) */
+    /* #define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask)) */
+    //@@((((addr)) + ( (typeof((addr)))( ( PAGE_SIZE)) - 1)) & ~( (typeof((addr)))( ( PAGE_SIZE)) - 1))
+	//bytes 를 할당하는데 필요한 페이지 수 반환
 	return PAGE_ALIGN(bytes) >> PAGE_SHIFT;
 }
 

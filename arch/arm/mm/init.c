@@ -141,6 +141,17 @@ void show_mem(unsigned int filter)
 static void __init find_limits(unsigned long *min, unsigned long *max_low,
 			       unsigned long *max_high)
 {
+
+      /* +---------------+---------------+ */
+      /* |               |               | */
+      /* +---mx_high-----+               + */
+      /* |               |          high | */
+      /* +--max_low------+---------------+ */
+      /* |               |    normal     | */
+      /* +---min---------+---------------+ */
+      /* |               | DMA           | */
+      /* +---------------+---------------+ */
+
 	struct meminfo *mi = &meminfo;
 	int i;
 
@@ -166,6 +177,7 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 	 * of memory which has already been mapped.
 	 */
 	boot_pages = bootmem_bootmap_pages(end_pfn - start_pfn);
+	//@@ 2013.11.02 END
 	bitmap = memblock_alloc_base(boot_pages << PAGE_SHIFT, L1_CACHE_BYTES,
 				__pfn_to_phys(end_pfn));
 
