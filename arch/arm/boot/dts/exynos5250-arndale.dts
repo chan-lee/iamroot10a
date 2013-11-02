@@ -104,7 +104,7 @@
 					regulator-name = "VDD_XPLL_1.1V";
 					regulator-min-microvolt = <1100000>;
 					regulator-max-microvolt = <1100000>;
-					regulator-always-on;
+				regul	ator-always-on;
 					regulator-boot-on;
 					op_mode = <1>;
 				};
