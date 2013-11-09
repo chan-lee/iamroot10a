@@ -142,20 +142,20 @@ static inline int sparse_early_nid(struct mem_section *section)
 void __meminit mminit_validate_memmodel_limits(unsigned long *start_pfn,
 						unsigned long *end_pfn)
 {
-	unsigned long max_sparsemem_pfn = 1UL << (MAX_PHYSMEM_BITS-PAGE_SHIFT);
+	unsigned long max_sparsemem_pfn = 1UL << (MAX_PHYSMEM_BITS-PAGE_SHIFT); //@@ 최대 sparsemem 페이지 프레임 넘버, 32 - 12 = 20 (1MB)
 
 	/*
 	 * Sanity checks - do not allow an architecture to pass
 	 * in larger pfns than the maximum scope of sparsemem:
 	 */
-	if (*start_pfn > max_sparsemem_pfn) {
+	if (*start_pfn > max_sparsemem_pfn) { //@@ start 페이지 프레임 넘버가 최대값보다 큰지 검사
 		mminit_dprintk(MMINIT_WARNING, "pfnvalidation",
 			"Start of range %lu -> %lu exceeds SPARSEMEM max %lu\n",
 			*start_pfn, *end_pfn, max_sparsemem_pfn);
 		WARN_ON_ONCE(1);
 		*start_pfn = max_sparsemem_pfn;
 		*end_pfn = max_sparsemem_pfn;
-	} else if (*end_pfn > max_sparsemem_pfn) {
+	} else if (*end_pfn > max_sparsemem_pfn) { //@@ end 페이지 프레임 넘버가 최대값보다 큰지 검사
 		mminit_dprintk(MMINIT_WARNING, "pfnvalidation",
 			"End of range %lu -> %lu exceeds SPARSEMEM max %lu\n",
 			*start_pfn, *end_pfn, max_sparsemem_pfn);

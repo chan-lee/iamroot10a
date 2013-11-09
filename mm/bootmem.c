@@ -85,8 +85,8 @@ static void __init link_bootmem(bootmem_data_t *bdata)
 {
 	bootmem_data_t *ent;
 
-	list_for_each_entry(ent, &bdata_list, list) {
-		if (bdata->node_min_pfn < ent->node_min_pfn) {
+	list_for_each_entry(ent, &bdata_list, list) { //@@ bdata_list를 순회
+		if (bdata->node_min_pfn < ent->node_min_pfn) { //@@ 조건에 맞으면 ent 리스트 끝에 bdata를 추가한다
 			list_add_tail(&bdata->list, &ent->list);
 			return;
 		}
@@ -103,8 +103,9 @@ static unsigned long __init init_bootmem_core(bootmem_data_t *bdata,
 {
 	unsigned long mapsize;
 
-	mminit_validate_memmodel_limits(&start, &end);
-	bdata->node_bootmem_map = phys_to_virt(PFN_PHYS(mapstart));
+	mminit_validate_memmodel_limits(&start, &end); //@@ start, end 페이지 프레임 넘버 유효성 검사
+	bdata->node_bootmem_map = phys_to_virt(PFN_PHYS(mapstart)); //@@ mapstart에 대한 가상주소를 가져옴
+	//@@ PFN_PHYS(x): 페이지 프레임 넘버에 대한 실제 물리주소로 변환 (PFN_PHYS(x) ((phys_addr_t)(x) << PAGE_SHIFT))
 	bdata->node_min_pfn = start;
 	bdata->node_low_pfn = end;
 	link_bootmem(bdata);
