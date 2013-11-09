@@ -1062,12 +1062,12 @@ static inline unsigned long early_pfn_to_nid(unsigned long pfn)
  * PFN_SECTION_SHIFT		pfn to/from section number
  */
 #define PA_SECTION_SHIFT	(SECTION_SIZE_BITS)
-#define PFN_SECTION_SHIFT	(SECTION_SIZE_BITS - PAGE_SHIFT)
+#define PFN_SECTION_SHIFT	(SECTION_SIZE_BITS - PAGE_SHIFT) //@@ SECTION_SIZE_BITS 28, PAGE_SHIFT 12
 
-#define NR_MEM_SECTIONS		(1UL << SECTIONS_SHIFT)
+#define NR_MEM_SECTIONS		(1UL << SECTIONS_SHIFT) //@@ 1 << SECTIONS_SHIFT(4) = 16
 
-#define PAGES_PER_SECTION       (1UL << PFN_SECTION_SHIFT)
-#define PAGE_SECTION_MASK	(~(PAGES_PER_SECTION-1))
+#define PAGES_PER_SECTION       (1UL << PFN_SECTION_SHIFT) //@@ PFN_SECTION_SHIFT 16
+#define PAGE_SECTION_MASK	(~(PAGES_PER_SECTION-1)) //@@ (~(2^16 - 1)) -> (0xFFFF0000)
 
 #define SECTION_BLOCKFLAGS_BITS \
 	((1UL << (PFN_SECTION_SHIFT - pageblock_order)) * NR_PAGEBLOCK_BITS)
@@ -1076,7 +1076,7 @@ static inline unsigned long early_pfn_to_nid(unsigned long pfn)
 #error Allocator MAX_ORDER exceeds SECTION_SIZE
 #endif
 
-#define pfn_to_section_nr(pfn) ((pfn) >> PFN_SECTION_SHIFT)
+#define pfn_to_section_nr(pfn) ((pfn) >> PFN_SECTION_SHIFT) //@@ 페이지 프레임 넘버를 섹션 넘버로 변환
 #define section_nr_to_pfn(sec) ((sec) << PFN_SECTION_SHIFT)
 
 #define SECTION_ALIGN_UP(pfn)	(((pfn) + PAGES_PER_SECTION - 1) & PAGE_SECTION_MASK)
@@ -1116,13 +1116,13 @@ struct mem_section {
 };
 
 #ifdef CONFIG_SPARSEMEM_EXTREME
-#define SECTIONS_PER_ROOT       (PAGE_SIZE / sizeof (struct mem_section))
+#define SECTIONS_PER_ROOT       (PAGE_SIZE / sizeof (struct mem_section)) //@@ PAGE_SIZE(4K) / sizeof(struct mem_section)(8) = 512
 #else
 #define SECTIONS_PER_ROOT	1
 #endif
 
-#define SECTION_NR_TO_ROOT(sec)	((sec) / SECTIONS_PER_ROOT)
-#define NR_SECTION_ROOTS	DIV_ROUND_UP(NR_MEM_SECTIONS, SECTIONS_PER_ROOT)
+#define SECTION_NR_TO_ROOT(sec)	((sec) / SECTIONS_PER_ROOT) //@@ SECTIONS_PER_ROOT(512), 한 페이지에 담을 수 있는 mem_section 구조체의 개수
+#define NR_SECTION_ROOTS	DIV_ROUND_UP(NR_MEM_SECTIONS, SECTIONS_PER_ROOT) //@@ DIV_ROUND_UP(NR_MEM_SECTIONS(16), SECTIONS_PER_ROOT(512)) = 1
 #define SECTION_ROOT_MASK	(SECTIONS_PER_ROOT - 1)
 
 #ifdef CONFIG_SPARSEMEM_EXTREME

@@ -20,7 +20,7 @@
  * 1) mem_section	- memory sections, mem_map's for valid memory
  */
 #ifdef CONFIG_SPARSEMEM_EXTREME
-struct mem_section *mem_section[NR_SECTION_ROOTS]
+struct mem_section *mem_section[NR_SECTION_ROOTS] //@@ NR_SECTION_ROOTS(1)
 	____cacheline_internodealigned_in_smp;
 #else
 struct mem_section mem_section[NR_SECTION_ROOTS][SECTIONS_PER_ROOT]
@@ -61,26 +61,27 @@ static struct mem_section noinline __init_refok *sparse_index_alloc(int nid)
 {
 	struct mem_section *section = NULL;
 	unsigned long array_size = SECTIONS_PER_ROOT *
-				   sizeof(struct mem_section);
+				   sizeof(struct mem_section); //@@ SECTIONS_PER_ROOT(512) * sizeof(struct mem_section)(8) = 4K
 
-	if (slab_is_available()) {
+	if (slab_is_available()) { //@@ IMPOSSIBLE ???
 		if (node_state(nid, N_HIGH_MEMORY))
 			section = kzalloc_node(array_size, GFP_KERNEL, nid);
 		else
 			section = kzalloc(array_size, GFP_KERNEL);
 	} else {
-		section = alloc_bootmem_node(NODE_DATA(nid), array_size);
+		//@@ [2013.11.09] [19:00-22:00] alloc_bootmem_node() 분석중
+		section = alloc_bootmem_node(NODE_DATA(nid), array_size); //@@ NODE_DATA(nid) (&contig_page_data)
 	}
 
 	return section;
 }
 
-static int __meminit sparse_index_init(unsigned long section_nr, int nid)
+static int __meminit sparse_index_init(unsigned long section_nr, int nid) //@@ section_nr = section, nid = 0
 {
-	unsigned long root = SECTION_NR_TO_ROOT(section_nr);
+	unsigned long root = SECTION_NR_TO_ROOT(section_nr); //@@ section_nr / 512, 찾으려는 mem_section 구조체가 어느 페이지에 있는지 확인
 	struct mem_section *section;
 
-	if (mem_section[root])
+	if (mem_section[root]) //@@ mem_section(전역 L23)
 		return -EEXIST;
 
 	section = sparse_index_alloc(nid);
@@ -169,10 +170,10 @@ void __init memory_present(int nid, unsigned long start, unsigned long end)
 {
 	unsigned long pfn;
 
-	start &= PAGE_SECTION_MASK;
-	mminit_validate_memmodel_limits(&start, &end);
-	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION) {
-		unsigned long section = pfn_to_section_nr(pfn);
+	start &= PAGE_SECTION_MASK; //@@ PAGE_SECTION_MASK (0xFFFF0000), ALIGN 하는 이유는???
+	mminit_validate_memmodel_limits(&start, &end); //@@ start와 end의 유효성 검사
+	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION) { //@@ PAGES_PER_SECTION (1 << 16) -> (64K)
+		unsigned long section = pfn_to_section_nr(pfn); //@@ pfn >> PFN_SECTION_SHIFT(64K)
 		struct mem_section *ms;
 
 		sparse_index_init(section, nid);

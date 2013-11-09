@@ -195,7 +195,7 @@ void memblock_set_current_limit(phys_addr_t limit);
  */
 static inline unsigned long memblock_region_memory_base_pfn(const struct memblock_region *reg)
 {
-	return PFN_UP(reg->base);
+	return PFN_UP(reg->base); //@@ 물리주소(base)를 시작 페이지 프레임 넘버로 변환
 }
 
 /**
@@ -204,7 +204,7 @@ static inline unsigned long memblock_region_memory_base_pfn(const struct membloc
  */
 static inline unsigned long memblock_region_memory_end_pfn(const struct memblock_region *reg)
 {
-	return PFN_DOWN(reg->base + reg->size);
+	return PFN_DOWN(reg->base + reg->size); //@@ 물리주소(base + size)를 마지막 페이지 프레임 넘버로 변환
 }
 
 /**

@@ -186,17 +186,17 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 	 * memory banks over to bootmem.
 	 */
 	node_set_online(0);
-	pgdat = NODE_DATA(0);
-	init_bootmem_node(pgdat, __phys_to_pfn(bitmap), start_pfn, end_pfn);
+	pgdat = NODE_DATA(0); //@@ = &contig_page_data(전역)
+	init_bootmem_node(pgdat, __phys_to_pfn(bitmap), start_pfn, end_pfn); //@@ 부트 메모리 노드를 등록
 
 	/* Free the lowmem regions from memblock into bootmem. */
-	for_each_memblock(memory, reg) {
-		unsigned long start = memblock_region_memory_base_pfn(reg);
-		unsigned long end = memblock_region_memory_end_pfn(reg);
+	for_each_memblock(memory, reg) { //@@ reg = memblock.memory.regions
+		unsigned long start = memblock_region_memory_base_pfn(reg); //@@ 시작 페이지 프레임 넘버
+		unsigned long end = memblock_region_memory_end_pfn(reg); //@@ 마지막 페이지 프레임 넘버
 
-		if (end >= end_pfn)
+		if (end >= end_pfn) //@@ ???
 			end = end_pfn;
-		if (start >= end)
+		if (start >= end) //@@ ???
 			break;
 
 		free_bootmem(__pfn_to_phys(start), (end - start) << PAGE_SHIFT);
@@ -418,7 +418,7 @@ void __init bootmem_init(void)
 
 	find_limits(&min, &max_low, &max_high);
 
-	arm_bootmem_init(min, max_low);
+	arm_bootmem_init(min, max_low); //@@ bootmem 초기화
 
 	/*
 	 * Sparsemem tries to allocate bootmem in memory_present(),

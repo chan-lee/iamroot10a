@@ -56,7 +56,7 @@ early_param("bootmem_debug", bootmem_debug_setup);
 
 static unsigned long __init bootmap_bytes(unsigned long pages)
 {
-	unsigned long bytes = DIV_ROUND_UP(pages, 8);
+	unsigned long bytes = DIV_ROUND_UP(pages, 8); //@@ bootmem_bootmap_pages() 참조
 
 	return ALIGN(bytes, sizeof(long));
 }
@@ -92,7 +92,7 @@ static void __init link_bootmem(bootmem_data_t *bdata)
 		}
 	}
 
-	list_add_tail(&bdata->list, &bdata_list);
+	list_add_tail(&bdata->list, &bdata_list); //@@ ???
 }
 
 /*
@@ -108,14 +108,14 @@ static unsigned long __init init_bootmem_core(bootmem_data_t *bdata,
 	//@@ PFN_PHYS(x): 페이지 프레임 넘버에 대한 실제 물리주소로 변환 (PFN_PHYS(x) ((phys_addr_t)(x) << PAGE_SHIFT))
 	bdata->node_min_pfn = start;
 	bdata->node_low_pfn = end;
-	link_bootmem(bdata);
+	link_bootmem(bdata); //@@ bdata를 bdata_list(전역)에 연결
 
 	/*
 	 * Initially all pages are reserved - setup_arch() has to
 	 * register free RAM areas explicitly.
 	 */
-	mapsize = bootmap_bytes(end - start);
-	memset(bdata->node_bootmem_map, 0xff, mapsize);
+	mapsize = bootmap_bytes(end - start); //@@ end - start 페이지 개수에 따른 bootmap 사이즈(바이트 개수) 가져옴
+	memset(bdata->node_bootmem_map, 0xff, mapsize); //@@ mapsize만큼 0xff로 초기화
 
 	bdebug("nid=%td start=%lx map=%lx end=%lx mapsize=%lx\n",
 		bdata - bootmem_node_data, start, mapstart, end, mapsize);
@@ -340,11 +340,13 @@ static int __init mark_bootmem_node(bootmem_data_t *bdata,
 	bdebug("nid=%td start=%lx end=%lx reserve=%d flags=%x\n",
 		bdata - bootmem_node_data, start, end, reserve, flags);
 
-	BUG_ON(start < bdata->node_min_pfn);
-	BUG_ON(end > bdata->node_low_pfn);
+	//@@ 노드의 메모리 영역은 노드에 속한 뱅크들의
+	//@@ 메모리 영역을 합한것 보다 크거나 같다(둘 다 최소한 같아야 한다)
+	BUG_ON(start < bdata->node_min_pfn); //@@ 각 뱅크의 start는 node_min_pfn 보다 작을 수 없다
+	BUG_ON(end > bdata->node_low_pfn); //@@ end는 node_low_pfn 보다 클 수 없다
 
-	sidx = start - bdata->node_min_pfn;
-	eidx = end - bdata->node_min_pfn;
+	sidx = start - bdata->node_min_pfn; //@@ sidx???
+	eidx = end - bdata->node_min_pfn; //@@ eidx???
 
 	if (reserve)
 		return __reserve(bdata, sidx, eidx, flags);
@@ -370,7 +372,7 @@ static int __init mark_bootmem(unsigned long start, unsigned long end,
 			continue;
 		}
 
-		max = min(bdata->node_low_pfn, end);
+		max = min(bdata->node_low_pfn, end); //@@ min() ???
 
 		err = mark_bootmem_node(bdata, pos, max, reserve, flags);
 		if (reserve && err) {
@@ -421,12 +423,12 @@ void __init free_bootmem(unsigned long physaddr, unsigned long size)
 {
 	unsigned long start, end;
 
-	kmemleak_free_part(__va(physaddr), size);
+	kmemleak_free_part(__va(physaddr), size); //@@ CONFIG_DEBUG_KMEMLEAK is not set
 
-	start = PFN_UP(physaddr);
-	end = PFN_DOWN(physaddr + size);
+	start = PFN_UP(physaddr); //@@ physaddr(물리주소)에 대한 페이지 프레임 넘버
+	end = PFN_DOWN(physaddr + size); //@@ physaddr + size(물리주소)에 대한 페이지 프레임 넘버
 
-	mark_bootmem(start, end, 0, 0);
+	mark_bootmem(start, end, 0, 0); //@@ 해당 페이지들에 대해 0으로 설정
 }
 
 /**
@@ -469,7 +471,7 @@ int __init reserve_bootmem(unsigned long addr, unsigned long size,
 	start = PFN_DOWN(addr);
 	end = PFN_UP(addr + size);
 
-	return mark_bootmem(start, end, 1, flags);
+	return mark_bootmem(start, end, 1, flags); //@@ 해당하는 페이지들에 데해 1로 설정
 }
 
 static unsigned long __init align_idx(struct bootmem_data *bdata,
