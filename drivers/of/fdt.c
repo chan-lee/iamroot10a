@@ -36,8 +36,8 @@ char *of_fdt_get_string(struct boot_param_header *blob, u32 offset)
  * the property ptr
  */
 void *of_fdt_get_property(struct boot_param_header *blob,
-		       unsigned long node, const char *name,
-		       unsigned long *size)
+		unsigned long node, const char *name,
+		unsigned long *size)
 {
 	unsigned long p = node;
 
@@ -84,7 +84,7 @@ void *of_fdt_get_property(struct boot_param_header *blob,
  * specific compatible values.
  */
 int of_fdt_is_compatible(struct boot_param_header *blob,
-		      unsigned long node, const char *compat)
+		unsigned long node, const char *compat)
 {
 	const char *cp;
 	unsigned long cplen, l, score = 0;
@@ -108,7 +108,7 @@ int of_fdt_is_compatible(struct boot_param_header *blob,
  * of_fdt_match - Return true if node matches a list of compatible values
  */
 int of_fdt_match(struct boot_param_header *blob, unsigned long node,
-                 const char *const *compat)
+		const char *const *compat)
 {
 	unsigned int tmp, score = 0;
 
@@ -126,7 +126,7 @@ int of_fdt_match(struct boot_param_header *blob, unsigned long node,
 }
 
 static void *unflatten_dt_alloc(unsigned long *mem, unsigned long size,
-				       unsigned long align)
+		unsigned long align)
 {
 	void *res;
 
@@ -147,11 +147,11 @@ static void *unflatten_dt_alloc(unsigned long *mem, unsigned long size,
  * @fpsize: Size of the node path up at the current depth.
  */
 static unsigned long unflatten_dt_node(struct boot_param_header *blob,
-				unsigned long mem,
-				unsigned long *p,
-				struct device_node *dad,
-				struct device_node ***allnextpp,
-				unsigned long fpsize)
+		unsigned long mem,
+		unsigned long *p,
+		struct device_node *dad,
+		struct device_node ***allnextpp,
+		unsigned long fpsize)
 {
 	struct device_node *np;
 	struct property *pp, **prev_pp = NULL;
@@ -198,7 +198,7 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 	}
 
 	np = unflatten_dt_alloc(&mem, sizeof(struct device_node) + allocl,
-				__alignof__(struct device_node));
+			__alignof__(struct device_node));
 	if (allnextpp) {
 		char *fn;
 		memset(np, 0, sizeof(*np));
@@ -210,8 +210,8 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 #ifdef DEBUG
 				if ((strlen(fn) + l + 1) != allocl) {
 					pr_debug("%s: p: %d, l: %d, a: %d\n",
-						pathp, (int)strlen(fn),
-						l, allocl);
+							pathp, (int)strlen(fn),
+							l, allocl);
 				}
 #endif
 				fn += strlen(fn);
@@ -262,7 +262,7 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 			has_name = 1;
 		l = strlen(pname) + 1;
 		pp = unflatten_dt_alloc(&mem, sizeof(struct property),
-					__alignof__(struct property));
+				__alignof__(struct property));
 		if (allnextpp) {
 			/* We accept flattened tree phandles either in
 			 * ePAPR-style "phandle" properties, or the
@@ -270,7 +270,7 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 			 * appear and have different values, things
 			 * will get weird.  Don't do that. */
 			if ((strcmp(pname, "phandle") == 0) ||
-			    (strcmp(pname, "linux,phandle") == 0)) {
+					(strcmp(pname, "linux,phandle") == 0)) {
 				if (np->phandle == 0)
 					np->phandle = be32_to_cpup((__be32*)*p);
 			}
@@ -305,7 +305,7 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 			pa = p1;
 		sz = (pa - ps) + 1;
 		pp = unflatten_dt_alloc(&mem, sizeof(struct property) + sz,
-					__alignof__(struct property));
+				__alignof__(struct property));
 		if (allnextpp) {
 			pp->name = "name";
 			pp->length = sz;
@@ -315,7 +315,7 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 			memcpy(pp->value, ps, sz - 1);
 			((char *)pp->value)[sz - 1] = 0;
 			pr_debug("fixed up name for %s -> %s\n", pathp,
-				(char *)pp->value);
+					(char *)pp->value);
 		}
 	}
 	if (allnextpp) {
@@ -333,7 +333,7 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 			*p += 4;
 		else
 			mem = unflatten_dt_node(blob, mem, p, np, allnextpp,
-						fpsize);
+					fpsize);
 		tag = be32_to_cpup((__be32 *)(*p));
 	}
 	if (tag != OF_DT_END_NODE) {
@@ -357,8 +357,8 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
  * for the resulting tree
  */
 static void __unflatten_device_tree(struct boot_param_header *blob,
-			     struct device_node **mynodes,
-			     void * (*dt_alloc)(u64 size, u64 align))
+		struct device_node **mynodes,
+		void * (*dt_alloc)(u64 size, u64 align))
 {
 	unsigned long start, mem, size;
 	struct device_node **allnextp = mynodes;
@@ -406,7 +406,7 @@ static void __unflatten_device_tree(struct boot_param_header *blob,
 		pr_warning("Weird tag at end of tree: %08x\n", *((u32 *)start));
 	if (be32_to_cpu(((__be32 *)mem)[size / 4]) != 0xdeadbeef)
 		pr_warning("End of tree marker overwritten: %08x\n",
-			   be32_to_cpu(((__be32 *)mem)[size / 4]));
+				be32_to_cpu(((__be32 *)mem)[size / 4]));
 	*allnextp = NULL;
 
 	pr_debug(" <- unflatten_device_tree()\n");
@@ -426,7 +426,7 @@ static void *kernel_tree_alloc(u64 size, u64 align)
  * can be used.
  */
 void of_fdt_unflatten_tree(unsigned long *blob,
-			struct device_node **mynodes)
+		struct device_node **mynodes)
 {
 	struct boot_param_header *device_tree =
 		(struct boot_param_header *)blob;
@@ -452,9 +452,9 @@ struct boot_param_header *initial_boot_params;
  * unflatten the tree
  */
 int __init of_scan_flat_dt(int (*it)(unsigned long node,
-				     const char *uname, int depth,
-				     void *data),
-			   void *data)
+			const char *uname, int depth,
+			void *data),
+		void *data)
 {
 	unsigned long p = ((unsigned long)initial_boot_params) +
 		be32_to_cpu(initial_boot_params->off_dt_struct);
@@ -503,32 +503,40 @@ int __init of_scan_flat_dt(int (*it)(unsigned long node,
 /**
  * of_get_flat_dt_root - find the root node in the flat blob
  */
-unsigned long __init of_get_flat_dt_root(void)
-{
+unsigned long __init of_get_flat_dt_root(void) {
+#if 0
+	//flat_dt 자료 형태 추측??
+	/* +----------------+ */
+	/* |root|                  */
+	/* +----------------+ */
+	/* |string??         */
+	/* +----------------+ */
+	/* |OF_DT_BEGIN_NODE| */
+	/* +----------------+ */
+	/* |OF_DT_NOP       | */
+	/* +----------------+ */
+	/* |dt_struct       | */
+	/* +----------------+ */ 
+#endif
 
+	//@@ Devict Tree (Documentation/devicetree/* 참조)
 
-    //flat_dt 자료 형태 추측??
-    /* +----------------+ */
-    /* |root|                  */
-    /* +----------------+ */
-    /* |string??         */
-    /* +----------------+ */
-    /* |OF_DT_BEGIN_NODE| */
-    /* +----------------+ */
-    /* |OF_DT_NOP       | */
-    /* +----------------+ */
-    /* |dt_struct       | */
-    /* +----------------+ */
-    
-
-	unsigned long p = ((unsigned long)initial_boot_params) +
+	/*
+	 *	flat dt data structure
+	 *
+	 *	+----------------------+
+	 *	|   OF_DT_BEGIN_NODE   |
+	 */
+	unsigned long p = ((unsigned long)initial_boot_params) + //@@ initial_boot_params = devtree = __atags_pointer
 		be32_to_cpu(initial_boot_params->off_dt_struct);
 
-	while (be32_to_cpup((__be32 *)p) == OF_DT_NOP)
+	while (be32_to_cpup((__be32 *)p) == OF_DT_NOP) //@@ OF_DT_NOP = 0x4
 		p += 4;
-	BUG_ON(be32_to_cpup((__be32 *)p) != OF_DT_BEGIN_NODE);
-	p += 4;
-	return ALIGN(p + strlen((char *)p) + 1, 4);
+
+	BUG_ON(be32_to_cpup((__be32 *)p) != OF_DT_BEGIN_NODE); //@@ OF_DT_BEGIN_NODE = 0x1
+	p += 4; //@@ p = root-node를 가리킴
+
+	return ALIGN(p + strlen((char *)p) + 1, 4); //@@ OF_DT_PROP을 가리킴
 }
 
 /**
@@ -538,7 +546,7 @@ unsigned long __init of_get_flat_dt_root(void)
  * access to properties
  */
 void *__init of_get_flat_dt_prop(unsigned long node, const char *name,
-				 unsigned long *size)
+		unsigned long *size)
 {
 	return of_fdt_get_property(initial_boot_params, node, name, size);
 }
@@ -596,7 +604,7 @@ inline void early_init_dt_check_for_initrd(unsigned long node)
  * early_init_dt_scan_root - fetch the top level address and size cells
  */
 int __init early_init_dt_scan_root(unsigned long node, const char *uname,
-				   int depth, void *data)
+		int depth, void *data)
 {
 	__be32 *prop;
 
@@ -632,7 +640,7 @@ u64 __init dt_mem_next_cell(int s, __be32 **cellp)
  * early_init_dt_scan_memory - Look for an parse memory nodes
  */
 int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
-				     int depth, void *data)
+		int depth, void *data)
 {
 	char *type = of_get_flat_dt_prop(node, "device_type", NULL);
 	__be32 *reg, *endp;
@@ -658,7 +666,7 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 	endp = reg + (l / sizeof(__be32));
 
 	pr_debug("memory scan node %s, reg size %ld, data: %x %x %x %x,\n",
-	    uname, l, reg[0], reg[1], reg[2], reg[3]);
+			uname, l, reg[0], reg[1], reg[2], reg[3]);
 
 	while ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
 		u64 base, size;
@@ -669,7 +677,7 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 		if (size == 0)
 			continue;
 		pr_debug(" - %llx ,  %llx\n", (unsigned long long)base,
-		    (unsigned long long)size);
+				(unsigned long long)size);
 
 		early_init_dt_add_memory_arch(base, size);
 	}
@@ -678,7 +686,7 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 }
 
 int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
-				     int depth, void *data)
+		int depth, void *data)
 {
 	unsigned long l;
 	char *p;
@@ -686,7 +694,7 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 	pr_debug("search \"chosen\", depth: %d, uname: %s\n", depth, uname);
 
 	if (depth != 1 || !data ||
-	    (strcmp(uname, "chosen") != 0 && strcmp(uname, "chosen@0") != 0))
+			(strcmp(uname, "chosen") != 0 && strcmp(uname, "chosen@0") != 0))
 		return 0;
 
 	early_init_dt_check_for_initrd(node);
@@ -725,7 +733,7 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 void __init unflatten_device_tree(void)
 {
 	__unflatten_device_tree(initial_boot_params, &of_allnodes,
-				early_init_dt_alloc_memory_arch);
+			early_init_dt_alloc_memory_arch);
 
 	/* Get pointer to "/chosen" and "/aliases" nodes for use everywhere */
 	of_alias_scan(early_init_dt_alloc_memory_arch);

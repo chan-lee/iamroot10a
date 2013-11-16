@@ -1335,7 +1335,7 @@ void __init paging_init(struct machine_desc *mdesc)
 
 	build_mem_type_table(); //TO Do 페이지 타입 설정. 타입별 의미는 파악 못함
 	prepare_page_table();
-	Map_lowmem();
+	map_lowmem();
 	dma_contiguous_remap();
 	devicemaps_init(mdesc);
 	kmap_init();

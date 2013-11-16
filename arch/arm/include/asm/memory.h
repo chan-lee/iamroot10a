@@ -185,7 +185,7 @@ extern unsigned long __pv_phys_offset;
 	: "=r" (to)					\
 	: "r" (from), "I" (type))
 
-static inline unsigned long __virt_to_phys(unsigned long x)
+static inline unsigned long __virt_to_phys(unsigned long x) //@@ 이 함수에 대한 설명은 C팀 자료 참조
 {
 	unsigned long t;
 	__pv_stub(x, t, "add", __PV_BITS_31_24);
@@ -244,7 +244,7 @@ static inline void *phys_to_virt(phys_addr_t x)
 /*
  * Drivers should NOT use these either.
  */
-#define __pa(x)			__virt_to_phys((unsigned long)(x))
+#define __pa(x)			__virt_to_phys((unsigned long)(x)) //@@ 가상주소를 물리주소로 변환
 #define __va(x)			((void *)__phys_to_virt((unsigned long)(x)))
 #define pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
 

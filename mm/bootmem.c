@@ -471,7 +471,7 @@ int __init reserve_bootmem(unsigned long addr, unsigned long size,
 	start = PFN_DOWN(addr);
 	end = PFN_UP(addr + size);
 
-	return mark_bootmem(start, end, 1, flags); //@@ 해당하는 페이지들에 데해 1로 설정
+	return mark_bootmem(start, end, 1, flags); //@@ 해당하는 페이지들에 대해 1로 설정
 }
 
 static unsigned long __init align_idx(struct bootmem_data *bdata,

@@ -864,7 +864,7 @@ void __init setup_arch(char **cmdline_p)
 	struct machine_desc *mdesc;
 
 	setup_processor();
-	mdesc = setup_machine_fdt(__atags_pointer);
+	mdesc = setup_machine_fdt(__atags_pointer); //@@ [2013.11.16] REVIEW
 	if (!mdesc)
 		// dtb 가 아닌 atag가 넘어왔을때 
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);

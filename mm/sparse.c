@@ -70,6 +70,8 @@ static struct mem_section noinline __init_refok *sparse_index_alloc(int nid)
 			section = kzalloc(array_size, GFP_KERNEL);
 	} else {
 		//@@ [2013.11.09] [19:00-22:00] alloc_bootmem_node() 분석중
+		//@@ [2013.11.16] [START]
+		//@@ [2013.11.16] [END]
 		section = alloc_bootmem_node(NODE_DATA(nid), array_size); //@@ NODE_DATA(nid) (&contig_page_data)
 	}
 

@@ -176,7 +176,7 @@ void __init arm_dt_init_cpu_maps(void)
  * If a dtb was passed to the kernel in r2, then use it to choose the
  * correct machine_desc and to setup the system.
  */
-struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
+struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys) //@@ [2013.11.16] REVIEW, dt_phys := atags/dtb pointer
 {
 	struct boot_param_header *devtree;
 	struct machine_desc *mdesc, *mdesc_best = NULL;
@@ -184,7 +184,7 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 	unsigned long dt_root;
 	const char *model;
 
-#ifdef CONFIG_ARCH_MULTIPLATFORM
+#ifdef CONFIG_ARCH_MULTIPLATFORM //@@ is not set
 	DT_MACHINE_START(GENERIC_DT, "Generic DT based system")
 	MACHINE_END
 
@@ -195,24 +195,48 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 		return NULL;
 	//http://stackoverflow.com/questions/16909655/virtual-to-physical-address-conversion-in-linux-kernel
 	//To Do : 변환 원리를 이해 못함..
-	devtree = phys_to_virt(dt_phys);
+	devtree = phys_to_virt(dt_phys); //@@ phys(atags/dtb pointer) to virt(atags/dtb pointer)
 
 	/* check device tree validity */
-	if (be32_to_cpu(devtree->magic) != OF_DT_HEADER)
+	if (be32_to_cpu(devtree->magic) != OF_DT_HEADER) //@@ TODO: be32_to_cpu()
 		return NULL;
 
 	/* Search the mdescs for the 'best' compatible value match */
 	//To Do: 호환 가능한 dtb 버전 찾는 과정
 	initial_boot_params = devtree;
-	dt_root = of_get_flat_dt_root();
-	for_each_machine_desc(mdesc) {
+
+	/*
+	 *	//@@ struct boot_param_header
+	 *
+	 *	struct boot_param_header {
+	 *		__be32  magic;				// magic word OF_DT_HEADER
+	 *		__be32  totalsize;			// total size of DT block
+	 *		__be32  off_dt_struct;		// offset to structure
+	 *		__be32  off_dt_strings;		// offset to strings
+	 *		__be32  off_mem_rsvmap;		// offset to memory reserve map
+	 *		__be32  version;			// format version
+	 *		__be32  last_comp_version;	// last compatible version
+	 *									// version 2 fields below
+	 *		__be32  boot_cpuid_phys;	// Physical CPU id we're booting on
+	 *									// version 3 fields below
+	 *		__be32  dt_strings_size;	// size of the DT strings block
+	 *									// version 17 fields below
+	 *		__be32  dt_struct_size;		// size of the DT structure block
+	 *	};
+	 */
+
+	dt_root = of_get_flat_dt_root(); //@@ dt_root = OF_DT_PROP(Device Tree 구조)
+
+	for_each_machine_desc(mdesc) { //@@ __arch_info_begin to __arch_info_end (arch.info.init 영역)
 		score = of_flat_dt_match(dt_root, mdesc->dt_compat);
+
 		if (score > 0 && score < mdesc_score) {
 			mdesc_best = mdesc;
 			mdesc_score = score;
 		}
 	}
-	// 131005 start
+
+	//@@ 131005 start
 	if (!mdesc_best) {
 		const char *prop;
 		long size;
