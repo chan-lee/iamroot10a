@@ -142,9 +142,9 @@ static void __init find_limits(unsigned long *min, unsigned long *max_low,
 			       unsigned long *max_high)
 {
 
-      /* +---------------+---------------+ */
+      /* +--max_high-----+---------------+ */
       /* |               |               | */
-      /* +---mx_high-----+               + */
+      /* |				 |				 | */
       /* |               |          high | */
       /* +--max_low------+---------------+ */
       /* |               |    normal     | */
@@ -152,16 +152,20 @@ static void __init find_limits(unsigned long *min, unsigned long *max_low,
       /* |               | DMA           | */
       /* +---------------+---------------+ */
 
-	struct meminfo *mi = &meminfo;
+	struct meminfo *mi = &meminfo; //@@ meminfo(전역) - arch/arm/mm/init.c L92
 	int i;
 
 	/* This assumes the meminfo array is properly sorted */
-	*min = bank_pfn_start(&mi->bank[0]);
-	for_each_bank (i, mi)
-		if (mi->bank[i].highmem)
+	*min = bank_pfn_start(&mi->bank[0]);	//@@ bank[0].start의 PFN(Page Frame Number),
+											//@@ bank_pfn_start(): bank->start를 PFN로 변환
+											//@@ start가 0x20000000일 경우 PFN = 0x20000
+
+	for_each_bank(i, mi)
+		if (mi->bank[i].highmem)	//@@ hihgmem 뱅크를 찾음
 				break;
-	*max_low = bank_pfn_end(&mi->bank[i - 1]);
-	*max_high = bank_pfn_end(&mi->bank[mi->nr_banks - 1]);
+
+	*max_low = bank_pfn_end(&mi->bank[i - 1]);	//@@ highmem 앞 뱅크(normal의 마지막 뱅크) end의 PFN
+	*max_high = bank_pfn_end(&mi->bank[mi->nr_banks - 1]);	//@@ 마지막 뱅크 end의 PFN
 }
 
 static void __init arm_bootmem_init(unsigned long start_pfn,
@@ -176,18 +180,27 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 	 * Allocate the bootmem bitmap page.  This must be in a region
 	 * of memory which has already been mapped.
 	 */
+	//@@ boot_pages: 페이지 프레임의 개수를 비트맵으로 표현하기 위한 바이트수(bytes)를 할당하는데 필요한 페이지 개수
 	boot_pages = bootmem_bootmap_pages(end_pfn - start_pfn);
+	
 	//@@ 2013.11.02 END
-	bitmap = memblock_alloc_base(boot_pages << PAGE_SHIFT, L1_CACHE_BYTES,
-				__pfn_to_phys(end_pfn));
+	//@@ L1_CACHE_SHIFT = 6
+	//@@ L1_CACHE_BYTES = (1 << L1_CACHE_SHIFT)
+	//@@ bitmap: (boot_pages << PAGE_SHIFT) 크기 만큼의 물리메모리의 시작주소
+	bitmap = memblock_alloc_base(boot_pages << PAGE_SHIFT,	//@@ boot_pages * 4K
+								L1_CACHE_BYTES,				//@@ L1_CACHE_BYTES = 64
+								__pfn_to_phys(end_pfn));	//@@ end_pfn(마지막 normal 뱅크의 PFN)을 물리주소로 변환
 
 	/*
 	 * Initialise the bootmem allocator, handing the
 	 * memory banks over to bootmem.
 	 */
-	node_set_online(0);
-	pgdat = NODE_DATA(0); //@@ = &contig_page_data(전역)
+	node_set_online(0);		//@@ 0노드를 ONLINE시킴
+	pgdat = NODE_DATA(0);	//@@ = &contig_page_data(전역)
+	
+	//@@ 
 	init_bootmem_node(pgdat, __phys_to_pfn(bitmap), start_pfn, end_pfn); //@@ 부트 메모리 노드를 등록
+	//@@ [2013.11.23] 작업 완료
 
 	/* Free the lowmem regions from memblock into bootmem. */
 	for_each_memblock(memory, reg) { //@@ reg = memblock.memory.regions
@@ -417,6 +430,9 @@ void __init bootmem_init(void)
 	max_low = max_high = 0;
 
 	find_limits(&min, &max_low, &max_high);
+	//@@ min: 첫번째 뱅크 start의 PFN
+	//@@ max_low: normal의 마지막 뱅크 end의 PFN
+	//@@ max_high: 마지막 뱅크 end의 PFN
 
 	arm_bootmem_init(min, max_low); //@@ bootmem 초기화
 

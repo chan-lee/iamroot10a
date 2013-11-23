@@ -65,7 +65,7 @@ static unsigned long __init bootmap_bytes(unsigned long pages)
  * bootmem_bootmap_pages - calculate bitmap size in pages
  * @pages: number of pages the bitmap has to represent
  */
-unsigned long __init bootmem_bootmap_pages(unsigned long pages)
+unsigned long __init bootmem_bootmap_pages(unsigned long pages)	//@@ pages: 사용가능한 페이지프레임의 개수
 {
     //페이지를 비트맵으로 표현하는데 필요한 바이트 수
     	unsigned long bytes = bootmap_bytes(pages);

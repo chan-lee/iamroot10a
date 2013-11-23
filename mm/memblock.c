@@ -104,7 +104,7 @@ phys_addr_t __init_memblock memblock_find_in_range_node(phys_addr_t start,
 	u64 i;
 
 	/* pump up @end */
-	if (end == MEMBLOCK_ALLOC_ACCESSIBLE)
+	if (end == MEMBLOCK_ALLOC_ACCESSIBLE)	//@@ MEMBLOCK_ALLOC_ACCESSIBLE = 0
 		end = memblock.current_limit;
 
 	/* avoid allocating the first page */
@@ -119,6 +119,7 @@ phys_addr_t __init_memblock memblock_find_in_range_node(phys_addr_t start,
 			continue;
 
 		cand = round_down(this_end - size, align);
+
 		if (cand >= this_start)
 			return cand;
 	}
@@ -781,6 +782,7 @@ static phys_addr_t __init memblock_alloc_base_nid(phys_addr_t size,
 	size = round_up(size, align);
 
 	found = memblock_find_in_range_node(0, max_addr, size, align, nid);
+
 	if (found && !memblock_reserve(found, size))
 		return found;
 
@@ -794,7 +796,7 @@ phys_addr_t __init memblock_alloc_nid(phys_addr_t size, phys_addr_t align, int n
 
 phys_addr_t __init __memblock_alloc_base(phys_addr_t size, phys_addr_t align, phys_addr_t max_addr)
 {
-	return memblock_alloc_base_nid(size, align, max_addr, MAX_NUMNODES);
+	return memblock_alloc_base_nid(size, align, max_addr, MAX_NUMNODES);	//@@ MAX_NUMNODES = 1
 }
 
 phys_addr_t __init memblock_alloc_base(phys_addr_t size, phys_addr_t align, phys_addr_t max_addr)

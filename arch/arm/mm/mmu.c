@@ -1347,7 +1347,7 @@ void __init paging_init(struct machine_desc *mdesc)
 	/* allocate the zero page. */
 	zero_page = early_alloc(PAGE_SIZE);
 
-	bootmem_init();
+	bootmem_init(); //@@ [2013.11.23] bootmem_init() 부터 다시 시작
 
 	empty_zero_page = virt_to_page(zero_page);
 	__flush_dcache_page(NULL, empty_zero_page);
