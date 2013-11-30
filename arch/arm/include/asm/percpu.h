@@ -24,8 +24,10 @@
 static inline void set_my_cpu_offset(unsigned long off)
 {
 	/* Set TPIDRPRW */
-        //The TPIDRPRW provides a location where software executing at PL1 or higher can store thread identifying information that is not visible to software executing at PL0, for OS management purposes.
+	//@@ The TPIDRPRW provides a location where software executing at PL1 or higher can store thread identifying information that is not visible to software executing at PL0, for OS management purposes.
 	asm volatile("mcr p15, 0, %0, c13, c0, 4" : : "r" (off) : "memory");
+	//@@ 현재 CPU OFFSET(0)을 PL1 Thread ID에 쓴다.
+	//@@ TODO 이유는???
 }
 
 static inline unsigned long __my_cpu_offset(void)

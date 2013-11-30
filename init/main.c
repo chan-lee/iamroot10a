@@ -482,7 +482,7 @@ static void __init mm_init(void)
 //asmlinkage 는 x86을 위한 코드. arm 에서는 별다른 역할 없다.
 // __init 은 특정 section 에 두고 부팅시만 쓰고 부팅이 끝나면 사라진다.
 // http://venkateshabbarapu.blogspot.kr/2012/09/init-call-mechanism-in-linux-kernel.html 참고
-asmlinkage void __init start_kernel(void)
+asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 {
 	char * command_line;
 	extern const struct kernel_param __start___param[], __stop___param[];
@@ -499,6 +499,7 @@ asmlinkage void __init start_kernel(void)
 	// T: global, t: local, W : weak 을 의미한다. 
 	// local 은 static keyword 가 붙었을때고, 안붙이면 global 이 된다.
 	// http://llvm.org/docs/CommandGuide/llvm-nm.html 참고 
+	//@@ [2013.11.30] [15:00-18:00] [END]
 
 	debug_objects_early_init(); // CONFIG_DEBUG_OBJECTS 가 설정되어 있으면 수행.
 

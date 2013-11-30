@@ -475,8 +475,11 @@ void __init smp_setup_processor_id(void)
 	int i;
 	u32 mpidr = is_smp() ? read_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0;
 	u32 cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0); // MPIDR 의 affinity level 0 에 대한 값만 쓰겠다.
+	//@@ #define MPIDR_AFFINITY_LEVEL(mpidr, level) \
+	//@@ 	((mpidr >> (MPIDR_LEVEL_BITS * level)) & MPIDR_LEVEL_MASK)
         
 	cpu_logical_map(0) = cpu; // __cpu_logical_map[0] = cpu;
+
 	for (i = 1; i < nr_cpu_ids; ++i) // nr_cpu_ids == 2
           cpu_logical_map(i) = i == cpu ? 0 : i; // i==cpu 인지 확인해서 같으면 0을, 아니면 i 를 배열에 넣는다.
 
