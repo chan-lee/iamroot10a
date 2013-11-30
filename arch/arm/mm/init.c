@@ -199,10 +199,13 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 	pgdat = NODE_DATA(0);	//@@ = &contig_page_data(전역)
 	
 	//@@ 
-	init_bootmem_node(pgdat, __phys_to_pfn(bitmap), start_pfn, end_pfn); //@@ 부트 메모리 노드를 등록
+	init_bootmem_node(pgdat, __phys_to_pfn(bitmap), start_pfn, end_pfn); //@@ 부트 메모리를 위한 비트맵을 등록
 	//@@ [2013.11.23] 작업 완료
 
+	//@@ [2013.11.30] [19:00-22:00] [START]
 	/* Free the lowmem regions from memblock into bootmem. */
+	//@@ bootmem의 memblock의 memory.region들의
+	//@@ base 주소부터 size에 해당하는 페이지프레임만 bdata->node_bootmem_map에 0으로 설정
 	for_each_memblock(memory, reg) { //@@ reg = memblock.memory.regions
 		unsigned long start = memblock_region_memory_base_pfn(reg); //@@ 시작 페이지 프레임 넘버
 		unsigned long end = memblock_region_memory_end_pfn(reg); //@@ 마지막 페이지 프레임 넘버
@@ -212,7 +215,7 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 		if (start >= end) //@@ ???
 			break;
 
-		free_bootmem(__pfn_to_phys(start), (end - start) << PAGE_SHIFT);
+		free_bootmem(__pfn_to_phys(start), (end - start) << PAGE_SHIFT);	//@@ TODO free_bootmem() 분석
 	}
 
 	/* Reserve the lowmem memblock reserved regions in bootmem. */
@@ -332,7 +335,7 @@ int pfn_valid(unsigned long pfn)
 EXPORT_SYMBOL(pfn_valid);
 #endif
 
-#ifndef CONFIG_SPARSEMEM
+#ifndef CONFIG_SPARSEMEM //@@ CONFIG_SPARSEMEM = y
 static void __init arm_memory_present(void)
 {
 }

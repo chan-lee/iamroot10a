@@ -361,7 +361,7 @@ static int __init mark_bootmem(unsigned long start, unsigned long end,
 	unsigned long pos;
 	bootmem_data_t *bdata;
 
-	pos = start;
+	pos = start; //@@ 시작 페이지프레임넘버
 	list_for_each_entry(bdata, &bdata_list, list) {
 		int err;
 		unsigned long max;

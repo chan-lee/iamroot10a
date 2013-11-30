@@ -80,7 +80,10 @@ static struct mem_section noinline __init_refok *sparse_index_alloc(int nid)
 
 static int __meminit sparse_index_init(unsigned long section_nr, int nid) //@@ section_nr = section, nid = 0
 {
-	unsigned long root = SECTION_NR_TO_ROOT(section_nr); //@@ section_nr / 512, 찾으려는 mem_section 구조체가 어느 페이지에 있는지 확인
+	//@@ section_nr / 512, 찾으려는 mem_section 구조체가 어느 페이지에 있는지 확인
+	unsigned long root = SECTION_NR_TO_ROOT(section_nr); //@@ 섹션 번호에 대한 페이지 번호
+	//@@ [2013.11.30] [19:00-22:00] [END]
+
 	struct mem_section *section;
 
 	if (mem_section[root]) //@@ mem_section(전역 L23)
@@ -145,7 +148,8 @@ static inline int sparse_early_nid(struct mem_section *section)
 void __meminit mminit_validate_memmodel_limits(unsigned long *start_pfn,
 						unsigned long *end_pfn)
 {
-	unsigned long max_sparsemem_pfn = 1UL << (MAX_PHYSMEM_BITS-PAGE_SHIFT); //@@ 최대 sparsemem 페이지 프레임 넘버, 32 - 12 = 20 (1MB)
+	//@@ 최대 sparsemem 페이지 프레임 넘버, 32 - 12 = 20 (1MB)
+	unsigned long max_sparsemem_pfn = 1UL << (MAX_PHYSMEM_BITS-PAGE_SHIFT);
 
 	/*
 	 * Sanity checks - do not allow an architecture to pass
@@ -172,10 +176,11 @@ void __init memory_present(int nid, unsigned long start, unsigned long end)
 {
 	unsigned long pfn;
 
-	start &= PAGE_SECTION_MASK; //@@ PAGE_SECTION_MASK (0xFFFF0000), ALIGN 하는 이유는???
-	mminit_validate_memmodel_limits(&start, &end); //@@ start와 end의 유효성 검사
+	start &= PAGE_SECTION_MASK; //@@ PAGE_SECTION_MASK (0xFFFF0000), ALIGN 하는 이유는??? -> 페이지섹션 확인
+	mminit_validate_memmodel_limits(&start, &end); //@@ start와 end의 유효성(1MB) 검사 후 재설정
+
 	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION) { //@@ PAGES_PER_SECTION (1 << 16) -> (64K)
-		unsigned long section = pfn_to_section_nr(pfn); //@@ pfn >> PFN_SECTION_SHIFT(64K)
+		unsigned long section = pfn_to_section_nr(pfn); //@@ pfn >> PFN_SECTION_SHIFT(64K) -> 섹션 번호 찾기
 		struct mem_section *ms;
 
 		sparse_index_init(section, nid);

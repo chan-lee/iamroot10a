@@ -1121,11 +1121,11 @@ struct mem_section {
 #define SECTIONS_PER_ROOT	1
 #endif
 
-#define SECTION_NR_TO_ROOT(sec)	((sec) / SECTIONS_PER_ROOT) //@@ SECTIONS_PER_ROOT(512), 한 페이지에 담을 수 있는 mem_section 구조체의 개수
+#define SECTION_NR_TO_ROOT(sec)	((sec) / SECTIONS_PER_ROOT) //@@ SECTIONS_PER_ROOT(512), 섹션 번호에 대한 페이저 번호
 #define NR_SECTION_ROOTS	DIV_ROUND_UP(NR_MEM_SECTIONS, SECTIONS_PER_ROOT) //@@ DIV_ROUND_UP(NR_MEM_SECTIONS(16), SECTIONS_PER_ROOT(512)) = 1
 #define SECTION_ROOT_MASK	(SECTIONS_PER_ROOT - 1)
 
-#ifdef CONFIG_SPARSEMEM_EXTREME
+#ifdef CONFIG_SPARSEMEM_EXTREME //@@ CONFIG_SPARSEMEM_EXTREME = y
 extern struct mem_section *mem_section[NR_SECTION_ROOTS];
 #else
 extern struct mem_section mem_section[NR_SECTION_ROOTS][SECTIONS_PER_ROOT];
