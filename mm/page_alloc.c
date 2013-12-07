@@ -1426,7 +1426,7 @@ static int __isolate_free_page(struct page *page, unsigned int order)
 	rmv_page_order(page);
 
 	/* Set the pageblock if the isolated page is at least a pageblock */
-	if (order >= pageblock_order - 1) {
+	if (order >= pageblock_order - 1) { //@@ pageblock_order = 10
 		struct page *endpage = page + (1 << order) - 1;
 		for (; page < endpage; page += pageblock_nr_pages) {
 			int mt = get_pageblock_migratetype(page);
@@ -4591,7 +4591,7 @@ void __init set_pageblock_order(void)
 	unsigned int order;
 
 	/* Check that pageblock_nr_pages has not already been setup */
-	if (pageblock_order)
+	if (pageblock_order) //@@ pageblock_order = 10
 		return;
 
 	if (HPAGE_SHIFT > PAGE_SHIFT)

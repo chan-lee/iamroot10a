@@ -28,7 +28,7 @@ struct mem_section mem_section[NR_SECTION_ROOTS][SECTIONS_PER_ROOT]
 #endif
 EXPORT_SYMBOL(mem_section);
 
-#ifdef NODE_NOT_IN_PAGE_FLAGS
+#ifdef NODE_NOT_IN_PAGE_FLAGS //@@ NODE_NOT_IN_PAGE_FLAGS 매크로가 없음.
 /*
  * If we did not store the node number in the page then we have to
  * do a lookup in the section_to_node_table in order to find which
@@ -57,7 +57,7 @@ static inline void set_section_nid(unsigned long section_nr, int nid)
 #endif
 
 #ifdef CONFIG_SPARSEMEM_EXTREME
-static struct mem_section noinline __init_refok *sparse_index_alloc(int nid)
+static struct mem_section noinline __init_refok *sparse_index_alloc(int nid) //@@ nid = 0
 {
 	struct mem_section *section = NULL;
 	unsigned long array_size = SECTIONS_PER_ROOT *
@@ -72,7 +72,8 @@ static struct mem_section noinline __init_refok *sparse_index_alloc(int nid)
 		//@@ [2013.11.09] [19:00-22:00] alloc_bootmem_node() 분석중
 		//@@ [2013.11.16] [START]
 		//@@ [2013.11.16] [END]
-		section = alloc_bootmem_node(NODE_DATA(nid), array_size); //@@ NODE_DATA(nid) (&contig_page_data)
+		section = alloc_bootmem_node(NODE_DATA(nid), array_size); //@@ NODE_DATA(nid) = (&contig_page_data)
+		//@@ mem_section을 저장하기 위한 공간을 bootmem으로부터 요청하여 주소를 리턴 받음.
 	}
 
 	return section;
@@ -84,12 +85,14 @@ static int __meminit sparse_index_init(unsigned long section_nr, int nid) //@@ s
 	unsigned long root = SECTION_NR_TO_ROOT(section_nr); //@@ 섹션 번호에 대한 페이지 번호
 	//@@ [2013.11.30] [19:00-22:00] [END]
 
+	//@@ [2013.12.07] [19:00-22:00] [START]
 	struct mem_section *section;
 
 	if (mem_section[root]) //@@ mem_section(전역 L23)
 		return -EEXIST;
 
-	section = sparse_index_alloc(nid);
+	section = sparse_index_alloc(nid); //@@ struct mem_section을 저장하기 위한 메모리 공간 할당.
+
 	if (!section)
 		return -ENOMEM;
 
@@ -136,7 +139,7 @@ int __section_nr(struct mem_section* ms)
  */
 static inline unsigned long sparse_encode_early_nid(int nid)
 {
-	return (nid << SECTION_NID_SHIFT);
+	return (nid << SECTION_NID_SHIFT); //@@ SECTION_NID_SHIFT = 2
 }
 
 static inline int sparse_early_nid(struct mem_section *section)
@@ -172,24 +175,26 @@ void __meminit mminit_validate_memmodel_limits(unsigned long *start_pfn,
 }
 
 /* Record a memory area against a node. */
-void __init memory_present(int nid, unsigned long start, unsigned long end)
+void __init memory_present(int nid, unsigned long start, unsigned long end) //@@ nid = 0
 {
 	unsigned long pfn;
 
 	start &= PAGE_SECTION_MASK; //@@ PAGE_SECTION_MASK (0xFFFF0000), ALIGN 하는 이유는??? -> 페이지섹션 확인
 	mminit_validate_memmodel_limits(&start, &end); //@@ start와 end의 유효성(1MB) 검사 후 재설정
 
-	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION) { //@@ PAGES_PER_SECTION (1 << 16) -> (64K)
+	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION) { //@@ PAGES_PER_SECTION (1 << 16) -> (64K개)
 		unsigned long section = pfn_to_section_nr(pfn); //@@ pfn >> PFN_SECTION_SHIFT(64K) -> 섹션 번호 찾기
 		struct mem_section *ms;
 
-		sparse_index_init(section, nid);
-		set_section_nid(section, nid);
+		sparse_index_init(section, nid); //@@ 섹션정보를 저장하기 위한 페이지를 할당. (bootmem 할당자로부터)
+		set_section_nid(section, nid); //@@ NODE_NOT_IN_PAGE_FLAGS 매크로가 정의되어 있지 않아 아무일도 하지 않음.
 
-		ms = __nr_to_section(section);
+		ms = __nr_to_section(section); //@@ section(섹션번호)에 대한 mem_section 구조체의 주소 리턴.
+
 		if (!ms->section_mem_map)
 			ms->section_mem_map = sparse_encode_early_nid(nid) |
-							SECTION_MARKED_PRESENT;
+							SECTION_MARKED_PRESENT; //@@ SECTION_MARKED_PRESENT = 1
+		//@@ nid번호를 mem map mask 자리에 임시로 저장 + PRESENT 표시.
 	}
 }
 
@@ -492,7 +497,7 @@ void __init sparse_init(void)
 	BUILD_BUG_ON(!is_power_of_2(sizeof(struct mem_section)));
 
 	/* Setup pageblock_order for HUGETLB_PAGE_SIZE_VARIABLE */
-	set_pageblock_order();
+	set_pageblock_order(); //@@ pageblock_order 설정
 
 	/*
 	 * map is using big page (aka 2M in x86 64 bit)
@@ -505,8 +510,9 @@ void __init sparse_init(void)
 	 * powerpc need to call sparse_init_one_section right after each
 	 * sparse_early_mem_map_alloc, so allocate usemap_map at first.
 	 */
-	size = sizeof(unsigned long *) * NR_MEM_SECTIONS;
-	usemap_map = alloc_bootmem(size);
+	size = sizeof(unsigned long *) * NR_MEM_SECTIONS; //@@ NR_MEM_SECTIONS = 16 (메모리가 4GB일 때 16개의 섹션)
+	usemap_map = alloc_bootmem(size); //@@ size = 64
+
 	if (!usemap_map)
 		panic("can not allocate usemap_map\n");
 
@@ -515,32 +521,42 @@ void __init sparse_init(void)
 
 		if (!present_section_nr(pnum))
 			continue;
+
 		ms = __nr_to_section(pnum);
 		nodeid_begin = sparse_early_nid(ms);
 		pnum_begin = pnum;
 		break;
 	}
+
 	usemap_count = 1;
+
+	//@@ [2013.12.07] [19:00-22:00] [END] [mm/sparse.c] sparse_init() 분석 중 마침.
+	
 	for (pnum = pnum_begin + 1; pnum < NR_MEM_SECTIONS; pnum++) {
 		struct mem_section *ms;
 		int nodeid;
 
 		if (!present_section_nr(pnum))
 			continue;
+
 		ms = __nr_to_section(pnum);
 		nodeid = sparse_early_nid(ms);
+		
 		if (nodeid == nodeid_begin) {
 			usemap_count++;
 			continue;
 		}
+		
 		/* ok, we need to take cake of from pnum_begin to pnum - 1*/
 		sparse_early_usemaps_alloc_node(usemap_map, pnum_begin, pnum,
 						 usemap_count, nodeid_begin);
+		
 		/* new start, update count etc*/
 		nodeid_begin = nodeid;
 		pnum_begin = pnum;
 		usemap_count = 1;
 	}
+
 	/* ok, last chunk */
 	sparse_early_usemaps_alloc_node(usemap_map, pnum_begin, NR_MEM_SECTIONS,
 					 usemap_count, nodeid_begin);
