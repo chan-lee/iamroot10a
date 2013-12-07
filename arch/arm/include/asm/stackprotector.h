@@ -28,8 +28,9 @@ static __always_inline void boot_init_stack_canary(void)
 	unsigned long canary;
 
 	/* Try to get a semi random initial value. */
-	get_random_bytes(&canary, sizeof(canary));
-	canary ^= LINUX_VERSION_CODE;
+	get_random_bytes(&canary, sizeof(canary)); //@@ TODO get_random_bytes()
+	//@@ 참고사이트 [http://eprint.iacr.org/2006/086.pdf]
+	canary ^= LINUX_VERSION_CODE; //@@ LINUX_VERSION_CODE = 199424
 
 	current->stack_canary = canary; // current 매크로는 현재 태스크를 나타내는 태스크 디스크립터를 리턴.
 	__stack_chk_guard = current->stack_canary;

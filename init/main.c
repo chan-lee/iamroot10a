@@ -501,15 +501,19 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	// http://llvm.org/docs/CommandGuide/llvm-nm.html 참고 
 	//@@ [2013.11.30] [15:00-18:00] [END]
 
-	debug_objects_early_init(); // CONFIG_DEBUG_OBJECTS 가 설정되어 있으면 수행.
+	//@@ [2013.12.07] [15:00-18:00] [START]
+	debug_objects_early_init(); // CONFIG_DEBUG_OBJECTS 가 설정되어 있으면 수행. //@@ CONFIG_DEBUG_OBJECTS is not set
+	//@@ 모기향 P115 참조
 
 	/*
 	 * Set up the the initial canary ASAP:
 	 */
-	boot_init_stack_canary();
+	//@@ [모기향] P117
+	boot_init_stack_canary(); //@@ current->stack_canary에 canary 값을 구하여 저장
 
-        //cgroup 참조 링크 : https://access.redhat.com/site/documentation/ko-KR/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/ch01.html
-        //디폴트 설정에서는 사용하지 않도록 되어 있지만 분석하기로 결정  2013.09.14
+	//cgroup 참조 링크 : https://access.redhat.com/site/documentation/ko-KR/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/ch01.html
+	//디폴트 설정에서는 사용하지 않도록 되어 있지만 분석하기로 결정  2013.09.14
+
 	cgroup_init_early();
 
         //cpsid i 인스트럭션 호출

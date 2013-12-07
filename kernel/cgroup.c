@@ -283,6 +283,7 @@ static int notify_on_release(const struct cgroup *cgrp)
 #define for_each_builtin_subsys(ss, i)					\
 	for ((i) = 0; (i) < CGROUP_BUILTIN_SUBSYS_COUNT &&		\
 	     (((ss) = cgroup_subsys[i]) || true); (i)++)
+//@@ [kernel/cgroup] static struct cgroup_subsys *cgroup_subsys[CGROUP_SUBSYS_COUNT]
 
 /* iterate each subsystem attached to a hierarchy */
 #define for_each_root_subsys(root, ss)					\
@@ -1426,13 +1427,16 @@ static void init_cgroup_root(struct cgroupfs_root *root)
 {
 	struct cgroup *cgrp = &root->top_cgroup;
 
-	INIT_LIST_HEAD(&root->subsys_list);
-	INIT_LIST_HEAD(&root->root_list);
+	INIT_LIST_HEAD(&root->subsys_list); //@@ subsys_list: 서브시스템 리스트 초기화
+	INIT_LIST_HEAD(&root->root_list); //@@ TODO root_list의 역할???
 	root->number_of_cgroups = 1;
 	cgrp->root = root;
         //cgrp->name 포인터에 root_cgroup_name 주소값 할당
+	
 	RCU_INIT_POINTER(cgrp->name, &root_cgroup_name);
-	init_cgroup_housekeeping(cgrp);
+	//@@ static struct cgroup_name root_cgroup_name = { .name = "/" };
+	
+	init_cgroup_housekeeping(cgrp); //@@ 각종 리스트와 뮤텍스 스핀락 초기화
 }
 
 static int cgroup_init_root_id(struct cgroupfs_root *root, int start, int end)
@@ -4662,12 +4666,14 @@ static void __init cgroup_init_subsys(struct cgroup_subsys *ss)
 	mutex_lock(&cgroup_mutex);
 
 	/* init base cftset */
-	cgroup_init_cftsets(ss);
+	cgroup_init_cftsets(ss); //@@ TODO [추측] 각 서브시스템의 cgroup control files에 대해 초기화
 
 	/* Create the top cgroup state for this subsystem */
 	list_add(&ss->sibling, &cgroup_dummy_root.subsys_list);
 	ss->root = &cgroup_dummy_root;
 	css = ss->css_alloc(cgroup_dummy_top);
+	//@@ [2013.12.07] [END] ss->css_alloc() 분석 중 마침
+
 	/* We don't handle early failures gracefully */
 	BUG_ON(IS_ERR(css));
 	init_cgroup_css(css, ss, cgroup_dummy_top);
@@ -4881,6 +4887,8 @@ int __init cgroup_init_early(void)
 	int i;
 
 	atomic_set(&init_css_set.refcount, 1);
+	//@@ kernel/cgroup.c - init_css_set
+	//@@ refcount.counter = 1
         //더블 링크드 리스트 초기화 
 	INIT_LIST_HEAD(&init_css_set.cgrp_links);
 	INIT_LIST_HEAD(&init_css_set.tasks);
@@ -4888,10 +4896,12 @@ int __init cgroup_init_early(void)
         //http://stackoverflow.com/questions/3058592/use-of-double-pointer-in-linux-kernel-hash-list-implementation
 	INIT_HLIST_NODE(&init_css_set.hlist);
 	css_set_count = 1;
-	init_cgroup_root(&cgroup_dummy_root);
+	init_cgroup_root(&cgroup_dummy_root); //@@ cgroup root 초기화 작업 수행
+	//@@ [kernel/cgroup.c] static struct cgroupfs_root cgroup_dummy_root
 	cgroup_root_count = 1;
-	RCU_INIT_POINTER(init_task.cgroups, &init_css_set);
+	RCU_INIT_POINTER(init_task.cgroups, &init_css_set); //@@ init_task.cgroups = &init_css_set
 
+	//@@ [kernel/cgroup.c] static struct cgrp_cset_link init_cgrp_cset_link
 	init_cgrp_cset_link.cset = &init_css_set;
 	init_cgrp_cset_link.cgrp = cgroup_dummy_top;
 	list_add(&init_cgrp_cset_link.cset_link, &cgroup_dummy_top->cset_links);
@@ -4904,6 +4914,7 @@ int __init cgroup_init_early(void)
 		BUG_ON(strlen(ss->name) > MAX_CGROUP_TYPE_NAMELEN);
 		BUG_ON(!ss->css_alloc);
 		BUG_ON(!ss->css_free);
+
 		if (ss->subsys_id != i) {
 			printk(KERN_ERR "cgroup: Subsys %s id == %d\n",
 			       ss->name, ss->subsys_id);
