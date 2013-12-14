@@ -4214,6 +4214,8 @@ static void css_release(struct percpu_ref *ref)
 	schedule_work(&css->dput_work);
 }
 
+//@@[2013.12.14]앞에서 메모리를 할당받은 ss를 cgroup에 저장.
+//@@ cgroup를 다시 root에 연결.
 static void init_cgroup_css(struct cgroup_subsys_state *css,
 			       struct cgroup_subsys *ss,
 			       struct cgroup *cgrp)
@@ -4224,7 +4226,7 @@ static void init_cgroup_css(struct cgroup_subsys_state *css,
 	if (cgrp == cgroup_dummy_top)
 		css->flags |= CSS_ROOT;
 	BUG_ON(cgrp->subsys[ss->subsys_id]);
-	cgrp->subsys[ss->subsys_id] = css;
+	cgrp->subsys[ss->subsys_id] = css; //@@ cgrp->subsys's 배열에 css 을 할당. 
 
 	/*
 	 * css holds an extra ref to @cgrp->dentry which is put on the last
@@ -4243,9 +4245,9 @@ static int online_css(struct cgroup_subsys *ss, struct cgroup *cgrp)
 	lockdep_assert_held(&cgroup_mutex);
 
 	if (ss->css_online)
-		ret = ss->css_online(cgrp);
+		ret = ss->css_online(cgrp); //@@ ss가 css를 online시켜준다. 
 	if (!ret)
-		cgrp->subsys[ss->subsys_id]->flags |= CSS_ONLINE;
+		cgrp->subsys[ss->subsys_id]->flags |= CSS_ONLINE; //@@ CSS_ONLINE: 1
 	return ret;
 }
 
@@ -4671,27 +4673,27 @@ static void __init cgroup_init_subsys(struct cgroup_subsys *ss)
 	/* Create the top cgroup state for this subsystem */
 	list_add(&ss->sibling, &cgroup_dummy_root.subsys_list);
 	ss->root = &cgroup_dummy_root;
-	css = ss->css_alloc(cgroup_dummy_top);
+	css = ss->css_alloc(cgroup_dummy_top); //@@[2013.12.14] subsystem 마다 alloc하는 함수 포인트로 이동->Todo.
 	//@@ [2013.12.07] [END] ss->css_alloc() 분석 중 마침
 
 	/* We don't handle early failures gracefully */
 	BUG_ON(IS_ERR(css));
-	init_cgroup_css(css, ss, cgroup_dummy_top);
+	init_cgrup_css(css, ss, cgroup_dummy_top); //@@ [2013.12.14] [START] dummy_top을 cgoup의 root로 tree를 구성.
 
 	/* Update the init_css_set to contain a subsys
 	 * pointer to this state - since the subsystem is
 	 * newly registered, all tasks and hence the
 	 * init_css_set is in the subsystem's top cgroup. */
-	init_css_set.subsys[ss->subsys_id] = css;
+	init_css_set.subsys[ss->subsys_id] = css; //@@ init process 가 사용할 css_set.
 
-	need_forkexit_callback |= ss->fork || ss->exit;
+	need_forkexit_callback |= ss->fork || ss->exit; //@@fork나 exit에 대한 추후 작업을 위해서.
 
 	/* At system boot, before all subsystems have been
 	 * registered, no tasks have been forked, so we don't
 	 * need to invoke fork callbacks here. */
 	BUG_ON(!list_empty(&init_task.tasks));
 
-	BUG_ON(online_css(ss, cgroup_dummy_top));
+	BUG_ON(online_css(ss, cgroup_dummy_top)); //@@ ss를 cgoup에서 online 유무 확인.
 
 	mutex_unlock(&cgroup_mutex);
 
@@ -4922,7 +4924,7 @@ int __init cgroup_init_early(void)
 		}
 
 		if (ss->early_init)
-			cgroup_init_subsys(ss);
+			cgroup_init_subsys(ss); //@@ ss를 초기화하고 online으로 만들어 준다. 
 	}
 	return 0;
 }
