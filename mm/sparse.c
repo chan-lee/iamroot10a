@@ -144,7 +144,7 @@ static inline unsigned long sparse_encode_early_nid(int nid)
 
 static inline int sparse_early_nid(struct mem_section *section)
 {
-	return (section->section_mem_map >> SECTION_NID_SHIFT);
+	return (section->section_mem_map >> SECTION_NID_SHIFT); //@@ section id 확인.
 }
 
 /* Validate the physical addressing limitations of the model */
@@ -227,7 +227,12 @@ unsigned long __init node_memmap_size_bytes(int nid, unsigned long start_pfn,
  */
 static unsigned long sparse_encode_mem_map(struct page *mem_map, unsigned long pnum)
 {
-	return (unsigned long)(mem_map - (section_nr_to_pfn(pnum)));
+	  //@@ pnum : section number 
+		//@@ mem_map : page * 64k의 시작위치.
+		//@@This is, logically, a pointer to an array of struct
+		//@@ pages.  However, it is stored with some other magic
+		//@@ TODO...
+		return (unsigned long)(mem_map - (section_nr_to_pfn(pnum))); //@@ 페이지 프레임 넘버
 }
 
 /*
@@ -240,6 +245,7 @@ struct page *sparse_decode_mem_map(unsigned long coded_mem_map, unsigned long pn
 	return ((struct page *)coded_mem_map) + section_nr_to_pfn(pnum);
 }
 
+//@@ mem_section의 Nid가 map으로 가르치게하고 has_map을 설정. 
 static int __meminit sparse_init_one_section(struct mem_section *ms,
 		unsigned long pnum, struct page *mem_map,
 		unsigned long *pageblock_bitmap)
@@ -249,7 +255,7 @@ static int __meminit sparse_init_one_section(struct mem_section *ms,
 
 	ms->section_mem_map &= ~SECTION_MAP_MASK;
 	ms->section_mem_map |= sparse_encode_mem_map(mem_map, pnum) |
-							SECTION_HAS_MEM_MAP;
+							SECTION_HAS_MEM_MAP;  //@@  SECTION_HAS_MEM_MAP (1UL<<1)
  	ms->pageblock_flags = pageblock_bitmap;
 
 	return 1;
@@ -377,19 +383,19 @@ static void __init sparse_early_usemaps_alloc_node(unsigned long**usemap_map,
 	}
 }
 
-#ifndef CONFIG_SPARSEMEM_VMEMMAP
+#ifndef CONFIG_SPARSEMEM_VMEMMAP //@@ no define
 struct page __init *sparse_mem_map_populate(unsigned long pnum, int nid)
 {
 	struct page *map;
 	unsigned long size;
 
-	map = alloc_remap(nid, sizeof(struct page) * PAGES_PER_SECTION);
+	map = alloc_remap(nid, sizeof(struct page) * PAGES_PER_SECTION); //@@ PAGES_PER_SECTION 64K
 	if (map)
 		return map;
 
-	size = PAGE_ALIGN(sizeof(struct page) * PAGES_PER_SECTION);
+	size = PAGE_ALIGN(sizeof(struct page) * PAGES_PER_SECTION);  
 	map = __alloc_bootmem_node_high(NODE_DATA(nid), size,
-					 PAGE_SIZE, __pa(MAX_DMA_ADDRESS));
+					 PAGE_SIZE, __pa(MAX_DMA_ADDRESS)); //@@ PAGE_SIZE 4k
 	return map;
 }
 void __init sparse_mem_maps_populate_node(struct page **map_map,
@@ -458,7 +464,7 @@ static struct page __init *sparse_early_mem_map_alloc(unsigned long pnum)
 	struct mem_section *ms = __nr_to_section(pnum);
 	int nid = sparse_early_nid(ms);
 
-	map = sparse_mem_map_populate(pnum, nid);
+	map = sparse_mem_map_populate(pnum, nid); //nid : section안에 nid 필드.
 	if (map)
 		return map;
 
@@ -480,8 +486,8 @@ void __attribute__((weak)) __meminit vmemmap_populate_print_last(void)
 void __init sparse_init(void)
 {
 	unsigned long pnum;
-	struct page *map;
-	unsigned long *usemap;
+	struct page *map;		//@@page에 대한 정보
+	unsigned long *usemap;  //@@ 사용중인 page에 대해서.
 	unsigned long **usemap_map;
 	int size;
 	int nodeid_begin = 0;
@@ -510,8 +516,10 @@ void __init sparse_init(void)
 	 * powerpc need to call sparse_init_one_section right after each
 	 * sparse_early_mem_map_alloc, so allocate usemap_map at first.
 	 */
-	size = sizeof(unsigned long *) * NR_MEM_SECTIONS; //@@ NR_MEM_SECTIONS = 16 (메모리가 4GB일 때 16개의 섹션)
-	usemap_map = alloc_bootmem(size); //@@ size = 64
+	size = sizeof(unsigned long *) * NR_MEM_SECTIONS; //@@ NR_MEM_SECTIONS = 16 (메모리가 4GB일 때 16개의 섹션,section size = 512M)
+	usemap_map = alloc_bootmem(size); //@@ size = 64 byte,  16개의 section을 가르치는 포인터. 
+	//@@ usemap_map = 해당 section이 각 노드의 시작 section인지를 나타냄,
+	//@@ usemap = 같은 node에 있는 section의 시작 포인터, map = page. 
 
 	if (!usemap_map)
 		panic("can not allocate usemap_map\n");
@@ -521,7 +529,8 @@ void __init sparse_init(void)
 
 		if (!present_section_nr(pnum))
 			continue;
-
+		
+		//@@ present number(pnum) == 0 인 경우 앞 함수에서 alloc 했었음.
 		ms = __nr_to_section(pnum);
 		nodeid_begin = sparse_early_nid(ms);
 		pnum_begin = pnum;
@@ -532,7 +541,9 @@ void __init sparse_init(void)
 
 	//@@ [2013.12.07] [19:00-22:00] [END] [mm/sparse.c] sparse_init() 분석 중 마침.
 	
-	for (pnum = pnum_begin + 1; pnum < NR_MEM_SECTIONS; pnum++) {
+	//@@ present 된 것을 체크하기 위해서...
+	//@@ usemap... 한 node들 안에 있는 section들.
+	for (pnum = pnum_begin + 1; pnum < NR_MEM_SECTIONS; pnum++) {  //@@NR_MEM_SECTIONS 16
 		struct mem_section *ms;
 		int nodeid;
 
@@ -548,20 +559,21 @@ void __init sparse_init(void)
 		}
 		
 		/* ok, we need to take cake of from pnum_begin to pnum - 1*/
+		//@@ node안에 있는 section들을 가지고 usemap_map에 속하는 usemap을 할당.
 		sparse_early_usemaps_alloc_node(usemap_map, pnum_begin, pnum,
 						 usemap_count, nodeid_begin);
 		
 		/* new start, update count etc*/
 		nodeid_begin = nodeid;
 		pnum_begin = pnum;
-		usemap_count = 1;
+		usemap_count = 1; //@@ node당 usemap_count를 센다.
 	}
 
 	/* ok, last chunk */
 	sparse_early_usemaps_alloc_node(usemap_map, pnum_begin, NR_MEM_SECTIONS,
 					 usemap_count, nodeid_begin);
 
-#ifdef CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER
+#ifdef CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER //@@ no define 우리는 node가 한개.
 	size2 = sizeof(struct page *) * NR_MEM_SECTIONS;
 	map_map = alloc_bootmem(size2);
 	if (!map_map)
@@ -607,18 +619,20 @@ void __init sparse_init(void)
 		if (!present_section_nr(pnum))
 			continue;
 
-		usemap = usemap_map[pnum];
+		usemap = usemap_map[pnum];  
 		if (!usemap)
 			continue;
 
-#ifdef CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER
+#ifdef CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER //@@ no define.
 		map = map_map[pnum];
 #else
-		map = sparse_early_mem_map_alloc(pnum);
+		map = sparse_early_mem_map_alloc(pnum); //@@ page 할당.
 #endif
 		if (!map)
 			continue;
-
+		
+		//@@ mem_section의 Nid가 map으로 가르치게하고 has_map을 설정.
+		//Todo: 왜 pfn을 빼는지 모르겠다.
 		sparse_init_one_section(__nr_to_section(pnum), pnum, map,
 								usemap);
 	}
@@ -628,7 +642,7 @@ void __init sparse_init(void)
 #ifdef CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER
 	free_bootmem(__pa(map_map), size2);
 #endif
-	free_bootmem(__pa(usemap_map), size);
+	free_bootmem(__pa(usemap_map), size); //@@ node별 usemap정보를 기록하기위한 usemap_map을 반환.
 }
 
 #ifdef CONFIG_MEMORY_HOTPLUG

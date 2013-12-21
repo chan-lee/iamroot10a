@@ -288,6 +288,10 @@ static void __init arm_bootmem_free(unsigned long min, unsigned long max_low,
 	 * to do anything fancy with the allocation of this memory
 	 * to the zones, now is the time to do it.
 	 */
+	//@@ min: 첫번째 뱅크 start의 PFN
+	//@@ max_low: normal의 마지막 뱅크 end의 PFN
+	//@@ max_high: 마지막 뱅크 end의 PFN
+	
 	zone_size[0] = max_low - min;
 #ifdef CONFIG_HIGHMEM
 	zone_size[ZONE_HIGHMEM] = max_high - max_low;
@@ -345,7 +349,7 @@ static void __init arm_memory_present(void)
 	struct memblock_region *reg;
 
 	for_each_memblock(memory, reg)
-		memory_present(0, memblock_region_memory_base_pfn(reg),
+		memory_present(0/*nid*/, memblock_region_memory_base_pfn(reg),
 			       memblock_region_memory_end_pfn(reg));
 }
 #endif
@@ -443,19 +447,19 @@ void __init bootmem_init(void)
 	 * Sparsemem tries to allocate bootmem in memory_present(),
 	 * so must be done after the fixed reservations
 	 */
-	arm_memory_present(); //@@ 
+	arm_memory_present(); //@@ nid == 0 
 
 	/*
 	 * sparse_init() needs the bootmem allocator up and running.
 	 */
-	sparse_init();
+	sparse_init(); //@@ [20131221] page를 관리하는 map을 만들어서 mem_section과 연결..
 
 	/*
 	 * Now free the memory - free_area_init_node needs
 	 * the sparse mem_map arrays initialized by sparse_init()
 	 * for memmap_init_zone(), otherwise all PFNs are invalid.
 	 */
-	arm_bootmem_free(min, max_low, max_high);
+	arm_bootmem_free(min, max_low, max_high); //@@ [20131221] 볼려다가 끝. 책 p.251
 
 	/*
 	 * This doesn't seem to be used by the Linux memory manager any

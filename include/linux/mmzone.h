@@ -1150,7 +1150,7 @@ extern unsigned long usemap_size(void);
 #define SECTION_HAS_MEM_MAP	(1UL<<1)
 #define SECTION_MAP_LAST_BIT	(1UL<<2)
 #define SECTION_MAP_MASK	(~(SECTION_MAP_LAST_BIT-1))
-#define SECTION_NID_SHIFT	2
+#define SECTION_NID_SHIFT	2 //@@ 초반에는 NID를 기록하나 나중에는 map을 기록한다.
 
 static inline struct page *__section_mem_map_addr(struct mem_section *section)
 {
