@@ -434,7 +434,7 @@ void __init parse_early_param(void)
 
 static void __init boot_cpu_init(void)
 {
-	int cpu = smp_processor_id(); //@@ [2013.12.14] [END] 책 10.1 까지 읽음 thread_info의 cpu는 어디서 설정되었나? 참고:http://www.iamroot.org/xe/Kernel_8_ARM/62934
+	int cpu = smp_processor_id(); //@@ [2013.12.14] [END] 책 10.1 까지 읽음 thread_info의 cpu는 어디서 설정되었나? 참고:http://www.iamroot.org/xe/Kernel_8_ARM/62934 //@@ cpu == 0
 
 	/* Mark the boot cpu "present", "online" etc for SMP and UP case */
 	//각 cpu 상태에 대한 자료 : http://studyfoss.egloos.com/5444259
@@ -444,6 +444,7 @@ static void __init boot_cpu_init(void)
 	// cpu_active_mask - 해당 비트에 대한 CPU가 존재하며 task migration 시 이를 이용할 수 있다. */
 	// 참고로 CPU hotplug가 활성화되지 않은 환경이라면 present == possible이고 active == oneline이다. */
 	
+	//@@ [2013.12.21] [15:00-18:00] [START]
 	set_cpu_online(cpu, true);
 	set_cpu_active(cpu, true);
 	set_cpu_present(cpu, true);
