@@ -1800,7 +1800,7 @@ static bool zone_allows_reclaim(struct zone *local_zone, struct zone *zone)
 static void __paginginit init_zone_allows_reclaim(int nid)
 {
 	int i;
-
+  //@@ zone_reclaim_mode : 로컬에 사용 가능한 공간이 없을 경우 리모트에 있는 메모리를 가져옴
 	for_each_online_node(i)
 		if (node_distance(nid, i) <= RECLAIM_DISTANCE)
 			node_set(i, NODE_DATA(nid)->reclaim_nodes);
@@ -4542,6 +4542,7 @@ static void __meminit calculate_node_totalpages(struct pglist_data *pgdat,
 						  node_start_pfn, node_end_pfn,
 						  zholes_size);
 	pgdat->node_present_pages = realtotalpages;
+  //@@ To Do : hole, absent, present 페이지들의 정확한 차이들은 뭔가??
 	printk(KERN_DEBUG "On node %d totalpages: %lu\n", pgdat->node_id,
 							realtotalpages);
 }
@@ -4761,6 +4762,7 @@ static void __init_refok alloc_node_mem_map(struct pglist_data *pgdat)
 		 * aligned but the node_mem_map endpoints must be in order
 		 * for the buddy allocator to function correctly.
 		 */
+    //@@ order : 연속적인 메모리 페이지 p256 참고
 		start = pgdat->node_start_pfn & ~(MAX_ORDER_NR_PAGES - 1);
 		end = pgdat_end_pfn(pgdat);
 		end = ALIGN(end, MAX_ORDER_NR_PAGES);

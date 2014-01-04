@@ -738,6 +738,8 @@ again:
 void * __init __alloc_bootmem_node_nopanic(pg_data_t *pgdat, unsigned long size,
 				   unsigned long align, unsigned long goal)
 {
+    //@@ TO DO WARN_ON_ONCE 는 왜 하는 건인가
+    //@@ 2014.01.04 WARN_ON_ONCE에 대한 논의 하다 끝
 	if (WARN_ON_ONCE(slab_is_available()))
 		return kzalloc_node(size, GFP_NOWAIT, pgdat->node_id);
 
