@@ -612,6 +612,7 @@ static void __init setup_processor(void)
 	elf_hwcap = list->elf_hwcap;
 	//elf_hwpcap : 하드웨어 지원 사항을 나타내는 flag
 	cpuid_init_hwcaps();
+	//@@ [2014.01.04] [END] [15:00-18:00]
 
 #ifndef CONFIG_ARM_THUMB
 	elf_hwcap &= ~(HWCAP_THUMB | HWCAP_IDIVT);
