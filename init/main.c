@@ -528,6 +528,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
  */
 	//cpu를 online, active, present, possible 상태로 초기화
 	boot_cpu_init();
+	//@@ [2014.01.04] [15:00-18:00] [START]
 	page_address_init(); //@@highmem을 위한 page_address_htable를 초기화.[20131221]
 	pr_notice("%s", linux_banner);
 	setup_arch(&command_line);

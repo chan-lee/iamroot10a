@@ -332,7 +332,7 @@ static struct page_address_map page_address_maps[LAST_PKMAP];
 static struct page_address_slot {
 	struct list_head lh;			/* List of page_address_maps */
 	spinlock_t lock;			/* Protect this bucket's list */
-} ____cacheline_aligned_in_smp page_address_htable[1<<PA_HASH_ORDER];
+} ____cacheline_aligned_in_smp page_address_htable[1 << PA_HASH_ORDER]; //@@ PA_HASH_ORDER[7]
 //To Do  ____cacheline_aligned_in_smp 사용 하는 이유
 //L1 캐시 사이즈로 align시켜 주는데 최소한의 캐쉬라인에 모두 들어가게 하기 위함이 아닐까??
 

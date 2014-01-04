@@ -128,9 +128,9 @@ __mmap_switched_data:
  * This provides a C-API version of __lookup_processor_type
  */
 ENTRY(lookup_processor_type)
-	stmfd	sp!, {r4 - r6, r9, lr}
-	mov	r9, r0
-	bl	__lookup_processor_type
+	stmfd	sp!, {r4 - r6, r9, lr}	//@@ 스택에 r4-r6, r9, lr를 저장
+	mov	r9, r0						//@@ r9에 r0를 저장
+	bl	__lookup_processor_type		//@@ __lookup_processor_type으로 점프
 	mov	r0, r5
 	ldmfd	sp!, {r4 - r6, r9, pc}
 ENDPROC(lookup_processor_type)
@@ -154,15 +154,15 @@ ENDPROC(lookup_processor_type)
 __lookup_processor_type:
 	adr	r3, __lookup_processor_type_data
 	ldmia	r3, {r4 - r6}
-			@@r3 = __lookup_processor_type_data 라벨의 주소
-			@@r4 = __lookup_processor_type_data 가 메모리 상에 올라간 주소값.	
+			@@r3 = __lookup_processor_type_data 가 메모리 상에 올라간 물리주소
+			@@r4 = __lookup_processor_type_data 의 location counter(가상)
 			@@r5 =	__proc_info_begin @@ proc_infor_list 구조체가 모여있는 .proc.info.init 섹션의 시작을 의미 
 			@@r6 =	__proc_info_end @@ 섹션의 끝을 의미
 	
 	sub	r3, r3, r4			@ get offset between virt&phys
 	add	r5, r5, r3			@ convert virt addresses to
 	add	r6, r6, r3			@ physical address space
-1:	ldmia	r5, {r3, r4}			@ value, mask
+1:	ldmia	r5, {r3, r4}	@ value, mask
 	and	r4, r4, r9			@ mask wanted bits
 	teq	r3, r4
 	beq	2f @@ proc_info_list 를 순회하면서 찾으면 2f 로 점프. 그리고 빠져 나간다. 
@@ -181,10 +181,10 @@ ENDPROC(__lookup_processor_type)
 	.align	2
 	.type	__lookup_processor_type_data, %object
 __lookup_processor_type_data:
-	.long	. @@ . 은 현재 위치를 의미함, .long 은 4byte.
-	@@ Todo 130810: .word 는 4byte 인줄 알았는데 정말인가? word 는 data 를 한번에 가져올 수 있는 bus width 를 말한다. 우리는 32bit bus 를 사용하므로 .word 는 4byte 이다. 하지만 좀더 정확한 분석이 필요하다.
-	.long	__proc_info_begin
-	.long	__proc_info_end
+	.long	. @@ . 은 현재 위치를 의미함, .long 은 4byte. @@ 컴파일시 현지 위치의 location counter(상대주소)를 저장
+	@@ word 는 data 를 한번에 가져올 수 있는 bus width 를 말한다. 우리는 32bit bus 를 사용하므로 .word 는 4byte 이다.
+	.long	__proc_info_begin	@@ __proc_info_begin 레이블의 location counter를 저장
+	.long	__proc_info_end		@@ __proc_info_end 레이블의 location counter를 저장
 	.size	__lookup_processor_type_data, . - __lookup_processor_type_data
 	        @@ .size 는 elf symbol table 에 size 정보를 나타낸다.
 			@@ __lookup_processor_type_data 의 size 를 설정한다. .(현재 위치카운터) - __lookup_processor_type_data 를 함으로써 __lookup_processor_type_data 의 size 를 구할 수 있다.

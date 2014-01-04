@@ -154,7 +154,7 @@ static inline unsigned int __attribute_const__ read_cpuid_ext(unsigned offset)
  */
 static inline unsigned int __attribute_const__ read_cpuid_id(void)
 {
-	return read_cpuid(CPUID_ID);
+	return read_cpuid(CPUID_ID); //@@ CPUID_ID[0]
 }
 
 #elif defined(CONFIG_CPU_V7M)

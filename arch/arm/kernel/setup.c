@@ -243,7 +243,7 @@ static int __get_cpu_architecture(void)
 		/* Revised CPUID format. Read the Memory Model Feature
 		 * Register 0 and check for VMSAv7 or PMSAv7 */
 		asm("mrc	p15, 0, %0, c0, c1, 4"
-		    : "=r" (mmfr0));
+		    : "=r" (mmfr0)); //@@ [2014.01.04] TODO
 		if ((mmfr0 & 0x0000000f) >= 0x00000003 ||
 		    (mmfr0 & 0x000000f0) >= 0x00000030)
 			cpu_arch = CPU_ARCH_ARMv7;
@@ -375,19 +375,24 @@ static void __init cpuid_init_hwcaps(void)
 	if (cpu_architecture() < CPU_ARCH_ARMv7)
 		return;
 
-	divide_instrs = (read_cpuid_ext(CPUID_EXT_ISAR0) & 0x0f000000) >> 24;
+	divide_instrs = (read_cpuid_ext(CPUID_EXT_ISAR0) & 0x0f000000) >> 24; //@@ CPUID_EXT_ISAR0["c2, 0"]
 
 	switch (divide_instrs) {
-	case 2:
+	case 2: //@@ Adds SDIV and UDIV in the ARM instruction set. (Thumb 포함)
 		elf_hwcap |= HWCAP_IDIVA;
-	case 1:
+	case 1:	//@@ Adds SDIV and UDIV in the Thumb instruction set.
 		elf_hwcap |= HWCAP_IDIVT;
+		//@@ SDIV(Singed DIV), UDIV(Unsigned DIV)
 	}
 
 	/* LPAE implies atomic ldrd/strd instructions */
 	vmsa = (read_cpuid_ext(CPUID_EXT_MMFR0) & 0xf) >> 0;
+
+	//@@ VMSA(Virtual Memory System Architecture)	- MMU
+	//@@ PMSA(Procected Memory System Architecture)	- MPU
+
 	if (vmsa >= 5)
-		elf_hwcap |= HWCAP_LPAE;
+		elf_hwcap |= HWCAP_LPAE; //@@ LPAE(Large Physical Address Extension)
 }
 
 static void __init feat_v6_fixup(void)
@@ -569,6 +574,7 @@ static void __init setup_processor(void)
 	 * entries in arch/arm/mm/proc-*.S
 	 */
 	list = lookup_processor_type(read_cpuid_id());
+
 	if (!list) {
 		printk("CPU configuration botched (ID %08x), unable "
 		       "to continue.\n", read_cpuid_id());
@@ -576,10 +582,10 @@ static void __init setup_processor(void)
 	}
 
 	cpu_name = list->cpu_name;
-	//arm 아키텍쳐 버전 정보
+	//@@ arm 아키텍쳐 버전 정보
 	__cpu_architecture = __get_cpu_architecture();
 
-	///일단 4개의 설정 모두 사용한다고 가정
+	///@@ 일단 4개의 설정 모두 사용한다고 가정
 #ifdef MULTI_CPU
 	processor = *list->proc;
 #endif
@@ -597,7 +603,7 @@ static void __init setup_processor(void)
 	       cpu_name, read_cpuid_id(), read_cpuid_id() & 15,
 	       proc_arch[cpu_architecture()], cr_alignment);
 
-	//uts : univasal time sharing system
+	//@@ [2014.01.04] UTS(Unix Time-sharing System)
 	//init_uts_ns 구조체는 사용하는 UTS 시스템에 대한 간략한 정보를 담고 있음
 	snprintf(init_utsname()->machine, __NEW_UTS_LEN + 1, "%s%c",
 		 list->arch_name, ENDIANNESS);
