@@ -121,6 +121,7 @@ EXPORT_SYMBOL(outer_cache);
  * C code should use the cpu_architecture() function instead of accessing this
  * variable directly.
  */
+//@@ __read_mostly:  컴파일러에게  " 이 데이터는 자주 수정되지 않으며 대부분 읽기 연산만 이루어진다" 라는 것을 알려준다. 
 int __cpu_architecture __read_mostly = CPU_ARCH_UNKNOWN;
 
 struct stack {
@@ -262,8 +263,10 @@ static int __get_cpu_architecture(void)
 int __pure cpu_architecture(void)
 {
 	BUG_ON(__cpu_architecture == CPU_ARCH_UNKNOWN);
-
-	return __cpu_architecture;
+	//@@ arch/arm/kernel/entry-armv.S, 597 line.의 __cpu_architecture는 v7보다 작을때 생성.
+	//@@ setup_processor()안에 "__cpu_architecture = __get_cpu_architecture();"에서 설정된 값을 가져온다.
+	//@@ 결국 mrc 명령어를 사용해서 들고오고 CPU_ARCH_ARMv7값을 가지고 있을것이다.
+	return __cpu_architecture; 
 }
 
 static int cpu_has_aliasing_icache(unsigned int arch)
@@ -301,24 +304,24 @@ static int cpu_has_aliasing_icache(unsigned int arch)
 
 static void __init cacheid_init(void)
 {
-	unsigned int arch = cpu_architecture();
+	unsigned int arch = cpu_architecture(); //@@ arch: CPU_ARCH_ARMv7
 
-	if (arch == CPU_ARCH_ARMv7M) {
+	if (arch == CPU_ARCH_ARMv7M) { //@@   CPU_ARCH_ARMv7M: Cortex-M3, no caache
 		cacheid = 0;
-	} else if (arch >= CPU_ARCH_ARMv6) {
+	} else if (arch >= CPU_ARCH_ARMv6) { 
 		unsigned int cachetype = read_cpuid_cachetype();
-		if ((cachetype & (7 << 29)) == 4 << 29) {
+		if ((cachetype & (7 << 29)) == 4 << 29) {   //@@ check ARMv7 format.
 			/* ARMv7 register format */
 			arch = CPU_ARCH_ARMv7;
 			//CACHEID_VIPT_NONALIASING = 2
-			cacheid = CACHEID_VIPT_NONALIASING;
+			cacheid = CACHEID_VIPT_NONALIASING; //@@ VIPT로 설정, CACHEID_VIPT_NONALIASING  (1 << 1)
 			//Level 1 instruction cache policy.
-			switch (cachetype & (3 << 14)) {
+			switch (cachetype & (3 << 14)) {		//@@ for the L1 instruction cache, TODO: 어떤 값을 가지고 있는지...
 			case (1 << 14):
-				cacheid |= CACHEID_ASID_TAGGED;
+				cacheid |= CACHEID_ASID_TAGGED; 
 				break;
 			case (3 << 14):
-				cacheid |= CACHEID_PIPT;
+				cacheid |= CACHEID_PIPT; //@@ Physically-indexed,	physically-tagged (PIPT) caches
 				break;
 			}
 		} else {
@@ -332,7 +335,7 @@ static void __init cacheid_init(void)
 			cacheid |= CACHEID_VIPT_I_ALIASING;
 	} else {
 	    //CACHEID_VIVT = 1
-		cacheid = CACHEID_VIVT;
+		cacheid = CACHEID_VIVT;  //@@ CACHEID_VIVT      (1 << 0)
 	}
 
 	printk("CPU: %s data cache, %s instruction cache\n",
@@ -406,6 +409,7 @@ static void __init feat_v6_fixup(void)
 	 * HWCAP_TLS is available only on 1136 r1p0 and later,
 	 * see also kuser_get_tls_init.
 	 */
+	// @@ TLS : Thread Local Storage
 	if ((((id >> 4) & 0xfff) == 0xb36) && (((id >> 20) & 3) == 0))
 		elf_hwcap &= ~HWCAP_TLS;
 }
@@ -418,10 +422,10 @@ static void __init feat_v6_fixup(void)
 void notrace cpu_init(void)
 {
 #ifndef CONFIG_CPU_V7M
-	unsigned int cpu = smp_processor_id();
+	unsigned int cpu = smp_processor_id(); //@@ 현재 cpu id는 0으로 보고있음.
 	struct stack *stk = &stacks[cpu];
 
-	if (cpu >= NR_CPUS) {
+	if (cpu >= NR_CPUS) { //@@ NR_CPUS 2
 		printk(KERN_CRIT "CPU%u: bad primary CPU number\n", cpu);
 		BUG();
 	}
@@ -432,7 +436,9 @@ void notrace cpu_init(void)
 	 */
 	//http://studyfoss.egloos.com/5375570
 	//percpu 영역 내에서 각 cpu 별로 실제 데이터가 존재하는 offset 값 설정
-	set_my_cpu_offset(per_cpu_offset(cpu));
+	set_my_cpu_offset(per_cpu_offset(cpu)); //@@ TPIDRPRW의 Thread ID에 0을 저장.
+	//@@ [2014.01.11] [15:00-18:00] [END]  per_cpu_offset 에 대해서 한번 더 확인 하고 갈것(아래링크).
+	//@@ http://blog.naver.com/PostView.nhn?blogId=nix102guri&logNo=90098904482
 
 	cpu_proc_init();
 
@@ -617,10 +623,10 @@ static void __init setup_processor(void)
 #ifndef CONFIG_ARM_THUMB
 	elf_hwcap &= ~(HWCAP_THUMB | HWCAP_IDIVT);
 #endif
+	//@@ [2014.01.11] [START] [15:00-18:00]
+	feat_v6_fixup(); //@@ v6 이후에서 TLS 기능 설정
 
-	feat_v6_fixup();
-
-	cacheid_init();
+	cacheid_init(); //@@ VIPT nonaliasing,
 	cpu_init();
 }
 
