@@ -4744,13 +4744,14 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 	}
 }
 
+//@@ //@@ 2014-01-11 4.start
 static void __init_refok alloc_node_mem_map(struct pglist_data *pgdat)
 {
 	/* Skip empty nodes */
-	if (!pgdat->node_spanned_pages)
+	if (!pgdat->node_spanned_pages)   //@@ node_spanned_pages: total size of physical page
 		return;
 
-#ifdef CONFIG_FLAT_NODE_MEM_MAP
+#ifdef CONFIG_FLAT_NODE_MEM_MAP  //@@ defined.
 	/* ia64 gets its own node_mem_map, before this, without bootmem */
 	if (!pgdat->node_mem_map) {
 		unsigned long size, start, end;
@@ -4761,11 +4762,11 @@ static void __init_refok alloc_node_mem_map(struct pglist_data *pgdat)
 		 * aligned but the node_mem_map endpoints must be in order
 		 * for the buddy allocator to function correctly.
 		 */
-		start = pgdat->node_start_pfn & ~(MAX_ORDER_NR_PAGES - 1);
-		end = pgdat_end_pfn(pgdat);
+		start = pgdat->node_start_pfn & ~(MAX_ORDER_NR_PAGES - 1);  //@@ MAX_ORDER_NR_PAGES : (1 << 10), 1KB, ORDER: 책 256page
+		end = pgdat_end_pfn(pgdat); //@@ pgdat->node_start_pfn + pgdat->node_spanned_pages
 		end = ALIGN(end, MAX_ORDER_NR_PAGES);
 		size =  (end - start) * sizeof(struct page);
-		map = alloc_remap(pgdat->node_id, size);
+		map = alloc_remap(pgdat->node_id, size); //@@ return NULL , 현재 node_id = 0
 		if (!map)
 			map = alloc_bootmem_node_nopanic(pgdat, size);
 		pgdat->node_mem_map = map + (pgdat->node_start_pfn - start);
@@ -4785,6 +4786,8 @@ static void __init_refok alloc_node_mem_map(struct pglist_data *pgdat)
 #endif /* CONFIG_FLAT_NODE_MEM_MAP */
 }
 
+//@@ free_area_init_node(0, zone_size, min, zhole_size);
+//@@ min: 첫번째 뱅크 start의 PFN
 void __paginginit free_area_init_node(int nid, unsigned long *zones_size,
 		unsigned long node_start_pfn, unsigned long *zholes_size)
 {
@@ -4795,16 +4798,17 @@ void __paginginit free_area_init_node(int nid, unsigned long *zones_size,
 	/* pg_data_t should be reset to zero when it's allocated */
 	WARN_ON(pgdat->nr_zones || pgdat->classzone_idx);
 
-	pgdat->node_id = nid;
-	pgdat->node_start_pfn = node_start_pfn;
-	init_zone_allows_reclaim(nid);
+	//@@ [2014.01.11] [ 18:00 - 22:00 ] [START] //@@ 2014-01-11 0. start
+	pgdat->node_id = nid;	
+	pgdat->node_start_pfn = node_start_pfn; //min
+	init_zone_allows_reclaim(nid); //@@ empty function , NUMA가 아닌 경우에.
 #ifdef CONFIG_HAVE_MEMBLOCK_NODE_MAP
 	get_pfn_range_for_nid(nid, &start_pfn, &end_pfn);
 #endif
 	calculate_node_totalpages(pgdat, start_pfn, end_pfn,
-				  zones_size, zholes_size);
+				  zones_size, zholes_size); //@@ 2014-01-11 2.  TODO: 분석은 나중에.
 
-	alloc_node_mem_map(pgdat);
+	alloc_node_mem_map(pgdat);  //@@ pgdat 메모리(가상주소) 할당. [2014.01.11] [18:00 - 22:00] [END]
 #ifdef CONFIG_FLAT_NODE_MEM_MAP
 	printk(KERN_DEBUG "free_area_init_node: node %d, pgdat %08lx, node_mem_map %08lx\n",
 		nid, (unsigned long)pgdat,

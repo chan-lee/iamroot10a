@@ -720,7 +720,7 @@ extern struct page *mem_map;
  * per-zone basis.
  */
 struct bootmem_data;
-typedef struct pglist_data {
+typedef struct pglist_data {    //@@ //@@ 2014-01-11 3. 노드별로 관리하기 위한것.
 	struct zone node_zones[MAX_NR_ZONES];
 	struct zonelist node_zonelists[MAX_ZONELISTS];
 	int nr_zones;

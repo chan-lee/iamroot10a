@@ -516,9 +516,9 @@ static void * __init alloc_bootmem_bdata(struct bootmem_data *bdata,
 		return NULL;
 
 	min = bdata->node_min_pfn;
-	max = bdata->node_low_pfn;
+	max = bdata->node_low_pfn; //@@ zone normal 의 최상위
 
-	goal >>= PAGE_SHIFT;
+	goal >>= PAGE_SHIFT;  //@@ PAGE_SHIFT: 12 , goal: bootmem_low_init, 0xffff_ffff, 어디서 부터 검색을 할것인가.
 	limit >>= PAGE_SHIFT;
 
 	if (limit && max > limit)
@@ -526,14 +526,14 @@ static void * __init alloc_bootmem_bdata(struct bootmem_data *bdata,
 	if (max <= min)
 		return NULL;
 
-	step = max(align >> PAGE_SHIFT, 1UL);
+	step = max(align >> PAGE_SHIFT, 1UL); 
 
 	if (goal && min < goal && goal < max)
 		start = ALIGN(goal, step);
 	else
 		start = ALIGN(min, step);
 
-	sidx = start - bdata->node_min_pfn;
+	sidx = start - bdata->node_min_pfn; //@@ bit map의 index
 	midx = max - bdata->node_min_pfn;
 
 	if (bdata->hint_idx > sidx) {
@@ -541,7 +541,7 @@ static void * __init alloc_bootmem_bdata(struct bootmem_data *bdata,
 		 * Handle the valid case of sidx being zero and still
 		 * catch the fallback below.
 		 */
-		fallback = sidx + 1;
+		fallback = sidx + 1;   //@@ fallback : hint_idx를 사용하기 위해 start을 fallback에 저장. 이후 할당할수 없으면 fallback으로 옮.
 		sidx = align_idx(bdata, bdata->hint_idx, step);
 	}
 
@@ -707,22 +707,25 @@ void * __init __alloc_bootmem(unsigned long size, unsigned long align,
 
 void * __init ___alloc_bootmem_node_nopanic(pg_data_t *pgdat,
 				unsigned long size, unsigned long align,
-				unsigned long goal, unsigned long limit)
+				unsigned long goal, unsigned long limit) //@@ limit = 0
 {
 	void *ptr;
 
-	if (WARN_ON_ONCE(slab_is_available()))
+	if (WARN_ON_ONCE(slab_is_available())) //@@ 2014-01-11 7. slab_is_available():false.
 		return kzalloc(size, GFP_NOWAIT);
 again:
 
 	/* do not panic in alloc_bootmem_bdata() */
-	if (limit && goal + size > limit)
+	if (limit && goal + size > limit) //@@ + 먼저, > 다음, && 나중.
 		limit = 0;
 
-	ptr = alloc_bootmem_bdata(pgdat->bdata, size, align, goal, limit);
+	//@@ bdata: 특정 node, 
+	//@@ goal부터 시작으로 size만큼의 할당된 메모리의 가상주소를 리턴.
+	ptr = alloc_bootmem_bdata(pgdat->bdata, size, align, goal, limit); 
 	if (ptr)
 		return ptr;
-
+	//@@ 위 코드에서 특정 노드로 부터 메모리를 할당 받지 못하면 아래 core 루틴을 타서 전체 node를 검색한 후 
+	//@@ alloc_bootmem_bdata를 호출.
 	ptr = alloc_bootmem_core(size, align, goal, limit);
 	if (ptr)
 		return ptr;
@@ -738,7 +741,7 @@ again:
 void * __init __alloc_bootmem_node_nopanic(pg_data_t *pgdat, unsigned long size,
 				   unsigned long align, unsigned long goal)
 {
-	if (WARN_ON_ONCE(slab_is_available()))
+	if (WARN_ON_ONCE(slab_is_available())) //@@ //@@ 2014-01-11 5.현재 slab 사용하지 않음. slab_is_available(): false
 		return kzalloc_node(size, GFP_NOWAIT, pgdat->node_id);
 
 	return ___alloc_bootmem_node_nopanic(pgdat, size, align, goal, 0);
