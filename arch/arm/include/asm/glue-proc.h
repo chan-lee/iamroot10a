@@ -249,7 +249,7 @@
 #endif
 
 #ifndef MULTI_CPU
-#define cpu_proc_init			__glue(CPU_NAME,_proc_init)
+#define cpu_proc_init			__glue(CPU_NAME,_proc_init)    //@@ CPU_NAME cpu_v7
 #define cpu_proc_fin			__glue(CPU_NAME,_proc_fin)
 #define cpu_reset			__glue(CPU_NAME,_reset)
 #define cpu_do_idle			__glue(CPU_NAME,_do_idle)

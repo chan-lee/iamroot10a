@@ -440,13 +440,13 @@ void notrace cpu_init(void)
 	//@@ [2014.01.11] [15:00-18:00] [END]  per_cpu_offset 에 대해서 한번 더 확인 하고 갈것(아래링크).
 	//@@ http://blog.naver.com/PostView.nhn?blogId=nix102guri&logNo=90098904482
 
-	cpu_proc_init();
+	cpu_proc_init();  //@@ cpu_v7_proc_init, arch/arm/mm/proc-v7.S, p.193
 
 	/*
 	 * Define the placement constraint for the inline asm directive below.
 	 * In Thumb-2, msr with an immediate value is not allowed.
 	 */
-#ifdef CONFIG_THUMB2_KERNEL
+#ifdef CONFIG_THUMB2_KERNEL  //@@ not define
 #define PLC	"r"
 #else
 #define PLC	"I"
@@ -627,7 +627,7 @@ static void __init setup_processor(void)
 	feat_v6_fixup(); //@@ v6 이후에서 TLS 기능 설정
 
 	cacheid_init(); //@@ VIPT nonaliasing,
-	cpu_init();
+	cpu_init();   //@@ [2014.01.18] [ 15:00-18:00] [start]
 }
 
 void __init dump_machine_table(void)
@@ -879,8 +879,8 @@ void __init setup_arch(char **cmdline_p)
 {
 	struct machine_desc *mdesc;
 
-	setup_processor();
-	mdesc = setup_machine_fdt(__atags_pointer); //@@ [2013.11.16] REVIEW
+	setup_processor(); //@@ [2014.01.18] cache, cpu_init ... 설정
+	mdesc = setup_machine_fdt(__atags_pointer); //@@ [2013.11.16] REVIEW  [2014.01.18] review, devtree->magic로 dtb 유무체크
 	if (!mdesc)
 		// dtb 가 아닌 atag가 넘어왔을때 
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
