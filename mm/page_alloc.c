@@ -3764,7 +3764,7 @@ static inline unsigned long wait_table_hash_nr_entries(unsigned long pages)
 
 	pages /= PAGES_PER_WAITQUEUE;
 
-	while (size < pages)
+	while (size < pages)  //@@ page size 가 4k 인가???
 		size <<= 1;
 
 	/*
@@ -3774,7 +3774,7 @@ static inline unsigned long wait_table_hash_nr_entries(unsigned long pages)
 	 */
 	size = min(size, 4096UL);
 
-	return max(size, 4UL);
+	return max(size, 4UL); //@@ 4 < return < 4k 사이의 값을 반환.
 }
 #else
 /*
@@ -4193,7 +4193,7 @@ static __meminit void zone_pcp_init(struct zone *zone)
 	 * relies on the ability of the linker to provide the
 	 * offset of a (static) per cpu variable into the per cpu area.
 	 */
-	zone->pageset = &boot_pageset;
+	zone->pageset = &boot_pageset;  //@@ cpu 별 변수..TODO: 왜 쓰는건지?? 참고...per_cpu_ptr(zone->pageset, cpu);
 
 	if (zone->present_pages)
 		printk(KERN_DEBUG "  %s zone: %lu pages, LIFO batch:%u\n",
@@ -4583,7 +4583,7 @@ static inline void setup_usemap(struct pglist_data *pgdat, struct zone *zone,
 				unsigned long zone_start_pfn, unsigned long zonesize) {}
 #endif /* CONFIG_SPARSEMEM */
 
-#ifdef CONFIG_HUGETLB_PAGE_SIZE_VARIABLE
+#ifdef CONFIG_HUGETLB_PAGE_SIZE_VARIABLE   //@@ not define.
 
 /* Initialise the number of pages represented by NR_PAGEBLOCK_BITS */
 void __init set_pageblock_order(void)
@@ -4621,7 +4621,7 @@ void __init set_pageblock_order(void)
 #endif /* CONFIG_HUGETLB_PAGE_SIZE_VARIABLE */
 
 static unsigned long __paginginit calc_memmap_size(unsigned long spanned_pages,
-						   unsigned long present_pages)
+						   unsigned long present_pages)   //@@ __paginginit __meminit
 {
 	unsigned long pages = spanned_pages;
 
@@ -4634,10 +4634,10 @@ static unsigned long __paginginit calc_memmap_size(unsigned long spanned_pages,
 	 * So the (present_pages >> 4) heuristic is a tradeoff for that.
 	 */
 	if (spanned_pages > present_pages + (present_pages >> 4) &&
-	    IS_ENABLED(CONFIG_SPARSEMEM))
+	    IS_ENABLED(CONFIG_SPARSEMEM))  //@@ CONFIG_SPARSEMEM define
 		pages = present_pages;
 
-	return PAGE_ALIGN(pages * sizeof(struct page)) >> PAGE_SHIFT;
+	return PAGE_ALIGN(pages * sizeof(struct page)) >> PAGE_SHIFT; //@@ PAGE_SHIFT 12
 }
 
 /*
@@ -4657,36 +4657,36 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 	unsigned long zone_start_pfn = pgdat->node_start_pfn;
 	int ret;
 
-	pgdat_resize_init(pgdat);
-#ifdef CONFIG_NUMA_BALANCING
+	pgdat_resize_init(pgdat); //@@  CONFIG_MEMORY_HOTPLUG를 선언되어 있지 않음. 빈 함수.
+#ifdef CONFIG_NUMA_BALANCING //@@ not define
 	spin_lock_init(&pgdat->numabalancing_migrate_lock);
 	pgdat->numabalancing_migrate_nr_pages = 0;
 	pgdat->numabalancing_migrate_next_window = jiffies;
 #endif
 	init_waitqueue_head(&pgdat->kswapd_wait);
 	init_waitqueue_head(&pgdat->pfmemalloc_wait);
-	pgdat_page_cgroup_init(pgdat);
+	pgdat_page_cgroup_init(pgdat);    //@@ CONFIG_MEMCG_SWAP define, 빈함수.
 
-	for (j = 0; j < MAX_NR_ZONES; j++) {
+	for (j = 0; j < MAX_NR_ZONES; j++) {    //@@ zone_type: ZONE_NORMAL, HIGHMEM, MOVABLE, MAX_NR_ZONES=3
 		struct zone *zone = pgdat->node_zones + j;
 		unsigned long size, realsize, freesize, memmap_pages;
 
 		size = zone_spanned_pages_in_node(nid, j, node_start_pfn,
-						  node_end_pfn, zones_size);
+						  node_end_pfn, zones_size); //@@ CONFIG_HAVE_MEMBLOCK_NODE_MAP, no define. return zones_size[zone_type];-arm_bootmem_free에서 설정되어 있음.
 		realsize = freesize = size - zone_absent_pages_in_node(nid, j,
 								node_start_pfn,
 								node_end_pfn,
-								zholes_size);
+								zholes_size); //@@ zone_absent_pages_in_node() : return zholes_size[zone_type];-arm_bootmem_free에서 설정되어 있음.
 
 		/*
 		 * Adjust freesize so that it accounts for how much memory
 		 * is used by this zone for memmap. This affects the watermark
 		 * and per-cpu initialisations
 		 */
-		memmap_pages = calc_memmap_size(size, realsize);
+		memmap_pages = calc_memmap_size(size, realsize);  //@@ algined(?) memmap size, TODO:함수 한번 더 보기.
 		if (freesize >= memmap_pages) {
-			freesize -= memmap_pages;
-			if (memmap_pages)
+			freesize -= memmap_pages; //@@ memmap_pages:페이지구조체들을 저장된 공간 , freesize: 진짜 (사용가능한)존의 크기
+			if (memmap_pages) //@@ 페이지구조체들의 크기가 유효하다면 
 				printk(KERN_DEBUG
 				       "  %s zone: %lu pages used for memmap\n",
 				       zone_names[j], memmap_pages);
@@ -4695,47 +4695,47 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 				"  %s zone: %lu pages exceeds freesize %lu\n",
 				zone_names[j], memmap_pages, freesize);
 
-		/* Account for reserved pages */
+		/* Account for reserved pages */ //@@ 우리는 DMA ZONE 을 사용하지 않아서 dma_reserve 값이 0일 것이다.
 		if (j == 0 && freesize > dma_reserve) {
 			freesize -= dma_reserve;
 			printk(KERN_DEBUG "  %s zone: %lu pages reserved\n",
 					zone_names[0], dma_reserve);
 		}
 
-		if (!is_highmem_idx(j))
+		if (!is_highmem_idx(j))  //@@ highmem 사용 유무 체크
 			nr_kernel_pages += freesize;
 		/* Charge for highmem memmap if there are enough kernel pages */
 		else if (nr_kernel_pages > memmap_pages * 2)
 			nr_kernel_pages -= memmap_pages;
-		nr_all_pages += freesize;
+		nr_all_pages += freesize;   //@@ nr_all_pages: 전체 시스템의 페이지의 개수, 각 존마다 구해진 freesize를 누적시켜 전체개수를 구함 
 
 		zone->spanned_pages = size;
-		zone->present_pages = realsize;
+		zone->present_pages = realsize; //@@ freesize ??
 		/*
 		 * Set an approximate value for lowmem here, it will be adjusted
 		 * when the bootmem allocator frees pages into the buddy system.
 		 * And all highmem pages will be managed by the buddy system.
 		 */
-		zone->managed_pages = is_highmem_idx(j) ? realsize : freesize;
-#ifdef CONFIG_NUMA
+		zone->managed_pages = is_highmem_idx(j) ? realsize : freesize;  //@@ HIGHMEM인 경우에만 realsize 사용.
+#ifdef CONFIG_NUMA //@@ not use
 		zone->node = nid;
 		zone->min_unmapped_pages = (freesize*sysctl_min_unmapped_ratio)
-						/ 100;
-		zone->min_slab_pages = (freesize * sysctl_min_slab_ratio) / 100;
+						/ 100; //@@ min_unmapped_ratio: Documentation/sysctl/vm.txt 412 line.
+		zone->min_slab_pages = (freesize * sysctl_min_slab_ratio) / 100; //@@ min_slab_ratio : Documentation/sysctl/vm.txt 412 line.
 #endif
 		zone->name = zone_names[j];
 		spin_lock_init(&zone->lock);
-		spin_lock_init(&zone->lru_lock);
+		spin_lock_init(&zone->lru_lock); 
 		zone_seqlock_init(zone);
 		zone->zone_pgdat = pgdat;
 
 		zone_pcp_init(zone);
-		lruvec_init(&zone->lruvec);
+		lruvec_init(&zone->lruvec);//@@lru = least recently used, lruvec list를 0으로 초기화. zone_reclaim관련 리스트일것 같다..
 		if (!size)
 			continue;
 
-		set_pageblock_order();
-		setup_usemap(pgdat, zone, zone_start_pfn, size);
+		set_pageblock_order();  //@@ 빈함수. 우리는 define값으로 설정이 되어 있다. include/linux/pageblock-flags.h pageblock_order: 10 
+		setup_usemap(pgdat, zone, zone_start_pfn, size); //@@ CONFIG_SPARSEMEM define. 빈함수. [2014.01.18][18:00-22:00][END]
 		ret = init_currently_empty_zone(zone, zone_start_pfn,
 						size, MEMMAP_EARLY);
 		BUG_ON(ret);
@@ -4816,7 +4816,7 @@ void __paginginit free_area_init_node(int nid, unsigned long *zones_size,
 #endif
 
 	free_area_init_core(pgdat, start_pfn, end_pfn,
-			    zones_size, zholes_size);
+			    zones_size, zholes_size); //@@ [2014.01.18][18:00 - 22:00] [START]
 }
 
 #ifdef CONFIG_HAVE_MEMBLOCK_NODE_MAP

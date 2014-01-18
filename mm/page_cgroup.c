@@ -13,7 +13,7 @@
 
 static unsigned long total_usage;
 
-#if !defined(CONFIG_SPARSEMEM)
+#if !defined(CONFIG_SPARSEMEM) //@@ CONFIG_SPARSEMEM define.
 
 
 void __meminit pgdat_page_cgroup_init(struct pglist_data *pgdat)
