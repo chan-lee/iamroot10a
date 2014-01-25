@@ -3942,10 +3942,10 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 		page = pfn_to_page(pfn);
 		set_page_links(page, zone, nid, pfn);
 		mminit_verify_page_links(page, zone, nid, pfn);
-		init_page_count(page);
-		page_mapcount_reset(page);
+		init_page_count(page); //@@ 3로 설정, 0은 이 페이지를 사용하지 않는다는 뜻이다.
+		page_mapcount_reset(page); //@@ TODO -1로 설정, 어디에 사용하는지는 나중에 알아보자
 		page_nid_reset_last(page);
-		SetPageReserved(page);
+		SetPageReserved(page); //@@ include/linux/page-flags.h에 macro로 정의
 		/*
 		 * Mark the block movable so that blocks are reserved for
 		 * movable at startup. This will force kernel allocations
@@ -3960,6 +3960,8 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 		 * check here not to call set_pageblock_migratetype() against
 		 * pfn out of zone.
 		 */
+        //@@ TODO pageblock이 의미하는 것을 정확히 모르겠다. sparse의 use_map(section의 시작 포인터)
+        //@@ 인듯한데 그것을 왜 pageblock_flag에 저장하는지 모르겠다.
 		if ((z->zone_start_pfn <= pfn)
 		    && (pfn < zone_end_pfn(z))
 		    && !(pfn & (pageblock_nr_pages - 1)))
@@ -4180,6 +4182,10 @@ int zone_wait_table_init(struct zone *zone, unsigned long zone_size_pages)
 	if (!zone->wait_table)
 		return -ENOMEM;
 
+    // @@ wait_table공간에 wait_queue_head_t 사이즈만큼씩 건너 뛰면서
+    // @@ waitqueue_list의 head로 할당한다.
+    // @@ 결과적으로는 wait_queue_head_t wait_table[wait_table_hash_nr_enties] 과 같은
+    // @@ 효과를 낸다.
 	for(i = 0; i < zone->wait_table_hash_nr_entries; ++i)
 		init_waitqueue_head(zone->wait_table + i);
 
@@ -4208,6 +4214,7 @@ int __meminit init_currently_empty_zone(struct zone *zone,
 {
 	struct pglist_data *pgdat = zone->zone_pgdat;
 	int ret;
+    //@@ zone의 wait_table에 waitqueue head(wait_queue_head_t) array를 할당
 	ret = zone_wait_table_init(zone, size);
 	if (ret)
 		return ret;
@@ -4221,6 +4228,7 @@ int __meminit init_currently_empty_zone(struct zone *zone,
 			(unsigned long)zone_idx(zone),
 			zone_start_pfn, (zone_start_pfn + size));
 
+    //@@ zone의 free_list를 order와 세부 migrate_type으로 초기화
 	zone_init_free_lists(zone);
 
 	return 0;
@@ -4736,9 +4744,12 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 
 		set_pageblock_order();  //@@ 빈함수. 우리는 define값으로 설정이 되어 있다. include/linux/pageblock-flags.h pageblock_order: 10 
 		setup_usemap(pgdat, zone, zone_start_pfn, size); //@@ CONFIG_SPARSEMEM define. 빈함수. [2014.01.18][18:00-22:00][END]
+        //@@ [2014.01.25] normal start
+        //@@ zone의 wait_table과 free_list를 할당하고 초기화
 		ret = init_currently_empty_zone(zone, zone_start_pfn,
 						size, MEMMAP_EARLY);
 		BUG_ON(ret);
+        //@@ page에다 zone, nid, page_count, mapcount 등을 설정
 		memmap_init(size, nid, j, zone_start_pfn);
 		zone_start_pfn += size;
 	}

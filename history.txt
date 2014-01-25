@@ -1,0 +1,32 @@
+[2014.01.25] review
+arch/arm/kernel/setup.c - setup_arch()
+
+1. 저번 시간의 setup_machine_fdt()에 이어 setup_machine_tags() 함수를 봄
+    atags_pointer 정보가 담겨있는 address를 기반으로 fdt인가를 확인한후
+    fdt가 아닐 경우 setup_machine_tags를 호출한다.
+    우리는 atags를 사용하지 않지만 살펴보면 setup_machine_fdt()와 비슷한 구조를
+    가지고 있다. machine_desc들로부터 적당한 machine_desc를 찾아내고, atags 정보를
+    저장, parse한다.
+
+2. 그 후 setup_machine_fdt() 혹은 tags()로 부터 boot_coomand_line을 cmd_line에 저장한 후,
+3. early_param을 파싱하여 earlycon=, console= 옵션을 얻어낸다.
+4. 그리고 memory bank를 address순으로 정렬한다. (atags사용시 의미가 있는지는 잘 모르겠다.)
+
+[2014.01.25] normal
+arch/arm/kernel/setup.c - setup_arch()
+    arch/arm/mm/mmu.c - paging_init()
+        arch/arm/mm/init.c - bootmem_init()
+            arch/arm/mm/init.c - arm_bootmem_free()
+                arch/mm/page_alloc.c - free_area_init_node()
+                    arch/mm/page_alloc.c - free_area_init_core()
+
+1.                    arch/mm/page_alloc.c - init_currently_empty_zone()
+    해당 함수는 zone의 wait_table과 free_list를 할당하고 초기화하는 함수이다.
+
+2.                    arch/mm/page_alloc.c - memmap_init() = memmap_init_zone()
+    해당 함수는 page에 zone, nid, page_count, mapcount 등을 설정.
+    중간에 set_pageblock_migratetype이란 함수가 나오는데, pageblock의 개념을 잘 모르겠다.
+    sparse에서 use_map(section의 시작 포인터)이 pageblock_flag에 저장되었는데, 이것이 왜
+    pageblock인지 이유를 알수 없음. use_map이 pageblock인지 조차 잘 모르겠다. TODO
+
+
