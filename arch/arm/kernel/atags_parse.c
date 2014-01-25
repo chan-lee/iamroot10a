@@ -221,12 +221,15 @@ struct machine_desc * __init setup_machine_tags(phys_addr_t __atags_pointer,
 		tags = (struct tag *)&default_tags;
 	}
 
+    //@@ 각machine file에 기술되어 있다.
+    // 예를들면 arch/arm/ach-pxa/spitz.c의 spitz_fixup()이 fixup으로 되어있다.
+    // 그러나 우리는 exynos를 사용하는데 없다.
 	if (mdesc->fixup)
 		mdesc->fixup(tags, &from, &meminfo);
 
 	if (tags->hdr.tag == ATAG_CORE) {
 		if (meminfo.nr_banks != 0)
-			squash_mem_tags(tags);
+			squash_mem_tags(tags); //@@ ATAG_MEM을 ATAG_NONE으로 바꿔놓는다. p154 참조
 		save_atags(tags);
 		parse_tags(tags);
 	}

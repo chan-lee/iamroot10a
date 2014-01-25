@@ -880,9 +880,15 @@ void __init setup_arch(char **cmdline_p)
 	struct machine_desc *mdesc;
 
 	setup_processor(); //@@ [2014.01.18] cache, cpu_init ... 설정
+
+    //@@ __atags_pointer는 atag의 pointer 혹은 fdt의 pointer이고
+    //@@ fdt라 가정하고 먼저 찾아본후 아무런 정보가 없으면 atag라 생각한다.
 	mdesc = setup_machine_fdt(__atags_pointer); //@@ [2013.11.16] REVIEW  [2014.01.18] review, devtree->magic로 dtb 유무체크
 	if (!mdesc)
 		// dtb 가 아닌 atag가 넘어왔을때 
+        //@@ [2014.01.25] review start
+        //@@ machine_desc를 찾고, atag 정보를 parse하고,
+        //@@ boot_command_line에 default_command_line을 저장한다.
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
 	machine_desc = mdesc;
 	machine_name = mdesc->name;
@@ -898,7 +904,7 @@ void __init setup_arch(char **cmdline_p)
 	init_mm.brk	   = (unsigned long) _end;
 
 	/* populate cmd_line too for later use, preserving boot_command_line */
-	// boot_command_line 에는 dtb 에서 읽어온 bootargs 가 들어있다.
+	// boot_command_line 에는 dtb(혹은 atags) 에서 읽어온 bootargs 가 들어있다.
 	strlcpy(cmd_line, boot_command_line, COMMAND_LINE_SIZE);
 	*cmdline_p = cmd_line;
 
@@ -907,7 +913,9 @@ void __init setup_arch(char **cmdline_p)
 
 	// memory bank 에서 시작 address로 정렬하는 함수
 	// meminfo 구조체 변수는 early_init_dt_add_memory_arch()에서 초기화 하였다.
+    // heap sort
 	sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
+    //@@ [2014.01.25] review end
 
 	// 131005 end. sanity_shceck_meminfo 진입 후 끝남.
 	sanity_check_meminfo(); // 2013.10.12 시작
