@@ -283,7 +283,7 @@ EXPORT_SYMBOL(kmem_cache_destroy);
 
 int slab_is_available(void)
 {
-	return slab_state >= UP;
+	return slab_state >= UP; //@@ UP: 4, FULL: 5
 }
 
 #ifndef CONFIG_SLOB

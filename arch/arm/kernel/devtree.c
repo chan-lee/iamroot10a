@@ -225,9 +225,9 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys) //@@ [2013.
 	 *	};
 	 */
 
-	dt_root = of_get_flat_dt_root(); //@@ dt_root = OF_DT_PROP(Device Tree 구조)
+	dt_root = of_get_flat_dt_root(); //@@ dt_root = OF_DT_PROP(Device Tree 구조)  //@@ root property를 먼저 찾는다.
 
-	for_each_machine_desc(mdesc) { //@@ __arch_info_begin to __arch_info_end (arch.info.init 영역)
+	for_each_machine_desc(mdesc) { //@@ __arch_info_begin to __arch_info_end (arch.info.init 영역) //@@ skip
 		score = of_flat_dt_match(dt_root, mdesc->dt_compat);
 
 		if (score > 0 && score < mdesc_score) {

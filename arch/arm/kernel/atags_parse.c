@@ -190,7 +190,7 @@ struct machine_desc * __init setup_machine_tags(phys_addr_t __atags_pointer,
 	/*
 	 * locate machine in the list of supported machines.
 	 */
-	for_each_machine_desc(p)
+	for_each_machine_desc(p)   //@@ .arch.info.init의 point를 가져 옴.
 		if (machine_nr == p->nr) {
 			printk("Machine: %s\n", p->name);
 			mdesc = p;
@@ -206,9 +206,9 @@ struct machine_desc * __init setup_machine_tags(phys_addr_t __atags_pointer,
 	if (__atags_pointer)
 		tags = phys_to_virt(__atags_pointer);
 	else if (mdesc->atag_offset)
-		tags = (void *)(PAGE_OFFSET + mdesc->atag_offset);
+		tags = (void *)(PAGE_OFFSET + mdesc->atag_offset);  //@@ atags 위치 설정  [2014.01.08] [15:00-18:00] [END]
 
-#if defined(CONFIG_DEPRECATED_PARAM_STRUCT)
+#if defined(CONFIG_DEPRECATED_PARAM_STRUCT) //@@ not define
 	/*
 	 * If we have the old style parameters, convert them to
 	 * a tag list.

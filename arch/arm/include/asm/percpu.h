@@ -28,6 +28,7 @@ static inline void set_my_cpu_offset(unsigned long off)
 	asm volatile("mcr p15, 0, %0, c13, c0, 4" : : "r" (off) : "memory");
 	//@@ 현재 CPU OFFSET(0)을 PL1 Thread ID에 쓴다.
 	//@@ TODO 이유는???
+	//@@ http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=184082&sort_index=readed_count&order_type=desc 참고.
 }
 
 static inline unsigned long __my_cpu_offset(void)

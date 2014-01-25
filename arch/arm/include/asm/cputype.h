@@ -191,7 +191,7 @@ static inline unsigned int __attribute_const__ xscale_cpu_arch_version(void)
 static inline unsigned int __attribute_const__ read_cpuid_cachetype(void)
 {
     //CTR 레지스터 정보 반환
-	return read_cpuid(CPUID_CACHETYPE);
+	return read_cpuid(CPUID_CACHETYPE); //@@ CPUID_CACHETYPE 1
 }
 
 static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)
