@@ -729,6 +729,12 @@ static void __init request_standard_resources(struct machine_desc *mdesc)
 	kernel_data.start   = virt_to_phys(_sdata);
 	kernel_data.end     = virt_to_phys(_end - 1);
 
+    // iomem_resource - System RAM(region) - kernel_code, kernel_data
+    //                - System RAM
+    //                - ...
+    //                - video_ram
+    //
+    // io_port_resource - lp0, lp1, lp2
 	for_each_memblock(memory, region) {
 		res = alloc_bootmem_low(sizeof(*res));
 		res->name  = "System RAM";
@@ -929,14 +935,19 @@ void __init setup_arch(char **cmdline_p)
 	arm_memblock_init(&meminfo, mdesc);
 
 	paging_init(mdesc);
+    //@@ iomem_resource와 ioport_resource 설정
+    //@@ iomem에는 region별 system ram이 할당된다.
 	request_standard_resources(mdesc);
 
+    //@@ restart시에 사용하는 function pointer
 	if (mdesc->restart)
 		arm_pm_restart = mdesc->restart;
 
 	unflatten_device_tree();
 
 	arm_dt_init_cpu_maps();
+
+    //@@ PSCI: Power State Coordination Interface
 	psci_init();
 #ifdef CONFIG_SMP
 	if (is_smp()) {
@@ -947,6 +958,7 @@ void __init setup_arch(char **cmdline_p)
 				smp_set_ops(mdesc->smp);
 		}
 		smp_init_cpus();
+        //@@ TODO: pass 함
 		smp_build_mpidr_hash();
 	}
 #endif
@@ -954,6 +966,7 @@ void __init setup_arch(char **cmdline_p)
 	if (!is_smp())
 		hyp_mode_check();
 
+    //@@ crashkernel일 경우 공간 할당
 	reserve_crashkernel();
 
 #ifdef CONFIG_MULTI_IRQ_HANDLER
@@ -964,10 +977,12 @@ void __init setup_arch(char **cmdline_p)
 #if defined(CONFIG_VGA_CONSOLE)
 	conswitchp = &vga_con;
 #elif defined(CONFIG_DUMMY_CONSOLE)
+    //@@ CONFIG_DUMMY_CONSOLE = yes
 	conswitchp = &dummy_con;
 #endif
 #endif
 
+    // @@ 없는듯하다.
 	if (mdesc->init_early)
 		mdesc->init_early();
 }

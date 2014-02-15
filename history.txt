@@ -12,6 +12,7 @@ arch/arm/kernel/setup.c - setup_arch()
 3. early_param을 파싱하여 earlycon=, console= 옵션을 얻어낸다.
 4. 그리고 memory bank를 address순으로 정렬한다. (atags사용시 의미가 있는지는 잘 모르겠다.)
 
+------------------------------------------------------------
 [2014.01.25] normal
 arch/arm/kernel/setup.c - setup_arch()
     arch/arm/mm/mmu.c - paging_init()
@@ -30,6 +31,7 @@ arch/arm/kernel/setup.c - setup_arch()
     pageblock인지 이유를 알수 없음. use_map이 pageblock인지 조차 잘 모르겠다. TODO
 
 
+------------------------------------------------------------
 [2014.02.15] review
 arch/arm/kernel/setup.c - setup_arch()
 1.    arch/arm/mm/mmu.c - sanity_check_meminfo()
@@ -44,3 +46,20 @@ arch/arm/kernel/setup.c - setup_arch()
     - __pa, __virt_to_phys() 함수에 대한 설명
     http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=185905
 
+------------------------------------------------------------
+[2014.02.15] 후반
+arch/arm/kernel/setup.c - setup_arch()
+    arch/arm/mm/mmu.c - paging_init()
+1.  paging_init()함수 내부 아랫쪽의 zero_page를 flush시키는 곳부터 시작.
+    zero_page는 읽기를 위한 page로서 효율을 위해 만들어진 페이지이며,
+    쓰기요청이 들어올경우 COW로 작동한다.
+    아랫부분에 __flush_dache_page 함수가 있는데, 왜 flush를 하는지와
+    내부 구현은 cache에 대한 이해가 부족에 미루기로 한다.
+
+arch/arm/kernel/setup.c - setup_arch()
+2.  request_standard_resources에서 iomem_resource와 iomem_resource tree에
+    system ram, kernel code, video ram, lp port등을 할당한다.
+3.  unflatten_device_tree로 나머지 device  tree를 완성하고, cpu, psci, smp설정을 한다.
+    그중 smp_build_mpidr_hash함수는 pass. reverse_crashkernel을 위한 공간도 만들어서
+    iomem_resource에 추가한다.
+5.  mdesc->init_early() 는 있을듯한데 없다.

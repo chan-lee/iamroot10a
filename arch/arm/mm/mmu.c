@@ -1360,6 +1360,10 @@ void __init paging_init(struct machine_desc *mdesc)
 	bootmem_init(); //@@ [2013.11.23] bootmem_init() 부터 다시 시작
     //@@ [2014.01.25] normal end
 
+    //@@ [2014.01.15] start
+    //@@ p.216 참조. 읽기만을 위해서 만든 page.
 	empty_zero_page = virt_to_page(zero_page);
+    //@@ TODO _flush_dcache_page를 왜 호출하는지와 내부를 이해하기가 힘들다.
+    //@@ p.221 참조
 	__flush_dcache_page(NULL, empty_zero_page);
 }
