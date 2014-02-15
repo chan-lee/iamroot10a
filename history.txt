@@ -30,3 +30,17 @@ arch/arm/kernel/setup.c - setup_arch()
     pageblock인지 이유를 알수 없음. use_map이 pageblock인지 조차 잘 모르겠다. TODO
 
 
+[2014.02.15] review
+arch/arm/kernel/setup.c - setup_arch()
+1.    arch/arm/mm/mmu.c - sanity_check_meminfo()
+    sanity_check_meminfo()함수는 membank를 순환하면서 highmem인지 검출하고,
+    겹쳐 있는 부분을 나누며, high_memory, memblock_limit등을 설정한다.
+    __pa(vmalloc_min - 1) + 1의 경우 vmalloc_min은 high memory의 시작 위치를
+    나타내고(760M = 0xEF800000), __pa 함수는 물리 주소로 변환, -1/+1은 잘못된
+    변환을 막기 위해서 사용한다. 자세한 내용은 C팀의 후기를 참조하도록 한다.
+
+    - vmalloc_min과 -1/+1에 대한 설명 
+    http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&page=3&document_srl=185255
+    - __pa, __virt_to_phys() 함수에 대한 설명
+    http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=185905
+

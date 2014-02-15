@@ -185,7 +185,9 @@ extern unsigned long __pv_phys_offset;
 	: "=r" (to)					\
 	: "r" (from), "I" (type))
 
-static inline unsigned long __virt_to_phys(unsigned long x) //@@ 이 함수에 대한 설명은 C팀 자료 참조
+//@@ 아래 함수에 대한 설명은 C팀 자료 참조)
+//@@ http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=185905
+static inline unsigned long __virt_to_phys(unsigned long x)
 {
 	unsigned long t;
 	__pv_stub(x, t, "add", __PV_BITS_31_24);

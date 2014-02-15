@@ -955,6 +955,8 @@ void __init debug_ll_io_init(void)
 }
 #endif
 
+// @@ VMALLOC_END = 0xFF000000
+// @@ VMALOC_OFFSET = 8 * 1024 * 1024
 static void * __initdata vmalloc_min =
 	(void *)(VMALLOC_END - (240 << 20) - VMALLOC_OFFSET);
 
@@ -988,11 +990,17 @@ early_param("vmalloc", early_vmalloc);
 
 phys_addr_t arm_lowmem_limit __initdata = 0;
 
-void __init sanity_check_meminfo(void) //
+//@@ membank를 돌면서 highmem인지 체크하고, high와 normal이 겹쳐 있을 경우
+//@@ 나눈다. 그리고 high_memory의 값을 기록하고, section size로 align된 memblock_limit을
+//@@ 설정한다.
+void __init sanity_check_meminfo(void)
 {
 	phys_addr_t memblock_limit = 0;
 	int i, j, highmem = 0;
-	phys_addr_t vmalloc_limit = __pa(vmalloc_min - 1) + 1; // vmalloc_limit은 HIMEM(896MB) 시작위치
+    // @@ vmalloc_min = 0xEF800000(760MB) HIGHMEN의 시작 위치
+    // @@ X86의 경우 896MB이다.
+    // http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&page=3&document_srl=185255
+	phys_addr_t vmalloc_limit = __pa(vmalloc_min - 1) + 1;
 
 	for (i = 0, j = 0; i < meminfo.nr_banks; i++) {
 		struct membank *bank = &meminfo.bank[j];
@@ -1013,8 +1021,10 @@ void __init sanity_check_meminfo(void) //
 		 * Split those memory banks which are partially overlapping
 		 * the vmalloc area greatly simplifying things later.
 		 */
+        // @@ highmem 변수는 bank->start만 검사할뿐, 겹친 것은 알아내지 못하므로
+        // @@ 아래와 같이 연산
 		if (!highmem && bank->size > size_limit) { // 메모리 ZONE_HIMEM에 겹치는 메모리 뱅크를 재배치
-			if (meminfo.nr_banks >= NR_BANKS) {
+			if (meminfo.nr_banks >= NR_BANKS) { // @@ 나눌 공간이 모자르다. 
 				printk(KERN_CRIT "NR_BANKS too low, "
 						 "ignoring high memory\n");
 			} else {

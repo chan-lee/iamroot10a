@@ -918,8 +918,12 @@ void __init setup_arch(char **cmdline_p)
     //@@ [2014.01.25] review end
 
 	// 131005 end. sanity_shceck_meminfo 진입 후 끝남.
+    // [2014.02.15] review start
+    //@@ membank를 돌면서 highmem인지 체크하고, high와 normal이 겹쳐 있을 경우
+    //@@ 나눈다. 그리고 high_memory의 값을 기록하고, section size로 align된 memblock_limit을
+    //@@ 설정한다.
 	sanity_check_meminfo(); // 2013.10.12 시작
-	// device tree 에 있는 물리 메모리 bank 를 기준으로 ZONE_NORMAL 과 ZONE_HIGHMEM 을 구분
+    // [2014.02.15] review end
 
 
 	arm_memblock_init(&meminfo, mdesc);
