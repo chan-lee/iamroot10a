@@ -96,3 +96,19 @@ setup_arch() - arch/arm/kernel/setup.c
           mmu 입장: 16K, 4096 enties, 4G memory cover
           kernel 입장: 16K, 2048 enties, 4G memory cover
 
+------------------------------------------------------------
+[2014.02.22] 후반
+start_kernel() - init/main.c 
+1. 아래와 같은 함수들을 살펴 봄
+	mm_init_owner() - kernel/fork.c // init_mm의 owner를 init_task로 함
+	mm_init_cpumask() - include/linux/mm_types.h
+	setup_command_line() - init/main.c // p.265 참조
+	setup_nr_cpu_ids()
+2. per_cpu에 대하여 공부함.
+    - per_cpu는 언제 사용하는가?
+        percpu 의 개념 http://studyfoss.egloos.com/5375570
+        percpu 의 사용 http://blog.naver.com/PostView.nhn?blogId=nix102guri&logNo=90098904482
+    - thread_safe/ re-entrant 가능한가?
+    - thread는 cpu를 옮겨 다니는가?
+        work-queue http://studyfoss.egloos.com/5626173
+

@@ -533,10 +533,12 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	pr_notice("%s", linux_banner);
 	setup_arch(&command_line);
     //@@ [2014.02.15] end
+    //@@ [2014.02.22] start
 	mm_init_owner(&init_mm, &init_task);
 	mm_init_cpumask(&init_mm);
 	setup_command_line(command_line);
 	setup_nr_cpu_ids();
+    //@@ [2014.02.22] end
 	setup_per_cpu_areas();
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 
