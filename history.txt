@@ -63,3 +63,36 @@ arch/arm/kernel/setup.c - setup_arch()
     그중 smp_build_mpidr_hash함수는 pass. reverse_crashkernel을 위한 공간도 만들어서
     iomem_resource에 추가한다.
 5.  mdesc->init_early() 는 있을듯한데 없다.
+
+------------------------------------------------------------
+[2014.02.22] review
+setup_arch() - arch/arm/kernel/setup.c 
+1.  arm_memblock_init() - arch/arm/mm/init.c
+    meminfo로부터 memblock.memory->region을 만들고,
+    kernel text/bss, initrd, swapper_pg_dir, dt내의 reverve영역,
+    mdesc->reserve영역, DMB contiguos 부분을 memblock.reserve에 추가한다.
+    memblock_add -> memblock_add_region -> memblock_double_array() 부분은 
+    어느 부분까지 동작하는지 잘 모르겠으므로 패스한다.
+    DT level : bank 정보로 부터 meminfo를 만듬
+    memblock level : meminfo로 부터 memblock정보를 region으로 채움
+
+    paging_init() - arch/arm/mm/mmu.c
+2.      build_mem_type_table() - arch/arm/mm/mmu.c
+    cachepolicy와 memtype을 설정한다. 자세한 사항은 다음을 참조하자.
+    http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=185905
+ 
+3. prepare_page_table -preview
+    PTE : MMU는 하나의 page table은 1K의 크기를 가지고 있고, 이는 256개(1K / 4bytes)의
+          entry들이 있게 된다.(이때 커버하는 page크기는 1M)
+          하지만 ARM의 경우 HW의 entry에 dirty bit같은 부가 정보가
+          없으므로 linux용 entry가 따로 필요하게 된다. 그러다 보니 pte 크기는 2K로 늘어나게 된다.
+          거기에 pte의 크기가 page의 크기가 되어야 하기 때문에 2쌍이이 들어갈수 있게되고
+          linux kernel 입장에서는 총 entries는 512개가 되고 커버하는 page크기는 2M가 된다.
+          mmu 입장: 1K, 256 entries, 1M memory cover
+          kernel 입장: 4K, 512 enties, 2M memory cover
+    PGD : MMU의 입장에서는 PTE는 1M(256개)를 커버하므로, 4G를 커버하기 위해서는 4096개의 entry가
+          필요하게되고 이의 크기는 4096 * 4bytes = 16K가 된다. 하지만 linux kernel
+          입장에서는 PTE는 512개의 entry이게 되고 4G를 커버하기 위한 entry는 2048개가 된다.
+          mmu 입장: 16K, 4096 enties, 4G memory cover
+          kernel 입장: 16K, 2048 enties, 4G memory cover
+

@@ -369,13 +369,19 @@ phys_addr_t __init arm_memblock_steal(phys_addr_t size, phys_addr_t align)
 	return phys;
 }
 
+//@@ meminfo로부터 memblock.memory->region을 만들고,
+//@@ kernel text/bss, initrd, swapper_pg_dir, dt내의 reverve영역,
+//@@ mdesc->reserve영역, DMB contiguos 부분을 memblock.reserve에 추가한다.
 void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 {
 	int i;
 
 	for (i = 0; i < mi->nr_banks; i++)
-		memblock_add(mi->bank[i].start, mi->bank[i].size); // region 을 추가하고 합치는 함수 
-		// 조각모음??
+        //@@ region 을 추가하고 합치는 함수 
+        //@@ region은 인접한 memory bank끼리 묶어 놓은것.
+        //@@ ex) bank0 : 512 ~ 1024, bank1: 1024 ~ 1536 => region cnt :1
+        //       bank0 : 512 ~ 1024, bank1: 1536 ~ 2048 => region cnt :2
+		memblock_add(mi->bank[i].start, mi->bank[i].size);
 
 	/* Register the kernel text, kernel data and initrd with memblock. */
 #ifdef CONFIG_XIP_KERNEL
@@ -386,6 +392,7 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 #endif
 
 #ifdef CONFIG_BLK_DEV_INITRD
+    //@@ initrd 공간을 reserve함.
 	if (phys_initrd_size && // Where is phys_initrd_size?
 			!memblock_is_region_memory(phys_initrd_start, phys_initrd_size)) {
 		pr_err("INITRD: 0x%08llx+0x%08lx is not a memory region - disabling initrd\n",
@@ -419,7 +426,7 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 		// 131012 end.
 
 	/*
-	 * reserve memory for DMA contigouos allocations,
+	 * reserve memory for DMA contiguos allocations,
 	 * must come from DMA area inside low memory
 	 */
 	dma_contiguous_reserve(min(arm_dma_limit, arm_lowmem_limit));

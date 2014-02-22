@@ -931,7 +931,10 @@ void __init setup_arch(char **cmdline_p)
 	sanity_check_meminfo(); // 2013.10.12 시작
     // [2014.02.15] review end
 
-
+    //@@ [2014.02.22] review start
+    //@@ meminfo로부터 memblock.memory->region을 만들고,
+    //@@ kernel text/bss, initrd, swapper_pg_dir, dt내의 reverve영역,
+    //@@ mdesc->reserve영역, DMB contiguos 부분을 memblock.reserve에 추가한다.
 	arm_memblock_init(&meminfo, mdesc);
 
 	paging_init(mdesc);

@@ -389,6 +389,7 @@ repeat:
 	 * then with %true.  The first counts the number of regions needed
 	 * to accomodate the new area.  The second actually inserts them.
 	 */
+    // @@ 인접한 bank끼리 region을 이룬다.
 	base = obase;
 	nr_new = 0;
 
@@ -428,11 +429,12 @@ repeat:
 	 */
 	if (!insert) {
 		while (type->cnt + nr_new > type->max)
-			if (memblock_double_array(type, obase, size) < 0)
+			if (memblock_double_array(type, obase, size) < 0) //@@ pass. 현재 상태에서 동작할까?
 				return -ENOMEM;
 		insert = true;
 		goto repeat;
 	} else {
+        //@@ 일단 위에서 추가하고 merge할수 있는 것들은 merge한다.
 		memblock_merge_regions(type);
 		return 0;
 	}

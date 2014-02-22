@@ -68,7 +68,7 @@ EXPORT_SYMBOL(pgprot_kernel);
 struct cachepolicy {
 	const char	policy[16];
 	unsigned int	cr_mask;
-	pmdval_t	pmd;
+	pmdval_t	pmd; //@@ arm에서는 pgd와 동일
 	pteval_t	pte;
 	pteval_t	pte_s2;
 };
@@ -338,6 +338,7 @@ EXPORT_SYMBOL(get_mem_type);
 /*
  * Adjust the PMD section entries according to the CPU in use.
  */
+//@@ 참조 http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=185905
 static void __init build_mem_type_table(void)
 {
 	struct cachepolicy *cp;
@@ -398,6 +399,7 @@ static void __init build_mem_type_table(void)
 	/*
 	 * Mark the device areas according to the CPU/architecture.
 	 */
+    //@@ CR_XP CR register: Extended Page Table
 	if (cpu_is_xsc3() || (cpu_arch >= CPU_ARCH_ARMv6 && (cr & CR_XP))) {
 		if (!cpu_is_xsc3()) {
 			/*
@@ -1128,6 +1130,7 @@ void __init sanity_check_meminfo(void)
 	memblock_set_current_limit(memblock_limit);
 }
 
+//@@ 2단계 paging시 PUD와 PMD 생략
 static inline void prepare_page_table(void)
 {
 	unsigned long addr;
@@ -1343,7 +1346,8 @@ void __init paging_init(struct machine_desc *mdesc)
 {
 	void *zero_page;
 
-	build_mem_type_table(); //TO Do 페이지 타입 설정. 타입별 의미는 파악 못함
+	build_mem_type_table(); //@@ 페이지 타입 설정.ToDo 타입별 의미는 파악 못함
+    //@@ 2014.2.22 review end
 	prepare_page_table();
 	map_lowmem();
 	dma_contiguous_remap();
