@@ -1136,12 +1136,14 @@ static inline void prepare_page_table(void)
 	unsigned long addr;
 	phys_addr_t end;
 
+    // virtual address 구조는 다음을 참조
+    // http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=189745
 	/*
 	 * Clear out all the mappings below the kernel image.
 	 */
-	//#define MODULES_VADDR (PAGE_OFFSET - SZ_8M)
+	//#define MODULES_VADDR (PAGE_OFFSET - SZ_8M) kernel 아래에 module공간의 주소
 	//리눅스 커널에서는 페이지 디렉토리 엔트리를 2메가 단위로 관리
-	//#define PMD_SIZE		(1UL << 21)
+	//#define PMD_SIZE		(1UL << 21) => 2M
 	//실제 페이지 엔트리 크기는 1메가 이므로 , 2개의 배열 처럼 관리
 	for (addr = 0; addr < MODULES_VADDR; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
@@ -1348,7 +1350,9 @@ void __init paging_init(struct machine_desc *mdesc)
 
 	build_mem_type_table(); //@@ 페이지 타입 설정.ToDo 타입별 의미는 파악 못함
     //@@ 2014.2.22 review end
+    // @@ 2014.03.01 review start
 	prepare_page_table();
+    // @@ 2014.03.01 review end
 	map_lowmem();
 	dma_contiguous_remap();
 	devicemaps_init(mdesc);

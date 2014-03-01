@@ -82,17 +82,20 @@ setup_arch() - arch/arm/kernel/setup.c
     http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=185905
  
 3. prepare_page_table -preview
-    PTE : MMU는 하나의 page table은 1K의 크기를 가지고 있고, 이는 256개(1K / 4bytes)의
-          entry들이 있게 된다.(이때 커버하는 page크기는 1M)
-          하지만 ARM의 경우 HW의 entry에 dirty bit같은 부가 정보가
-          없으므로 linux용 entry가 따로 필요하게 된다. 그러다 보니 pte 크기는 2K로 늘어나게 된다.
+    32 bits를 1,2차 table과 page로 나누면, 31~20(1차)/19~12(2차)/11~0(page size)로 나눠지게 된다.
+    그러므로 1차table (PGD)의 entries는 4096개가 되고, 2차 table(PTE)의 entries는 256개가 되며,
+    page size는 4K가 된다.
+    PTE : 256개의 enties는 1K(256 * 4bytes)의 공간을 차지하게 되는데(이때 커버하는 page크기는 1M)
+          ARM의 경우 HW의 entry에 dirty bit같은 부가 정보가
+          없으므로 linux용 entry가 따로 필요하게 된다. 그러다 보니 pte가 차지하는 공간은
+          2K로 늘어나게 된다.
           거기에 pte의 크기가 page의 크기가 되어야 하기 때문에 2쌍이이 들어갈수 있게되고
           linux kernel 입장에서는 총 entries는 512개가 되고 커버하는 page크기는 2M가 된다.
           mmu 입장: 1K, 256 entries, 1M memory cover
           kernel 입장: 4K, 512 enties, 2M memory cover
-    PGD : MMU의 입장에서는 PTE는 1M(256개)를 커버하므로, 4G를 커버하기 위해서는 4096개의 entry가
-          필요하게되고 이의 크기는 4096 * 4bytes = 16K가 된다. 하지만 linux kernel
-          입장에서는 PTE는 512개의 entry이게 되고 4G를 커버하기 위한 entry는 2048개가 된다.
+    PGD : 4096개의 entries가 필요하고 이에 대한 크기는 4096 * 4bytes = 16K가 된다.
+          하지만 linux kernel 입장에서는 하나의 PTE는 512개의 entries를 가지게 되고, 결국
+          2048개만 필요하게 된다.
           mmu 입장: 16K, 4096 enties, 4G memory cover
           kernel 입장: 16K, 2048 enties, 4G memory cover
 
@@ -112,3 +115,11 @@ start_kernel() - init/main.c
     - thread는 cpu를 옮겨 다니는가?
         work-queue http://studyfoss.egloos.com/5626173
 
+--------------------------------------------------------------------------------
+[2014.02.22] review
+setup_arch() - arch/arm/kernel/setup.c 
+1.      prepare_page_table() - arch/arm/mm/mmu.c
+    - PAGE_OFFSET (가상주소0~3G) 까지 pmd를 clear한다.
+    - high memory (가상주소3G + 780M)부터 VMALLOC_START까지 pmd를 clear한다.
+        왜 VMALLOC_END가 아닌 VMALLOC_START인지는 잘 모르겠다.
+        
