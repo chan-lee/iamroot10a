@@ -1501,6 +1501,7 @@ static struct pcpu_alloc_info * __init pcpu_build_alloc_info(
 	 * and then as much as possible without using more address
 	 * space.
 	 */
+    // @@ 각 그룹을 고려하여 낭비가 1/3 이하의 가장 큰 upa를 구한다.
 	last_allocs = INT_MAX;
 	for (upa = max_upa; upa; upa--) {
 		int allocs = 0, wasted = 0;
@@ -1510,6 +1511,8 @@ static struct pcpu_alloc_info * __init pcpu_build_alloc_info(
 
 		for (group = 0; group < nr_groups; group++) {
 			int this_allocs = DIV_ROUND_UP(group_cnt[group], upa);
+            // @@ 몇개의 allocs가 있어야 그 그룹의 unit(cpu)을 모두 포함할수 있는가?
+            // 참조 http://studyfoss.egloos.com/5377666
 			allocs += this_allocs;
 			wasted += this_allocs * upa - group_cnt[group];
 		}
@@ -1620,6 +1623,7 @@ int __init pcpu_embed_first_chunk(size_t reserved_size, size_t dyn_size,
 
 	ai = pcpu_build_alloc_info(reserved_size, dyn_size, atom_size,
 				   cpu_distance_fn);
+    // @@ 2014.03.01 end
 	if (IS_ERR(ai))
 		return PTR_ERR(ai);
 
