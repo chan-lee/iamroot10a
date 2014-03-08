@@ -26,6 +26,9 @@ struct vm_area_struct;		/* vma defining user mapping in mm_types.h */
 #define IOREMAP_MAX_ORDER	(7 + PAGE_SHIFT)	/* 128 pages */
 #endif
 
+// vmalloc에서 중요한 구조체는 struct vm_struct 와 struct static_vm가
+// 있는데, staic_vm은 staic_vmlist의 node고 그것들이 각 vm_struct를
+// list로 들고 있다.
 struct vm_struct {
 	struct vm_struct	*next;
 	void			*addr;

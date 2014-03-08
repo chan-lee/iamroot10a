@@ -412,6 +412,9 @@ void __init dma_contiguous_early_fixup(phys_addr_t base, unsigned long size)
 void __init dma_contiguous_remap(void)
 {
 	int i;
+    //@@ dma_mmu_remap_num은 
+    //@@ setup_arch -> arm_memblock_init -> dma_contiguous_reserve에서
+    //@@ 설정될것으로 추정된다.
 	for (i = 0; i < dma_mmu_remap_num; i++) {
 		phys_addr_t start = dma_mmu_remap[i].base;
 		phys_addr_t end = start + dma_mmu_remap[i].size;

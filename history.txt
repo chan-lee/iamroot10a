@@ -118,10 +118,12 @@ start_kernel() - init/main.c
 --------------------------------------------------------------------------------
 [2014.03.01] review
 setup_arch() - arch/arm/kernel/setup.c 
+    paging_init - arch/arm/mm/mmu.c
 1.      prepare_page_table() - arch/arm/mm/mmu.c
     - PAGE_OFFSET (가상주소0~3G) 까지 pmd를 clear한다.
     - high memory (가상주소3G + 780M)부터 VMALLOC_START까지 pmd를 clear한다.
         왜 VMALLOC_END가 아닌 VMALLOC_START인지는 잘 모르겠다.
+2. 의문 : pmd 및 pte는 가상 주소인가? 물리 주소인가?
         
 --------------------------------------------------------------------------------
 [2014.03.01] 후반
@@ -132,4 +134,27 @@ start_kernel() - init/main.c
 1. cpu를 group으로 나눈후 각 그룹에 적용했을 때 낭비가 적은 unit per allocs를
     찾는다. alloc과 unit의 상관관계를 알기가 어려워 헤매었다. 다음시간에 마저하도록한다.
     참조 : http://studyfoss.egloos.com/5377666
+
+--------------------------------------------------------------------------------
+[2014.03.08] review
+setup_arch() - arch/arm/kernel/setup.c 
+    paging_init - arch/arm/mm/mmu.c
+        low-mem, dma, device, highmem 영역에 대해 mapping을한다.
+        create_mapping() 구현 부분은 너무 복잡해서 책을 참조(p.211)하기로 하고
+        넘어간다.
+
+1.      map_lowmem() - arch/arm/mm/mmu.c
+	    lowmem 영역에 대해 pgd, pud, pmd, pte를 설정한다.
+2.      dma_contiguous_remap() - arch/arm/mm/mda-mapping.c
+        dma 영역에 대해 다시 mapping
+3.      devicemaps_init(mdesc) - arch/arm/mm/mmu.c
+        각 장치에 대해 mapping, gap을 메꾸고, pci를 static_vmlist에 등록한다.
+	    mapping 끝부분에 있는 pci_reserve_io()는
+        PCI 영역을 static_vmlist에 추가하는 함수이다.
+	    vmalloc에서 중요한 구조체는 struct vm_struct 와 struct static_vm가
+        있는데, staic_vm은 staic_vmlist의 node고 그것들이 각 vm_struct를
+        list로 들고 있다.
+        io에 의한 pmd_gap을 메꿔주는 자료는 iamroot에 있다. 링크 필요.
+4.      kmap_init() - arch/arm/mm/mmu.c
+        p.215 TODO  왜 하나의 PMD가 필요한지 잘 모르겠다.
 

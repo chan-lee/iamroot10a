@@ -787,6 +787,7 @@ static void __init create_mapping(struct map_desc *md)
 	/*
 	 * Catch 36-bit addresses
 	 */
+    // @@ PAE일때 (32bits ~ 40bits) pass
 	if (md->pfn >= 0x100000) {
 		create_36bit_mapping(md, type);
 		return;
@@ -1207,6 +1208,7 @@ void __init arm_mm_memblock_reserve(void)
  * called function.  This means you can't use any function or debugging
  * method which may touch any device, otherwise the kernel _will_ crash.
  */
+// @@ p.211 참조
 static void __init devicemaps_init(struct machine_desc *mdesc)
 {
 	struct map_desc map;
@@ -1291,10 +1293,13 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	else
 		debug_ll_io_init();
 	//@@ [2013.10.26] END
-	fill_pmd_gaps();
+	fill_pmd_gaps(); // @@ 1MB 로 되어 있는 section일 경우 dummy section 추가 
 
 	/* Reserve fixed i/o space in VMALLOC region */
-	pci_reserve_io();
+	pci_reserve_io(); // @@ PCI 영역을 static_vmlist에 추가
+	// vmalloc에서 중요한 구조체는 struct vm_struct 와 struct static_vm가
+    // 있는데, staic_vm은 staic_vmlist의 node고 그것들이 각 vm_struct를
+    // list로 들고 있다.
 
 	/*
 	 * Finally flush the caches and tlb to ensure that we're in a
@@ -1314,6 +1319,7 @@ static void __init kmap_init(void)
 #endif
 }
 
+// @@ p.211 참조
 static void __init map_lowmem(void)
 {
 	struct memblock_region *reg;
@@ -1351,14 +1357,17 @@ void __init paging_init(struct machine_desc *mdesc)
 	build_mem_type_table(); //@@ 페이지 타입 설정.ToDo 타입별 의미는 파악 못함
     //@@ 2014.2.22 review end
     // @@ 2014.03.01 review start
+    // @@ PMD(1차 page table entries) 초기화
 	prepare_page_table();
     // @@ 2014.03.01 review end
-	map_lowmem();
-	dma_contiguous_remap();
-	devicemaps_init(mdesc);
-	kmap_init();
+    // @@ 2014.03.08 review start
+	map_lowmem(); // @@ lowmem 영역에 대해 pgd, pud, pmd, pte를 설정한다.
+	dma_contiguous_remap(); // @@ dma 영역에 대해 다시 mapping
+	devicemaps_init(mdesc); // @@ 각 장치에 대해 mapping, gap을 메꾸고, pci를 static_vmlist에 등록
+	kmap_init(); // @@ p.215 TODO  왜 하나의 PMD가 필요한지 잘 모르겠다.
+    // @@ 2014.03.08 review end
 	//cortex a15는 tcm지원 하지 않음
-	tcm_init();
+	tcm_init(); // @@ tightly coupled memory
 
 	top_pmd = pmd_off_k(0xffff0000);
 
