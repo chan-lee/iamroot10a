@@ -157,4 +157,19 @@ setup_arch() - arch/arm/kernel/setup.c
         io에 의한 pmd_gap을 메꿔주는 자료는 iamroot에 있다. 링크 필요.
 4.      kmap_init() - arch/arm/mm/mmu.c
         p.215 TODO  왜 하나의 PMD가 필요한지 잘 모르겠다.
+5.      kmemleak.c에는 kernel에서 메모리 누수 및 디버깅 검출을 위한 함수들이 있다.
+        kmemleack 호출 위치 수정요망
+--------------------------------------------------------------------------------
+[2014.03.08] 후반
+start_kernel() - init/main.c 
+	setup_per_cpu_areas() - mm/percpu.c
+1.      pcpu_embed_first_chunk() - mm/percpu.c
+        percpu를 위한 first chuck를 만든후 각 percpu offset을 기록한다.
+        자세한 내부 루틴은 다음을 참조한다.
+        http://studyfoss.egloos.com/viewer/5377666
+2.      smp_prepare_boot_cpu() - arch/arm/kernel/smp.c
+        booting cpu의 per_cpu offet을 기록한다.
+3.      build_all_zonelists() - mm/page_alloc.c
+	    set_zonelist_order()를 호출하여 zonelist의 order를 결정한다.
+        zone별로 혹은 node별로...
 

@@ -1609,6 +1609,9 @@ static struct pcpu_alloc_info * __init pcpu_build_alloc_info(
  * RETURNS:
  * 0 on success, -errno on failure.
  */
+
+// @@ 참조 : http://studyfoss.egloos.com/viewer/5377666
+
 int __init pcpu_embed_first_chunk(size_t reserved_size, size_t dyn_size,
 				  size_t atom_size,
 				  pcpu_fc_cpu_distance_fn_t cpu_distance_fn,
@@ -1624,6 +1627,7 @@ int __init pcpu_embed_first_chunk(size_t reserved_size, size_t dyn_size,
 	ai = pcpu_build_alloc_info(reserved_size, dyn_size, atom_size,
 				   cpu_distance_fn);
     // @@ 2014.03.01 end
+    // @@ 2014.03.08 start
 	if (IS_ERR(ai))
 		return PTR_ERR(ai);
 

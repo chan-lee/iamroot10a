@@ -3678,6 +3678,9 @@ static int __build_all_zonelists(void *data)
 	 * needs the percpu allocator in order to allocate its pagesets
 	 * (a chicken-egg dilemma).
 	 */
+
+    // @@ pageset 참조:
+    // https://www.kernel.org/doc/gorman/html/understand/understand009.html
 	for_each_possible_cpu(cpu) {
 		setup_pageset(&per_cpu(boot_pageset, cpu), 0);
 
@@ -3708,6 +3711,7 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 
 	if (system_state == SYSTEM_BOOTING) {
 		__build_all_zonelists(NULL);
+        // @@ 2014.03.08 end
 		mminit_verify_zonelist();
 		cpuset_init_current_mems_allowed();
 	} else {
