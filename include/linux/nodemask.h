@@ -110,7 +110,7 @@ static inline void __node_clear(int node, volatile nodemask_t *dstp)
 	clear_bit(node, dstp->bits);
 }
 
-#define nodes_setall(dst) __nodes_setall(&(dst), MAX_NUMNODES)
+#define nodes_setall(dst) __nodes_setall(&(dst), MAX_NUMNODES)   //MAX_NUMNODES 1
 static inline void __nodes_setall(nodemask_t *dstp, int nbits)
 {
 	bitmap_fill(dstp->bits, nbits);

@@ -169,7 +169,7 @@ static inline void cpu_maps_update_done(void)
 #endif /* CONFIG_SMP */
 extern struct bus_type cpu_subsys;
 
-#ifdef CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU   //@@ 선언되어 있음.
 /* Stop CPUs going up and down. */
 
 extern void get_online_cpus(void);

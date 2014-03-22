@@ -173,3 +173,13 @@ start_kernel() - init/main.c
 	    set_zonelist_order()를 호출하여 zonelist의 order를 결정한다.
         zone별로 혹은 node별로...
 
+--------------------------------------------------------------------------------
+[2014.03.22] 
+start_kernel() - init/main.c
+	build_all_zonelists() end 
+1. mminit_verify_zonelist() //zonelist 검증.
+2. cpuset_init_current_mems_allowed() //mems_allowd 비트맵에 시스템의 모든 노드를 set함.
+3. nr_free_pagecache_pages(); //@@ highmem에서 이동 가능한 프리페이지수를 구함.
+4. @@ mobility를 할만큼 충분한 가용 페이지가 없으면 mirgration을 하지 않겠다.
+ 
+

@@ -2881,7 +2881,8 @@ EXPORT_SYMBOL_GPL(nr_free_buffer_pages);
  */
 unsigned long nr_free_pagecache_pages(void)
 {
-	return nr_free_zone_pages(gfp_zone(GFP_HIGHUSER_MOVABLE));
+	//@@ highmem zone 에서 이동 가능한 프리 페이지의 수를 구함.
+	return nr_free_zone_pages(gfp_zone(GFP_HIGHUSER_MOVABLE));  
 }
 
 static inline void show_node(struct zone *zone)
@@ -3712,19 +3713,20 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 	if (system_state == SYSTEM_BOOTING) {
 		__build_all_zonelists(NULL);
         // @@ 2014.03.08 end
+		//@@ 2014.03.22 start
 		mminit_verify_zonelist();
 		cpuset_init_current_mems_allowed();
 	} else {
-#ifdef CONFIG_MEMORY_HOTPLUG
+#ifdef CONFIG_MEMORY_HOTPLUG   //@@ 선언되어 있지 않음.
 		if (zone)
 			setup_zone_pageset(zone);
 #endif
 		/* we have to stop all cpus to guarantee there is no user
 		   of zonelist */
-		stop_machine(__build_all_zonelists, pgdat, NULL);
+		stop_machine(__build_all_zonelists, pgdat, NULL);  //@@ __build_all_zonelists(pgdata);
 		/* cpuset refresh routine should be here */
 	}
-	vm_total_pages = nr_free_pagecache_pages();
+	vm_total_pages = nr_free_pagecache_pages(); //@@ highmem에서 이동 가능한 프리페이지수를 구함. 
 	/*
 	 * Disable grouping by mobility if the number of pages in the
 	 * system is too low to allow the mechanism to work. It would be
@@ -3732,7 +3734,8 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 	 * made on memory-hotadd so a system can start with mobility
 	 * disabled and enable it later
 	 */
-	if (vm_total_pages < (pageblock_nr_pages * MIGRATE_TYPES))
+	//@@ mobility를 할만큼 충분한 가용 페이지가 없으면 mirgration을 하지 않겠다.
+	if (vm_total_pages < (pageblock_nr_pages * MIGRATE_TYPES))  //@@ pageblock_nr_pages 2k ,MIGRATE_TYPES 4
 		page_group_by_mobility_disabled = 1;
 	else
 		page_group_by_mobility_disabled = 0;

@@ -25,18 +25,19 @@ void mminit_verify_zonelist(void)
 {
 	int nid;
 
-	if (mminit_loglevel < MMINIT_VERIFY)
+	if (mminit_loglevel < MMINIT_VERIFY) //@@ loglevel값이 1보다 작으면 리턴.
 		return;
 
 	for_each_online_node(nid) {
-		pg_data_t *pgdat = NODE_DATA(nid);
+		pg_data_t *pgdat = NODE_DATA(nid); //@@ bootmem의 시작 주소.
 		struct zone *zone;
 		struct zoneref *z;
 		struct zonelist *zonelist;
 		int i, listid, zoneid;
 
-		BUG_ON(MAX_ZONELISTS > 2);
-		for (i = 0; i < MAX_ZONELISTS * MAX_NR_ZONES; i++) {
+		BUG_ON(MAX_ZONELISTS > 2);  //@@ MAX_ZONELISTS 1,      if CONFIG_NUMA, MAX_ZONELISTS 2
+		//@@ 모든 zone을 한번에 처리하기 위해서 max_zonlists * max_nr_zones 사용.
+		for (i = 0; i < MAX_ZONELISTS * MAX_NR_ZONES; i++) { //@@ MAX_NR_ZONES 3
 
 			/* Identify the zone and nodelist */
 			zoneid = i % MAX_NR_ZONES;
@@ -46,13 +47,13 @@ void mminit_verify_zonelist(void)
 			if (!populated_zone(zone))
 				continue;
 
-			/* Print information about the zonelist */
+			/* Print information about the zonelist */ //@@ 모든 node에 있는 zone의 정보를 출력한다.
 			printk(KERN_DEBUG "mminit::zonelist %s %d:%s = ",
 				listid > 0 ? "thisnode" : "general", nid,
 				zone->name);
 
-			/* Iterate the zonelist */
-			for_each_zone_zonelist(zone, z, zonelist, zoneid) {
+			/* Iterate the zonelist */ 
+			for_each_zone_zonelist(zone, z, zonelist, zoneid) { //@@ z++ 하면서 zonlist의 name을 출력한다.
 #ifdef CONFIG_NUMA
 				printk(KERN_CONT "%d:%s ",
 					zone->node, zone->name);

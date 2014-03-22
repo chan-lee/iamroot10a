@@ -25,7 +25,7 @@
 
 #ifndef CONFIG_NEED_MULTIPLE_NODES
 struct pglist_data __refdata contig_page_data = {
-	.bdata = &bootmem_node_data[0]
+	.bdata = &bootmem_node_data[0] 	/* //@@ arm 인 경우에 node가 한개 */
 };
 EXPORT_SYMBOL(contig_page_data);
 #endif

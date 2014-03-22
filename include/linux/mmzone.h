@@ -41,7 +41,7 @@ enum {
 	MIGRATE_MOVABLE,
 	MIGRATE_PCPTYPES,	/* the number of types on the pcp lists */
 	MIGRATE_RESERVE = MIGRATE_PCPTYPES,
-#ifdef CONFIG_CMA
+#ifdef CONFIG_CMA    //@@ 선언 되어 있지 않음
 	/*
 	 * MIGRATE_CMA migration type is designed to mimic the way
 	 * ZONE_MOVABLE works.  Only movable pages can be allocated
@@ -57,7 +57,7 @@ enum {
 	 */
 	MIGRATE_CMA,
 #endif
-#ifdef CONFIG_MEMORY_ISOLATION
+#ifdef CONFIG_MEMORY_ISOLATION  //@@ 선언되어 있지 않음.
 	MIGRATE_ISOLATE,	/* can't allocate from here */
 #endif
 	MIGRATE_TYPES
@@ -906,10 +906,10 @@ extern int numa_zonelist_order_handler(struct ctl_table *, int,
 extern char numa_zonelist_order[];
 #define NUMA_ZONELIST_ORDER_LEN 16	/* string buffer size */
 
-#ifndef CONFIG_NEED_MULTIPLE_NODES
+#ifndef CONFIG_NEED_MULTIPLE_NODES   //@@ 선언 되어 있지 않음.
 
 extern struct pglist_data contig_page_data;
-#define NODE_DATA(nid)		(&contig_page_data)
+#define NODE_DATA(nid)		(&contig_page_data) //@@ &bootmem_node_data[0], bootmem 의 시작 주소를 가져옮.
 #define NODE_MEM_MAP(nid)	mem_map
 
 #else /* CONFIG_NEED_MULTIPLE_NODES */

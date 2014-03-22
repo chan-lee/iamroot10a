@@ -69,7 +69,7 @@ void get_online_cpus(void)
 	if (cpu_hotplug.active_writer == current)
 		return;
 	mutex_lock(&cpu_hotplug.lock);
-	cpu_hotplug.refcount++;
+	cpu_hotplug.refcount++;  //@@ cpu_hotplug: cpu도 on/off 할 수 있다.
 	mutex_unlock(&cpu_hotplug.lock);
 
 }

@@ -2376,8 +2376,13 @@ void cpuset_cpus_allowed_fallback(struct task_struct *tsk)
 	 */
 }
 
+//@@ from iamroot source
+//@@ current task 의 mems_allowd 비트맵에 시스템의 모든 노드를 set함.
+//@@ mems_allowd는 현재 태스크에서 발생하는 페이지 할당을 처리할 수
+//@@ 노드를 정해주는 비트맵이다..
 void cpuset_init_current_mems_allowed(void)
 {
+	//@@ mems_allowd 비트맵에 시스템의 모든 노드를 set함.
 	nodes_setall(current->mems_allowed);
 }
 
