@@ -176,7 +176,7 @@ extern void get_online_cpus(void);
 extern void put_online_cpus(void);
 extern void cpu_hotplug_disable(void);
 extern void cpu_hotplug_enable(void);
-#define hotcpu_notifier(fn, pri)	cpu_notifier(fn, pri)
+#define hotcpu_notifier(fn, pri)	cpu_notifier(fn, pri)   //@@ cpu_chain에 우선순위 를 주어 등록.
 #define register_hotcpu_notifier(nb)	register_cpu_notifier(nb)
 #define unregister_hotcpu_notifier(nb)	unregister_cpu_notifier(nb)
 void clear_tasks_mm_cpumask(int cpu);

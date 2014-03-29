@@ -50,8 +50,8 @@ static __always_inline void del_page_from_lru_list(struct page *page,
 static inline enum lru_list page_lru_base_type(struct page *page)
 {
 	if (page_is_file_cache(page))
-		return LRU_INACTIVE_FILE;
-	return LRU_INACTIVE_ANON;
+		return LRU_INACTIVE_FILE;  //@@ 2
+	return LRU_INACTIVE_ANON;  //@@ 0
 }
 
 /**

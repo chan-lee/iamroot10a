@@ -40,7 +40,7 @@ void cpu_maps_update_done(void)
 	mutex_unlock(&cpu_add_remove_lock);
 }
 
-static RAW_NOTIFIER_HEAD(cpu_chain);
+static RAW_NOTIFIER_HEAD(cpu_chain);  //@@ cpu_chain에 대한 notifier를 초기화.
 
 /* If set, cpu_up and cpu_down will return -EBUSY and do nothing.
  * Should always be manipulated under cpu_add_remove_lock
@@ -164,7 +164,7 @@ int __ref register_cpu_notifier(struct notifier_block *nb)
 {
 	int ret;
 	cpu_maps_update_begin();
-	ret = raw_notifier_chain_register(&cpu_chain, nb);
+	ret = raw_notifier_chain_register(&cpu_chain, nb);  //@@ cpu_chin에 nb를 등록.
 	cpu_maps_update_done();
 	return ret;
 }

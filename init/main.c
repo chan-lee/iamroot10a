@@ -544,7 +544,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 
 	build_all_zonelists(NULL, NULL); //@@ 2014.03.22 end
-	page_alloc_init();
+	page_alloc_init(); //@@ 2014.03.28 start
 
 	pr_notice("Kernel command line: %s\n", boot_command_line);
 	parse_early_param();

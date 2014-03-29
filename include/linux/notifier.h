@@ -48,7 +48,7 @@
  */
 
 typedef	int (*notifier_fn_t)(struct notifier_block *nb,
-			unsigned long action, void *data);
+			unsigned long action, void *data); //@@ action: plug or unplug.
 
 struct notifier_block {
 	notifier_fn_t notifier_call;

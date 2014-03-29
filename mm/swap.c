@@ -40,6 +40,7 @@
 /* How many pages do we try to swap or page in/out together? */
 int page_cluster;
 
+//@@ cpu가 가지고 있던 page를 옮기거나 없앤다. pagevec - swap - lru
 static DEFINE_PER_CPU(struct pagevec, lru_add_pvec);
 static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
 static DEFINE_PER_CPU(struct pagevec, lru_deactivate_pvecs);
@@ -312,8 +313,8 @@ static void pagevec_lru_move_fn(struct pagevec *pvec,
 			spin_lock_irqsave(&zone->lru_lock, flags);
 		}
 
-		lruvec = mem_cgroup_page_lruvec(page, zone);
-		(*move_fn)(page, lruvec, arg);
+		lruvec = mem_cgroup_page_lruvec(page, zone);  //@@ 옮겨질 lruvec
+		(*move_fn)(page, lruvec, arg); 
 	}
 	if (zone)
 		spin_unlock_irqrestore(&zone->lru_lock, flags);
@@ -326,7 +327,7 @@ static void pagevec_move_tail_fn(struct page *page, struct lruvec *lruvec,
 {
 	int *pgmoved = arg;
 
-	if (PageLRU(page) && !PageActive(page) && !PageUnevictable(page)) {
+	if (PageLRU(page) && !PageActive(page) && !PageUnevictable(page)) { //@@ page를 빼기위한 조건 검사.
 		enum lru_list lru = page_lru_base_type(page);
 		list_move_tail(&page->lru, &lruvec->lists[lru]);
 		(*pgmoved)++;
@@ -342,7 +343,7 @@ static void pagevec_move_tail(struct pagevec *pvec)
 	int pgmoved = 0;
 
 	pagevec_lru_move_fn(pvec, pagevec_move_tail_fn, &pgmoved);
-	__count_vm_events(PGROTATED, pgmoved);
+	__count_vm_events(PGROTATED, pgmoved);  //@@ PGROTATED: LRU 끝으로 회전된 페이지
 }
 
 /*
@@ -383,14 +384,15 @@ static void __activate_page(struct page *page, struct lruvec *lruvec,
 		int file = page_is_file_cache(page);
 		int lru = page_lru_base_type(page);
 
+		//@@ 자신의 lru리스트에서 page를 뺀후 active를 시킨후 lru리스트에 다시 추가.
 		del_page_from_lru_list(page, lruvec, lru);
 		SetPageActive(page);
-		lru += LRU_ACTIVE;
+		lru += LRU_ACTIVE;   //@@ LRU_ACTIVE 1
 		add_page_to_lru_list(page, lruvec, lru);
-		trace_mm_lru_activate(page, page_to_pfn(page));
+		trace_mm_lru_activate(page, page_to_pfn(page)); //@@ ???
 
 		__count_vm_event(PGACTIVATE);
-		update_page_reclaim_stat(lruvec, file, 1);
+		update_page_reclaim_stat(lruvec, file, 1);  //@@ file: page cache인지 알려주는 인자.
 	}
 }
 
@@ -615,22 +617,22 @@ static void lru_deactivate_fn(struct page *page, struct lruvec *lruvec,
  */
 void lru_add_drain_cpu(int cpu)
 {
-	struct pagevec *pvec = &per_cpu(lru_add_pvec, cpu);
+	struct pagevec *pvec = &per_cpu(lru_add_pvec, cpu);  //@@ 현재 cpu의 lru_add_pvec.
 
 	if (pagevec_count(pvec))
-		__pagevec_lru_add(pvec);
+		__pagevec_lru_add(pvec);  //@@ TODO, lru vec로 pvec를 옮긴다.
 
-	pvec = &per_cpu(lru_rotate_pvecs, cpu);
+	pvec = &per_cpu(lru_rotate_pvecs, cpu); //@@ 해당 cpu에 대한 rotate pagevec를 가져온다.
 	if (pagevec_count(pvec)) {
 		unsigned long flags;
 
 		/* No harm done if a racing interrupt already did this */
 		local_irq_save(flags);
-		pagevec_move_tail(pvec);
+		pagevec_move_tail(pvec); //@@ TODO 
 		local_irq_restore(flags);
 	}
 
-	pvec = &per_cpu(lru_deactivate_pvecs, cpu);
+	pvec = &per_cpu(lru_deactivate_pvecs, cpu);  //@@ 해당 cpu에 대한 lru_deactivate_pavecs를 가져온다.
 	if (pagevec_count(pvec))
 		pagevec_lru_move_fn(pvec, lru_deactivate_fn, NULL);
 

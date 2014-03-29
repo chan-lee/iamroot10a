@@ -39,7 +39,8 @@ static inline void count_vm_event(enum vm_event_item item)
 
 static inline void __count_vm_events(enum vm_event_item item, long delta)
 {
-	__this_cpu_add(vm_event_states.event[item], delta);
+	__this_cpu_add(vm_event_states.event[item], delta); //@@ delta: 다른 lruvec의 꼬리로 옮겨진  갯수
+	//@@ TODO __this_cpu_add
 }
 
 static inline void count_vm_events(enum vm_event_item item, long delta)

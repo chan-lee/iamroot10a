@@ -1204,7 +1204,7 @@ static void drain_pages(unsigned int cpu)
 	unsigned long flags;
 	struct zone *zone;
 
-	for_each_populated_zone(zone) {
+	for_each_populated_zone(zone) {  //@@ populated_zone, page 유무 확인.
 		struct per_cpu_pageset *pset;
 		struct per_cpu_pages *pcp;
 

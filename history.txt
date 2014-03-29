@@ -183,3 +183,18 @@ start_kernel() - init/main.c
 4. @@ mobility를 할만큼 충분한 가용 페이지가 없으면 mirgration을 하지 않겠다.
  
 
+--------------------------------------------------------------------------------
+[2014.03.28]
+start_kenrel() - page_alloc_init()
+
+1. hotcpu_notifier()
+	- notifier_block 구조체 타입의 page_alloc_cpu_notify_nb를 만들고 우선순위를 0으로 page_alloc_cpu_notify_nb에 등록
+
+	.page_alloc_cpu_notify()
+		.lru_add_drain_cpu(cpu)
+			TODO: LRU에 대해서
+
+		.drain_page(cpu) - 2014.4.5 시작..
+
+
+--------------------------------------------------------------------------------
