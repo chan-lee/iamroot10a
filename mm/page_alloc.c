@@ -666,19 +666,21 @@ static void free_pcppages_bulk(struct zone *zone, int count,
 			if (++migratetype == MIGRATE_PCPTYPES)
 				migratetype = 0;
 			list = &pcp->lists[migratetype];
-		} while (list_empty(list));
+		} while (list_empty(list)); //@@ per_cpu_pages의 lists 중에서 free 할 페이지가 있는 lists 를 찾아낸다
 
 		/* This is the only non-empty list. Free them all. */
-		if (batch_free == MIGRATE_PCPTYPES)
+		if (batch_free == MIGRATE_PCPTYPES) //@@ MIGRATE_PCPTYPES 까지 오면 모두 다 free 시킨다
 			batch_free = to_free;
 
+    //@@ free시킬 lists에서, page 하나씩 free 시킴
 		do {
 			int mt;	/* migratetype of the to-be-freed page */
 
 			page = list_entry(list->prev, struct page, lru);
 			/* must delete as __free_one_page list manipulates */
-			list_del(&page->lru);
+			list_del(&page->lru); //@@ [2014.04.05] [END]
 			mt = get_freepage_migratetype(page);
+      //@@ page의 MIGRATE_TYPE을 받아옴
 			/* MIGRATE_MOVABLE list may include MIGRATE_RESERVEs */
 			__free_one_page(page, zone, 0, mt);
 			trace_mm_page_pcpu_drain(page, 0, mt);
@@ -1209,7 +1211,7 @@ static void drain_pages(unsigned int cpu)
 		struct per_cpu_pages *pcp;
 
 		local_irq_save(flags);
-		pset = per_cpu_ptr(zone->pageset, cpu);
+		pset = per_cpu_ptr(zone->pageset, cpu); //@@ zone의 pageset 구하기
 
 		pcp = &pset->pcp;
 		if (pcp->count) {
@@ -5365,8 +5367,15 @@ static int page_alloc_cpu_notify(struct notifier_block *self,
 	int cpu = (unsigned long)hcpu;
 
 	if (action == CPU_DEAD || action == CPU_DEAD_FROZEN) {
-		lru_add_drain_cpu(cpu);
-		drain_pages(cpu);
+		lru_add_drain_cpu(cpu); //@@ pagevec (lru lists 를 옮겨줌
+    //@@ [2014.04.05] start
+    //@@ &per_cpu(lru_add_pvec) : pagecache의 inactive list 인가 아닌가?
+    //@@ &per_cpu(lru_*) : Pagecache 영역을 per_cpu 관점에서 가리킴
+    //@@ zone->lruvec*: Pagecache 영역을 zone 의 관점에서 가리킴
+		drain_pages(cpu); //@@ percpu 로 관리되는 pageset 을 drain 해줌
+
+    //@@ lru_add_drain_all: percpu의 Pagecache영역 drain(free, rotate, move_tail)
+    //@@ drain_pages: 일반 Pages영역 drain
 
 		/*
 		 * Spill the event counters of the dead processor

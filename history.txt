@@ -198,3 +198,21 @@ start_kenrel() - page_alloc_init()
 
 
 --------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+[2014.04.05]
+start_kenrel() - page_alloc_init()
+
+[앞시간]
+1. lwn: control groups 관련 article reading
+        (cgroup의 과거와 현재 그리고 미래)
+
+[뒷시간]
+1. understanding linux virtual memory management Chapter.10 Reading: LRU
+page replacement policy and Pagecache
+2. lru_add_drain_cpu 복습: lru_add_pvec, lru_rotate_pvecs,
+lru_deactivate_pvecs 등의 의미와 Pagecache와의 관계
+1. drain_page() 하던 중 종료 (2014.04.12 부터 다시)
+
+--------------------------------------------------------------------------------

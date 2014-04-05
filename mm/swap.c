@@ -41,6 +41,7 @@
 int page_cluster;
 
 //@@ cpu가 가지고 있던 page를 옮기거나 없앤다. pagevec - swap - lru
+//@@ lru_add_pvec, lru_rotate_pvecs, lru_deactivate_pvecs 들은 pagecache의 inactive lists에서 percpu가 관리하는 속성들이라고 생각중
 static DEFINE_PER_CPU(struct pagevec, lru_add_pvec);
 static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
 static DEFINE_PER_CPU(struct pagevec, lru_deactivate_pvecs);
