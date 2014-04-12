@@ -216,3 +216,20 @@ lru_deactivate_pvecs 등의 의미와 Pagecache와의 관계
 1. drain_page() 하던 중 종료 (2014.04.12 부터 다시)
 
 --------------------------------------------------------------------------------
+[2014.04.12]
+understanding the linux virtual memory manager
+Chapter 2 - Describing Physical Memory
+책에서는 각 bank는 node라 불리고 노드를 나타내는 자료 구조는
+struct pglist_data {} pg_data_t 이다.
+NUMA의 경우 pg_data_t의 list인 pgdat_list로 나타내며, 
+UMA의 경우 contig_page_data로 되어있다.
+ZONE에 대한 설명은 생략하고, 34Page를 보면 각 구조체의 관계가 나와있다.
+pg_data_t -> node_zones -> ZONE_XXX -> node_mem_map(책에는 zone_mem_map으로 나와있음) -> page
+
+Chapter 2.1 Nodes
+pg_data_t에 대하여 설명하고 있는데, 책을 참조하고
+node_start_paddr은 node_start_pfn으로 변경된듯하고,
+node start mapnr은 사라진듯하고, 다음 node를 가리키는
+중요한 데이터인 node_next가 사라졌다. 이 부분에 대한 변경이 
+현재 코드에 사라진 pgdat_list와 관련이 있는것 같다. (pgdat_list와 pg_list_data랑 혼동하지 말것)
+
