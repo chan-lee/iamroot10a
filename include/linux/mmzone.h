@@ -224,10 +224,10 @@ struct lruvec {
 /* LRU Isolation modes. */
 typedef unsigned __bitwise__ isolate_mode_t;
 
-enum zone_watermarks {
-	WMARK_MIN,
-	WMARK_LOW,
-	WMARK_HIGH,
+enum zone_watermarks { // history 참조
+	WMARK_MIN, // free_area_init_core()에서 초기화 되며, direct_recalim path로 극심하게 메모리가 모자른 수위
+	WMARK_LOW, // kswapd 이 깨어나서 freeing을 하기 시작하는 수위. 보통 min의 두배
+	WMARK_HIGH, // kswapd 이 잠드는 수위. 보통 min의 3배
 	NR_WMARK
 };
 
@@ -314,7 +314,7 @@ struct zone {
 	/* Fields commonly accessed by the page allocator */
 
 	/* zone watermarks, access with *_wmark_pages(zone) macros */
-	unsigned long watermark[NR_WMARK];
+	unsigned long watermark[NR_WMARK]; // 상단 참조
 
 	/*
 	 * When free pages are below this point, additional steps are taken

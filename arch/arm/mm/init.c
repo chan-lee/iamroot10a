@@ -328,6 +328,7 @@ static void __init arm_bootmem_free(unsigned long min, unsigned long max_low,
 			arm_dma_zone_size >> PAGE_SHIFT);
 #endif
 
+    // 책 2.3 Zone Initialization
 	free_area_init_node(0, zone_size, min, zhole_size);
 }
 
@@ -443,10 +444,11 @@ void __init bootmem_init(void)
 
 	max_low = max_high = 0;
 
+    // 책 2.2.2 Calculating the Size of Zones
 	find_limits(&min, &max_low, &max_high);
-	//@@ min: 첫번째 뱅크 start의 PFN
-	//@@ max_low: normal의 마지막 뱅크 end의 PFN
-	//@@ max_high: 마지막 뱅크 end의 PFN
+	//@@ min: 첫번째 뱅크 start의 PFN , min_low_pfn
+	//@@ max_low: normal의 마지막 뱅크 end의 PFN, max_low_pfn
+	//@@ max_high: 마지막 뱅크 end의 PFN, max_pfn
 
 	arm_bootmem_init(min, max_low); //@@ bootmem 초기화
 
@@ -466,6 +468,7 @@ void __init bootmem_init(void)
 	 * the sparse mem_map arrays initialized by sparse_init()
 	 * for memmap_init_zone(), otherwise all PFNs are invalid.
 	 */
+    // 책 2.3 Zone Initialization
 	arm_bootmem_free(min, max_low, max_high); //@@ [20131221] 볼려다가 끝. 책 p.251
 
 	/*

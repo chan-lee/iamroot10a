@@ -4173,6 +4173,7 @@ int zone_wait_table_init(struct zone *zone, unsigned long zone_size_pages)
 					* sizeof(wait_queue_head_t);
 
 	if (!slab_is_available()) {
+        // 2.2.3 Zone Wait Queue Table 참조. history 참조 
 		zone->wait_table = (wait_queue_head_t *)
 			alloc_bootmem_node_nopanic(pgdat, alloc_size);
 	} else {

@@ -24,6 +24,8 @@
 #include "internal.h"
 
 #ifndef CONFIG_NEED_MULTIPLE_NODES
+
+// UMA의 경우 한개의 pg_data_t를 contig_page_data로 사용한다. NUMA일 경우는 잘 모르겠다.
 struct pglist_data __refdata contig_page_data = {
 	.bdata = &bootmem_node_data[0] 	/* //@@ arm 인 경우에 node가 한개 */
 };
