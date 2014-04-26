@@ -287,3 +287,83 @@ UMA: 실제 map 주소 (0x12345678), global mem_map(0x12345678), node_mem_map(0x
 NUMA: 0번 노드의 map 주소 (0x12345678), global mem_map(PAGE_OFFSET), PAGE_OFFSET[XX](0x12345678)
 => 확실치가 않다.
 
+--------------------------------------------------------------------------------
+[2014.04.26]
+Chapter 2.5. Pages
+struct page 에 대한 설명
+모든 물리적 페이지 프레임은 struct page 로 관리됨
+페이지의 status 를 추적하기 위해서
+
+[list]
+list_head 가 page 를 list로 관리함.
+2.xv설명) clean_pages list, dirt_pages list, locked_pages 리스트가
+존재함.
+3.xv) 지금은 확실하지 않다.
+
+[address_space* mapping]
+memory mapped -> address space 가리킴.
+1. 파일인경우: 파일 조작 address_space
+2. anonymous & mapping is setted: swap address space
+
+[unsigned long index]
+1. 파일인 경우: 파일의 offset
+2. swap_space: space address space offset
+3. being freed: order of the block being freed -> stored in index -> 3.x
+v에서는 이것이 void* freelist로 관리됨(3.x에서는 union을 이용한다.)
+
+[next_hash]
+-> 3.x에서는 존재하지 않음? (아직 확인하지 못함)
+
+[count]
+
+[flags]
+
+[lru]
+
+[pprev_has]
+-> 3.x에서는 존재하지 않음? (아직 확인하지 못함)
+
+[buffers]
+-> 3.x에서 buffer_head 사용에 관한 논의(bio를 씀?) (3.x v에서 확인 못함)
+ref) http://blog.naver.com/kkn2988?Redirect=Log&logNo=141569528
+
+[virtual]
+void* virtual: 커널 메모리 영역(3~4GB)에서 ZONE_NORMAL까지는 direct mapping
+되지만, kernel space에서 할당하는 ZONE_HIGHMEM영역은 kmap()으로 매핑된다.
+이 kmap()으로 관리되는 영역을 virtual이 가리킴.
+
+Pageflag
+-- include/linux/page-flags.h 에서 확인 가능
+
+Chapter 2.6. Mapping Pages to Zones
+1. 2.4에서는 struct page마다 zone을 가리키는 포인터가 있었지만 2.6
+이후로 삭제되고, 대신 SHIFT를 이용해서 접근함. zone을 위해서 pageflag의
+일부 공간을 이용한다.
+2. zone_table 의 자료 구조가 있는가? 3.x에서 아직 못찾았음.
+
+Chapter 2.7. High Memory
+32bit machine에서 4GB이상의 물리 메모리를 사용하기 위한 PAE등에 대한 설명
+
+Chapter 2.8. What's New in 2.6
+1. Zones 자료구조에 업데이트 된 부분들
+: zone->lock, zone->lru_lock, zone->pageset과 같이 spinlock contention이 높은
+자료구조들을 서로 다른 cacheline에 배치시키기 위해 zone 내부에 padding을 두는
+trick을 사용함.
+
+2. per_cpu_page 자료구조에 대한 의문점들을 아직 가지고 있다.
+
+3. page_state 자료구조는 3.x에서는 사라진 것으로 보인다.
+
+Chapter 3. Page Table Management
+
+pgd_t datatype:
+./arch/arm/include/asm/page.h 의 149부터 153번째 줄 참고(3단계인지
+2단계인지 아직 명확하지 않음)
+
+unsigned integer 를 structure로 define한 이유? :잘못된 사용을 막기 위해 +
+PAE의 4bit를 위해: page granularity때문에 32bit모두 다 필요하지는
+않다.((다시 확인해야함)
+
+page granularity 만큼의 remaining bits는 다양한 용도로 사용(PAE 확장,
+protection 등등)
+
