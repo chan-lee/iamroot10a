@@ -367,3 +367,7 @@ PAE의 4bit를 위해: page granularity때문에 32bit모두 다 필요하지는
 page granularity 만큼의 remaining bits는 다양한 용도로 사용(PAE 확장,
 protection 등등)
 
+--------------------------------------------------------------------------------
+[2014.05.10]
+
+git push test
