@@ -370,4 +370,47 @@ protection 등등)
 --------------------------------------------------------------------------------
 [2014.05.10]
 
-git push test
+Chapter 3. Page Table Management
+
+3.1. Describing the Page Directory
+-- 복습
+-- Target architecture: 2-level pagetable(11-9-12bits)
+-- Why different with x86? (10-10-12bits)
+-- Find the references
+3.2. Describing a Page Table Entry
+-- protection bits usually stored in lower bits (also should find the reference)
+-- Arm page protection define (./arch/arm/include/asm/pgtable.h)
+-- 1. Hardware page table protection (./arch/arm/include/asm/pgtable-*level-hwdef.h ?)
+-- 2. Linux page table protection
+-- 차이점에 대해서 알아야 함.
+3.3. Using Page Table Entries
+-- pmd_bad(), pgd_bad() : we will figure out later
+-- page table walk example: follow_page() -> 3.x에서 follow_page_mask()로 바뀜
+3.4. Translating and Setting Page Table Entries
+-- mk_pte, mk_pte_phys
+-- 설명이 너무 간단해서 이해할 수 없다.
+-- pfn_to_page, page_to_pfn macros: ./include/asm-generic/memory_model.h 참고
+3.5. Allocating and Freeing Page Tables
+-- quicklists: pages tables are cached(free가 되더라도 다시 allocation될 수 있으니, cache를 해놓는다)
+-- 하지만 quicklists datastructure와 get_pgd_fast()등의 function들을 실제로 사용하고 있는 것은 확인하지 못했음
+-- microblaze를 비롯한 일부 architecture dependent code에는 존재하는 것을 확인
+3.6. Kernel Page Tables
+--3.6.1. Bootstrapping
+----8MB memory for Bootstrapping
+----pg0 and pg1 point to that space
+--3.6.2. Finalizing
+---- x86 paging_init (page table 구성) 설명
+---- paging_init() for x86: ./arch/x86/mm/init_32.c
+---- paging_init() for arm: ./arch/arm/mm/mmu.c
+---- paging_init() for x86
+------ pagetable_init()
+------ kmap_init()
+------ zone_sizes_init()
+3.7. Mapping Addresses to a struct page
+--3.7.1. Mapping Physical to Virtual Kernel Addresses
+--3.7.2. Mapping struct pages to Physical Addresses
+----struct page 와 physical&virtual address translation에 대해서 다음주에 다시 보기
+----swapper_pg_dir : for highmemory?
+----VA 3~4GB에 해당하는 kernel memory는 offset +- 로 translation이 가능하고,
+----그 이외에는 page table (pgd: swapper_pg_dir)을 이용할 것으로 생각중
+
