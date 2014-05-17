@@ -348,7 +348,7 @@ Chapter 2.8. What's New in 2.6
 1. Zones 자료구조에 업데이트 된 부분들
 : zone->lock, zone->lru_lock, zone->pageset과 같이 spinlock contention이 높은
 자료구조들을 서로 다른 cacheline에 배치시키기 위해 zone 내부에 padding을 두는
-trick을 사용함.
+trick을 사용함. (3.9 Level 1 CPU Cache Management 참조)
 
 2. per_cpu_page 자료구조에 대한 의문점들을 아직 가지고 있다.
 
@@ -414,3 +414,70 @@ Chapter 3. Page Table Management
 ----VA 3~4GB에 해당하는 kernel memory는 offset +- 로 translation이 가능하고,
 ----그 이외에는 page table (pgd: swapper_pg_dir)을 이용할 것으로 생각중
 
+--------------------------------------------------------------------------------
+[2014.05.17]
+
+3.8 Translation Lookaside Buffer (TLB)
+PTE를 이용하여 매번 virtual address를 physical address로 바꾸기
+힘드므로 associative memory에 저장하여 놓는다.
+
+TLB의 구조(2way의 경우)
+Index | Tag | PPN | valid | Tag | PPN | valid
+index는 virtual address의 LSBs
+Tag는 virtual address의 나머지 상위 비트
+PPN Physcial Page Number
+(way와 index의 크기는 2 dimension이며 trade off가 있다.?)
+
+void flush_tlb_all(void) - 전체용
+void flush_tlb_mm - context switch용
+void flush_tlb_range - 부분용
+void flush_tlb_page - page 단위 (가장 작은 단위)
+void flush_tlb_pgtables - 특정 플랫폼에서는 pgtables 통채로 entry를 채운다.(?)
+void update_mmu_cache - page fault 가 완료되었을 때 호출
+
+Documentation/cachetlb.txt 참조
+arm 쪽은 arch/arm/include/asm/tlbflush.h
+
+3.9 Level 1 CPU Cache Management
+Level 1과 2 cache가 보통 있는데 linux는 L1 cache만 신경쓴다.
+L1_CACHE_BYTES = 2<<5 
+
+cache의 종류
+direct mapping = 1 way set associate mapping
+full associate mapping = max way set associate mapping
+set associate mapping = n way set associate mapping
+용어
+| tag | set(index) | offset |
+tag : unique를 보장해주는 MSB
+set : index, line을 나타내는 LSB
+offset : 한 line 내에서의 offset
+n-way : 같은 index를 가진 tag가 n개가 존재한다.
+
+아래의 자료 참조
+http://pds12.egloos.com/pds/200809/23/87/hardware_cache_schematic.pdf
+민홍교수 ppt
+
+cache를 잘 사용하기 위한 방법
+1. 구조체에 자주 사용하는 field는 32bytes 안에 포함되게 앞부분으로 옮겨라
+2. false sharing인 되지 않도록 cpus사이에서 사용하는 관계없는 데이터는 떨어 트려라
+3. mm_struct 같은 경우는 false sharing을 피하기 위해 32byts align 되어 있다.
+* false sharing
+http://doriyun.tistory.com/18
+
+* PIPT, VIPT, VIVT에 대한 정보
+VIPT의 경우 address 하위 12bits의 경우 physical이나 virtual이나
+같기 때문에 이 하위 12bits를 이용하여 cache index(set)을 먼저 검출하는것이
+가능하기 때문이 아닐지 추축해봄.
+http://micol.tistory.com/m/post/257
+
+3.10 What's New in 2.6
+1. MMU-less Architecture 지원
+mm/nommu.c
+
+2. Reverse Mapping
+Page에서는 그것을 이용하는 PTE를 알수가 없다. 이는 swap out할 때
+shared page등을 검사할 경우 많은 비용을 수반하게 된다.
+이를 위해서 page에서 이를 사용하고 있는 pte들을 가리키는
+구조를 만들었다. union pte 이는 단일 pte를 가리킬수도 있고(대부분은 단일 pte이므로),
+pte_chain이 될 수도 있다.
+mm/rmap.c 가 관계가 있는지 다음 시간에 확인
