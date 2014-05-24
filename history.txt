@@ -440,7 +440,7 @@ arm 쪽은 arch/arm/include/asm/tlbflush.h
 
 3.9 Level 1 CPU Cache Management
 Level 1과 2 cache가 보통 있는데 linux는 L1 cache만 신경쓴다.
-L1_CACHE_BYTES = 2<<5 
+L1_CACHE_BYTES = 2<<5 (1 line의 size)
 
 cache의 종류
 direct mapping = 1 way set associate mapping
@@ -464,7 +464,7 @@ cache를 잘 사용하기 위한 방법
 * false sharing
 http://doriyun.tistory.com/18
 
-* PIPT, VIPT, VIVT에 대한 정보
+* PIPT, VIPT, VIVT에 대한 정보(TLB를 비롯한 주소 변환 유닛들의 위치에 따라 달라짐)
 VIPT의 경우 address 하위 12bits의 경우 physical이나 virtual이나
 같기 때문에 이 하위 12bits를 이용하여 cache index(set)을 먼저 검출하는것이
 가능하기 때문이 아닐지 추축해봄.
@@ -481,3 +481,67 @@ shared page등을 검사할 경우 많은 비용을 수반하게 된다.
 구조를 만들었다. union pte 이는 단일 pte를 가리킬수도 있고(대부분은 단일 pte이므로),
 pte_chain이 될 수도 있다.
 mm/rmap.c 가 관계가 있는지 다음 시간에 확인
+
+--------------------------------------------------------------------------------
+[2014.05.24]
+* Reverse Mapping
+- pte_chain에 관한 흔적은 예전 커널의 mm/rmap.c에서 볼수 있으나
+현재는 찾을수 없었다.
+rmap.c와 reverse mapping이 같은 것인지 잘 모르겠다.
+include/linux/rmap.h , mm/rmap.c
+
+* Object-Based Reverse Mapping
+모든 page에 대해 reverse map을 유지하는 것은 비용이 많이 필요하므로
+VMA(Virtual Memory Area)를 이용하여 관리한다.
+VMA는 쉽게 생각하여 page의 시작과 끝을 나타내는 구조체이다.
+아래 링크의 그림을 참조하면 쉽게 알수 있다.
+kernel memory 구조에 대한 블로그.(How the kernel Manages Your Memory)
+http://duartes.org/gustavo/blog/post/how-the-kernel-manages-your-memory/
+
+모든 pte를 찾아보려면 두가지 일이 필요한데,
+하나는 page_referenced() (어느 페이지가 최근에 참조되었는지 알아보는 함수)
+나머지 하나는 try_to_unmap이다.
+page에 address_space *mapping 이란 필드가 있는데 이 부분이
+reverse mapping이며 두가지 종류로 나뉜다.
+하나는 backed file/device 이며, 하나는 anonymous 이다.
+file/device의 경우 address_space라고 부르며,
+anonymous는 swapper_space라고 부른다.
+
+* kernel : page->mapping(address_space)->i_mmap -> 각 mm_struct들의 vma들의 rbtree
+* process : mm_struct->mmap(vma의 list)
+
+try_to_unmap_obj() 설명을 보면 여러 개의 프로세스가 많은 vma를 필요로 하는
+하나의 파일을 열고 있을 때에는 object based reverse mapping보다
+page based reverse mapping이 더 좋다고 설명하고 ㅣㅇ는데, 이는 앞 단락에 나온 pte_chain이
+나오는 reverse mapping이 아닌가 추측되며, 현재는 없어진 것이 아닌가 추측된다.
+
+object based reverse mapping에 관한 자료
+https://www.kernel.org/doc/ols/2004/ols2004v2-pages-71-74.pdf
+
+* PTEs in High Memory
+PTE를 high memory에 위치 시킬 수 있다. 하지만 그만큼 병목이 될 수 있다.
+pte_alloc_kernel()은 kernel PTE 용이고
+pte_alloc_map() 은 userspace mapping용이다.
+CPU당 하나의 PTE만 high memory를 이용할 수 있다고 하였는데, 그 이유는 모르겠다.
+
+* Huge TLB Filesystem
+linux는 전통적으로 kernel image만 4M page를 사용하였다.
+HugePage를 이용하면 TLB slot에 큰 이득이 된다.
+process가 hugepage를 두가지 방법으로 이용할 수 있다.
+
+shmget() - shared region backed by huge page를 생성할 때 사용.
+예를 들어 hugetlbfs에서 new file을
+여러개 만든다고 할 때, 각자의 이름은 구분되어야 하고 이는 hugetlbfs_counter에
+기록해야 한다. 이런것들에 대한 정보를 저장할 때 이용할 수 있다.
+System V에서 넘어온 함수
+
+mmap() - file open huge page filesystem
+실제 파일을 open할 때 사용.
+file이 open될 때 호출되는 함수. POSIX
+만약 MAP_SHARED 옵션으로 호출한다면, shmget()과 비슷한 효과를 나타낸다.
+
+자세한 사항은 Documentation/vm/hugetlbpage.txt 참조
+
+* Cache Flush Management
+flush_page_to_ram() 삭제
+flush_dcache_range() 추가
