@@ -1090,6 +1090,11 @@ struct task_struct {
 #endif
 
 	struct mm_struct *mm, *active_mm;
+  //@@ active_mm: active_mm은 context switch할 때
+  //@@ 이전 task의 mm_struct다.
+  //@@ 자신의 mm_struct(*mm)와 이전 task의 mm_struct(*active_mm)를
+  //@@ 비교해서, context switch할 때마다
+  //@@ 모든 tlb를 flush하는 것을 피할 수 있다.
 #ifdef CONFIG_COMPAT_BRK
 	unsigned brk_randomized:1;
 #endif
