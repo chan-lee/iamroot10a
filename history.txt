@@ -585,3 +585,106 @@ mm_users를 감소시킨 뒤에 mm_counters를 감소시키고,
 4.3.1. Allocating a Descriptor
 4.3.2. Initializing a Descriptor
 4.3.3. Destroying a Descriptor
+--------------------------------------------------------------------------------
+[2014.06.07]
+
+4.4 Memory Regions
+프로세스의 모든 주소공간은 거의  사용되지 않는다. 각각의  공간은 vm_area_struct에 의해 region으로 표현된다.
+56페이지 그림 4.2 참조.
+ex)
+  region이 file과 연결된 메모리를 가지는 경우(backed by a file)의 경우
+		 vm_area_struct -> vm_file -> inode -> address_space로 연결.
+
+vm_area_struct 	: ./include/linux/mm_type.h
+vm_flags 				: ./include/liinx/mm.h
+
+4.4.1 Memory Region Operations
+three operations : open, close, nopage.
+	open, close : Resion이 생성되거나 제거될때 사용.
+	nopage			: page fault가 발생할때 호출.
+								vm_operation_struct -> gernric_file_vm_ops->nopage->filemap_nopage.
+
+4.4.2 File/Device-Backed Memory Regions
+address_space : inode->i_mapping과 page->mapping이 address_space를 가르키고 있다.
+memory manager는 flush정보가 필요한데 a_ops를 통해서 정보를 알 수 있다.
+
+vm_area_struct : 가상 주소 영역
+address_space  : 물리 주소 영역(?)
+
+address_space_operations : include/linux/fs.h
+	실제 page를 다루는 함수들.
+
+4.4.3 Creating a Memory Region
+system call mmap() dl 프로세스 내에서 새로운 메모리 영역을 생성하도록 한다.
+sys_mmap2()->do_mmap2()->do_mmap_pgoff() 로 호출시 파라메터 전달.
+그림 4.3 참조. sys mmap2()
+do_mmap2():   mmap() 호출시 linux에서 사용하지 않는 MAP_DENYWRITE 와 MAP_EECUTABLE 비트를 제거하고 파일에 맵핑될 경우 세마포어를 획득한다.
+do_mmap_pageoff() : sanity check를 하고 파일이나 디바이스가 맵핑된경우 매핑된 사이즈가 페이지 얼라인 된지 확인하고 address space의 커널영역에 생성되지 않도록 한다.
+1. 파라미터에 대한 sanity check를 한다.
+2. 충분한 선형 주소 공간을 찾는다. get_unmmaped_area()->arch_get_unmmaped_area()
+3. VM flage 계산하고 파일 접근 권한에 대해서 체크.
+4. 매핑을 원하는 공간에 기존에 매핑된 역역이 있으면 새로운 매핑에 적합하게 기존 공간을 고친다.
+5. slab 할당자로부터 vm_area_struct를 할당하고 해당 정보들을 채운다.
+6. 새로은 VMA를 연결한다.
+7. 파일시스템이나 디바이스에 맞는 mmap 함수를 호출한다.
+8. update statistics and exit
+
+4.4.4  Finding a Mapped Memory Region
+find_vma()
+mmap_cache field 체크. 마지막에 호출된 find_vma()의 결과를 가지고 있음.
+만약에 요청한 영역이 아니면 mm_rb 필드에 저장된 red-black 트리에서 찾는다. 만약에 요구된 영역이 어떤 VMA에도 포함되지 않으면 이 함수는 요구된 영역과 가장 가까운 VMA를 리턴한다.
+find_vma_prev() : find_vma와 동일하지만 이전 VMA의 위치도 리턴한다.
+find_vma_intersection() : 요구된 주용소공관과  겹치는 VMA를 찾기 위해 사용.
+vma_merge() : VMA 확장에 사용. VMA가 앞쪽으로 확장할수 없으면 뒤로 확장한다.
+get_unmapped_area() 충분한 공간을 찾기위해 사용.
+
+4.4.5 Finding a Free Memory Region
+ get_unmmapped_area -> arch_get_unmapped_area(or generic version in mm/mmap.c) -> find_vma
+
+4.4.6 Inserting a Memory Region.
+메모리 영역 추가는 insert_vm_struct()을 사용.
+이것은 VMAs 사이에 적당한 VMA를 찾기위해 find_vma_prepare() 를 호출하고 
+새로운 VMA의 연결을 위해 vma_link를 호출한다.
+insert_vm_struct()는 map_count field가 증가하지 않기때문에 잘 사용되지 않고 
+map_count를 증가시켜주는 __insert_vm_struct()를 사용한다.
+
+insert_vm_stuct()함수를 사용하지 않고 find_vma_prepare()를 호출한 후  vma_link()를 호출한다. 시간을 줄이기 위해.
+
+4.4.7 Merging Contiguous Regions
+merge_segments()대신에 vma_merge()를 사용.
+vma_merge()는 sys_mmap(), do_brk()에서 사용된다.
+함수를 사용하지 않아도 합쳐지는 경우가 있는데
+첫번째는 sys_mprotect()가 호출된경우, mprotect()로 permission이 변경된경우 인접한 영역은 합쳐진다.
+두번째는 move_vma()가 호출된 경우, 옆에 위치한 동일할 영역이 합쳐짐
+ brk() : http://www.nxmnpg.com/ko/2/brk
+
+4.4.8 Remapping and Moving a Memory Region.
+mremap()->sys_mremap()-.do_mremap()->get_unmapped_area()
+메모리 영역을 이동하기위해서 충분한 공간을 찾는다.
+충분한 공간이 있으면 move_vma()를 호출.
+move_vma()는 인접한 VMA들 에 합쳐질 수 있는지 체크하고 
+그렇지 않으면 새로운 VMA가 하나의 PTE에 할당한다. 
+그리고 move_page_tables()를 호출한다.
+
+이때 사용되는 zap_page_range()의 경우 실제로 페이지를 복사하거나 옮기는것이 아닌
+swap out만을 시키고 나중에 page fault handling 코드를 이용하여 다시 swap 한다.
+
+ 4.4.9 Locking a Memory Region
+mlock()->sys_mlock()을 이용해서 pages(region)를 lock 할수 있다.
+
+mlockall()->sys_mlockall()
+
+==> do_mlock
+
+메모리 lock의 3가지 제한 사항.
+1.VMA가 page aligned되어 있다.
+2.프로세스가 ystem admin에 의 해 설정된 RLIMIT_MLOCK의 한계가 있다.
+3.각 프로세스는 한번에 물리메로리의 절반만 락을 걸수 있다. root process만 pages를 lock을 할 수 있다.
+
+4.4.10 Unlocking the Region
+munlock(), munlockall()
+sys_munlock, sys_munlockall()
+==> 이 함수들은 regions을 수정하기 위해서 do_mmap()에 의존한다.
+
+----------------------------------------------------------------------
+
