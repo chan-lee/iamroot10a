@@ -687,4 +687,86 @@ sys_munlock, sys_munlockall()
 ==> 이 함수들은 regions을 수정하기 위해서 do_mmap()에 의존한다.
 
 ----------------------------------------------------------------------
+[2014.06.14]
+4.4.11 Fixing Up Regions After Locking
+locking/ unlocking을 할 때, VMA들은 4가지 방버으로 영향을 받는데,
+이는 mlock_fixup() 에 의해 수정이 되어야 한다.
+mlock_fixup_all(), mlock_fixup_start(), mlock_fixup_end(), mlock_fixup_middle()
+흥미로운 점은 locking의 결과로 생성된 VMA들은 lock이 풀리더라고 merge되지 않는다.
+- 현재 커널에서는 많이 수정된 듯하다.
 
+4.4.12 Deleting a Memory Region
+do_munmap()
+  1. red-black tree와 linked list를 수정
+    - 만약 부분적인 unmap이라고 할지라도, 일단 삭제하고 unmap_fixed()에서 다시 생성
+  2. 관련된 page를 release하고 PTE를 unmapped시킴
+    - 이때 PGD를unmap할지라도 PTE를 free하지는 않는다. (비용문제)
+  3. 만약 region에 구멍이 생기면 수정함
+
+4.4.13 Deleting All Memory Regions
+exit_mmap()을 통해 모든 VMA를 unmap 한다.
+그리고 TLB를 flush하고, PTE를 지운다.
+
+4.5 Exception Handling
+page fault에 대한 excetpion만 다루기로 한다.
+두 가지 경우가 발생할 수 있는데,
+  1. PAGE_OFFSET 이상을 접근할 경우,
+  2. copy_from_user(), copy_to_user() 의 userspace를 접근하는 함수를 실행할 때
+__ex_table이 linker에 의해 생성되며, execution point와 fixup routine으로 구성된다.
+exception이 발생시 page fault handler가 manage를 못하면,
+search_exception_table()을 호출하고 여기서 대응되는 fixup code의 위치를 찾아서 호출한다.
+
+4.6 Page Faulting
+page들이 모두 메모리에 상주할 필요는 없다. 
+linux는 Demand Fetch policy르 사용하는데 이는 하드웨어가 page fault exception을
+일으키면 backing storage로 부터 fetch되는 것이다.
+backing storage의 특성상 prefetch를 이용하면 더 적은 page fault를
+일으킬 수 있는데 linux에서는 이 부분에서 좀 원시적이다.
+page in될 때 2^ page_cluster만큼 swapin_readahead()만큼 읽어 오지만 불행하게도
+곧 사용될 근처의 page들만 읽어오는데 이는 prepaging policy를 형편없게 만든다.
+
+page fault는 major와 minor로 나뉘는데, major page fault는 disk로부터
+데이터를 읽어 올때 발생한다. 이것은 아주 비싼 동작이다.
+이는 task_struct->maj_flt, task_struct->min_flt에 기록되어 있다.
+
+page fault의 종류
+1. Region valid, but page not allocated (Minor)
+2. Region not valid but is beside an expandable region like the stack (Minor)
+3. Page swapped out, but present in swap cache (Minor)
+4. Page swapped out to backing storage (Major)
+  - swap-out되어 있으나 pte는 남아 있어, pte를 찾고 disk로 부터 읽어온다.
+5. Page write when marked read-only (Minor)
+  - COW를 wirte할 때
+6. Region is invalid or process has no permissions to access (Error)
+7. Fault occurred in the kernel portion address space (Minor)
+  - vmalloc area에서 발생할 때, init_mm에의해 현재 process의
+    page table들이 master page table에 update 될때. 유일한 kernel page fault
+8. Fault occurred in the userpsace region while in kernel mode (Error)
+
+page fault를 처리하는 함수의 이름은 do_page_fault()이고 이는 어러가지 일을 한다. (책 참조)
+그중 handle_mm_fault()는 page from backing storage와 COW를 처리한다.
+
+4.6.1 Handling a Page Fault
+1. valid한 region인지 검사
+2. handle_mm_fault()에서 pmd와 pte가 없을 경우 alloc함
+3. pte의 상태에 따라 세가지 경우로 나뉨
+ - 1) pte_present()와 pte_none()을 봄
+     - pte_none() - true: 아예 allocation된적이 없다.
+                          do_no_page() 호출 -> Demand Allocation
+     - pte_none() - false: pte_present()를 체크
+     - pte_present() - true: page_fault()가 불릴 이유가 없다.
+     - pte_present() - false: alloc된적 있으나 swapped -out되서 내려갔다. 
+                              do_swap_page() 호출-> Demand Paging 
+                              do_no_page()를 호출하는 희귀한 경우가 virtual file일 경우 있음
+
+   2) pte의 write protected인 경우
+     do_wp_page()를 호출 - 왜냐면 page가 COW page이기 때문.
+     COW page는 여러 포르세스들(부모와 자식)에 의해 공유되는데
+     COW page인지 인식 방법은 PTE에서는 모르지만(?) VMA에 writable로 마크되어 있기 때문이다.
+
+   3) pte가 read 이고 present인 경우
+     3 level page table을 가지지 않은 특정 아키텍쳐에서 발생하는데, young(accessed)으로 마크한다.
+     왜 그런지는 다음 시간에...
+     
+
+----------------------------------------------------------------------
