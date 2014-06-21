@@ -692,7 +692,7 @@ sys_munlock, sys_munlockall()
 locking/ unlocking을 할 때, VMA들은 4가지 방버으로 영향을 받는데,
 이는 mlock_fixup() 에 의해 수정이 되어야 한다.
 mlock_fixup_all(), mlock_fixup_start(), mlock_fixup_end(), mlock_fixup_middle()
-흥미로운 점은 locking의 결과로 생성된 VMA들은 lock이 풀리더라고 merge되지 않는다.
+흥미로운 점은 locking의 결과로 생성된 VMA들은 lock이 풀리더라도 merge되지 않는다.
 - 현재 커널에서는 많이 수정된 듯하다.
 
 4.4.12 Deleting a Memory Region
@@ -708,10 +708,10 @@ exit_mmap()을 통해 모든 VMA를 unmap 한다.
 그리고 TLB를 flush하고, PTE를 지운다.
 
 4.5 Exception Handling
-page fault에 대한 excetpion만 다루기로 한다.
+page fault에 대한 bad reference excetpion만 다루기로 한다.
 두 가지 경우가 발생할 수 있는데,
-  1. PAGE_OFFSET 이상을 접근할 경우,
-  2. copy_from_user(), copy_to_user() 의 userspace를 접근하는 함수를 실행할 때
+  1. PAGE_OFFSET 이상을 접근할 경우, (4.6?) 잘 이해가 안됨
+  2. copy_from_user(), copy_to_user() 의 userspace를 접근하는 함수를 실행할 때 (4.7)
 __ex_table이 linker에 의해 생성되며, execution point와 fixup routine으로 구성된다.
 exception이 발생시 page fault handler가 manage를 못하면,
 search_exception_table()을 호출하고 여기서 대응되는 fixup code의 위치를 찾아서 호출한다.
@@ -749,24 +749,75 @@ page fault를 처리하는 함수의 이름은 do_page_fault()이고 이는 어�
 4.6.1 Handling a Page Fault
 1. valid한 region인지 검사
 2. handle_mm_fault()에서 pmd와 pte가 없을 경우 alloc함
-3. pte의 상태에 따라 세가지 경우로 나뉨
+3. pte의 상태에 따라 세가지 경우로 나뉨 (pte bits p.36)
  - 1) pte_present()와 pte_none()을 봄
      - pte_none() - true: 아예 allocation된적이 없다.
-                          do_no_page() 호출 -> Demand Allocation
+                          do_no_page() 호출 -> Demand Allocation(4.6.2 절)
      - pte_none() - false: pte_present()를 체크
      - pte_present() - true: page_fault()가 불릴 이유가 없다.
      - pte_present() - false: alloc된적 있으나 swapped -out되서 내려갔다. 
-                              do_swap_page() 호출-> Demand Paging 
+                              do_swap_page() 호출-> Demand Paging(4.6.3 절)
                               do_no_page()를 호출하는 희귀한 경우가 virtual file일 경우 있음
 
    2) pte의 write protected인 경우
      do_wp_page()를 호출 - 왜냐면 page가 COW page이기 때문.
      COW page는 여러 포르세스들(부모와 자식)에 의해 공유되는데
-     COW page인지 인식 방법은 PTE에서는 모르지만(?) VMA에 writable로 마크되어 있기 때문이다.
+     COW page인지 인식 방법은 PTE에서는 모르지만(?) VMA에 writable로 마크(p.63)되어 있기 때문이다.
 
-   3) pte가 read 이고 present인 경우
+   3) pte가 이미 read 되어 있고 present인 경우
      3 level page table을 가지지 않은 특정 아키텍쳐에서 발생하는데, young(accessed)으로 마크한다.
      왜 그런지는 다음 시간에...
      
-
 ----------------------------------------------------------------------
+[2014.06.21]
+4.6.2 Demand Allocation
+do_no_page() 함수에 의해 수행
+vma의 종류는 file/device backed pages와 anonymous pages가 있다.
+file/device는 memory-mapped device나 파일로 vm_operations(p.64)이 제공되며
+그중 nopage() 함수를 호출한다.
+
+-Handling Anonymous Pages
+vm_area_struct->vm_ops 필드가 없거나 nopage() 함수가 없으면,
+anonymous page로 분류되며 do_anonymous_page()가 호출된다.
+첫 읽기일 경우 write protection이 걸려있는 empty_zero_page로 연결되어 있다.
+만약 쓰기 요청이 들어오면 다른 page fault가 발생할 것이다.
+ex) kernel source
+init/main.c - start_kernel()
+    ->arch/arm/kernel/setup.c - setup_arch() 
+        ->arch/arm/mm/mmu.c - paging_init()
+의 소스를 보면 page table들을 초기화 한 후 empty_zero_page를 만든다.
+
+첫 쓰기일 경우, alloc_page()가 호출이 되고, clear_user_highpage()에 의해
+0으로 채워진다. 그리고 mm_struct에 RSS(사용되는 페이지수를 나타냄. p.59)를
+하나 증가 시킨다. 특정 아키텍쳐에서는 cache coherency를 높이기 위해 user space
+process에 추가 될 때는 flush_page_to_ram()이 호출된다고하는데 잘 모르겠음.
+그리고 나중에 재사용(?)을 위해 LRU list에 추가된다.
+마지막으로 page table entry가 갱신된다.
+
+
+-Handling File/Device-Backed Pages
+vm_operation 의 nopage()가 제공된다.
+file backed 의 경우 filemap_nopage()가 사용되고
+virtual file(shmfs)의 경우 shmem_nopage()(ch.12)가 사용되며
+각가의 device마다 각각의 nopage()를 제공해야 한다.
+valid한 page만 return한다면 내부는 어떻게 만들어졌든 상관이 없다.
+page 가 return된 후 체크를 해야 하는데
+COW 에 의한 것인지 pte_none()에 의한 것인지에 대해서이다. (자세한 것은 pass)
+
+4.6.3 Demand Paging
+backing storage로 swapped out 되어 있을 때 발생하며,
+virtual file의 경우는 12장에서 다시 살펴 본다.
+shared될 수도 있으니 swapped out이 바로 되지 않고, swap cache에 위치 시킨다.
+(RMAP이 생겨서 바뀔 것이르 추측됨)
+swap cache에 이미 있을 경우 minor page fault로 reference count만 증가 시키면 되고,
+disk에 있을 경우 swapin_readahread()가 호출된다.
+low memory machine에서는 보통 2^2, 2^3 page정도이다. (16K ~ 32K)
+
+4.6.4 COW pages
+do_wp_page() . 설명은 생략
+fork시에 두 프로세스의 pte는 read-only로 되는데
+write 요청이 발생하면 PTE write protected되어 있다 할지라도
+VMA가 writable이면 이것을 보고 인식하여 do_wp_page()를 수행함
+
+4.7 Copying to/from Userspace
+생략
