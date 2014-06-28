@@ -821,3 +821,64 @@ VMA가 writable이면 이것을 보고 인식하여 do_wp_page()를 수행함
 
 4.7 Copying to/from Userspace
 생략
+
+[2014.06.28]
+4.8 What's New in 2.6
+--Linear Address Space
+  vsyscall support 추가. (int 0x80 을 통한 시스템콜이 아니라 userspace page <-> kernel space page 의 매핑을 이용함)
+--mm_struct
+  free_area_cache (first hole을 알려주는 필드) 를 추가하여 searching time을 절약 
+--vm_area_struct
+  vm_next_share와 vm_pprev_share 을 shared 필드 하나로 합침
+--struct address_space
+  gfp_mask field 를 비트 단위로 나누어 두 개의 flags 를 저장한다. (다시 말해, 추가적으로 asynchronous I/O의 상태를 저장하는 flag를 가진다)
+  [struct address_space 의 추가적인 필드]
+  1. page_tree: linked list -> radix tree 로 변경
+  2. page_lock: page_tree 를 보호하는 spin lock
+  3. io_pages: do_writepages() 호출하기 전에 메모리의 io_pages list 에 임시 저장
+  4. dirtied_when: jiffies 저장
+  5. backing_dev_info
+  6. private_list: buffer_head를 가리킨다.
+  7. private_lock: private_list를 share하는 address_space 간의 private_list를 보호한다.
+  8. assoc_mapping
+  9. truncate_count
+  [struct address_space_operations 의 operations]
+  1. writepage:
+  2. writepages:
+  3. set_page_dirty:
+  4. readpages:
+  5. bmap:
+  6. invalidatepage:
+  7. direct_I/O:
+--Memory Regions
+security module 과 vm area 계정 관리 추가
+--4GiB/4GiB User/Kernel Split
+1gb 의 kernel 영역은 메모리 사이즈가 커지면, 부족할 수 있다 (mem_map 때문) 이를 해결하기 위한 patch가 있지만 아직 mainstream은 아니다.
+--Nonlinear VMA Population
+----생략
+
+----------------------------------------------------------------------
+Chapter 5. Boot Memory Allocator
+Boot Memory Allocator (First Fit style allocator)
+--5.1. Representing the Boot Map
+  struct boomem_data (Boot memory allocator) 에 대한 설명
+--5.2. Initializing the Boot Memory Allocator
+--5.3. Initializing bootmem_data
+  UMA, NUMA 에서 bootmem_data 초기화
+  처음에 bitmap의 bit들을 모두 1로(사용중) 초기화하고, 0(free)으로 바꾸는건 architecture dependent 코드에서 각각 이루어짐
+  free_bootmem()을 통해서 0으로 set함
+--5.4. Allocating Memory
+  memory allocation이 어떻게 이루어지는지 설명
+  goal: preferred starting address (first fit allocation), zone_dma (low function) 은 goal 이 0, zone_normal 은 goal 이 MAX_DMA_ADDRESS가 된다
+--5.5. Freeing Memory
+  페이지의 4KB 모두 free 가 되면 bitmap의 bit를 0으로 바꿈
+--5.6. Retiring the Boot Memory Allocator
+  Boot memory 를 해제하고 다음 단계의 memory allocator로 전환하는 과정 (각 architecture는 mem_init()을 통해 위의 과정을 제공해야 함)
+  free_all_bootmem(UMA), free_all_bootmem_node(NUMA) 를 이용
+  free_all_bootmem_core 에서 비트맵의 비트를 모두 1로(사용하지 않은 페이지도 모두 1(사용중)로 세팅) 세팅하고 그 후에 __free_pages()를 통해서 메모리 해제와 buddy allocator 구성을 함께 한다
+  이것을 highmemory 영역에 대해서 같은 과정(1로 세팅 후에 다시 __free_pages())을 수행한다
+  __init section 은 system start_up 동안에만 사용되는 코드 영역들로, boot memory 를 해제할 때 boot allocator 데이터 영역 뿐 만 아니라, 코드 영역도(bootstraping code section) 메모리에서 free한다
+--5.7. What's New in 2.6
+  last_success field 추가: search time 감소를 위해서 free가 되면 free된 위치를 last_success가 가리킨다 (offset은 이전과 같음)
+  BITS_PER_LONG: BITS_PER_LONG의 블록이 모두 1인지 검사하고, 아니라면 그 때 각각의 bit를 검사
+  NUMA & contiguous architecture: contiguous architectures는 자신의 아키텍쳐만의 init_bootmem() 을 정의할 수 있고, 어떤 아키텍쳐도 각자의 reserve_bootmem()을 정의할 수 있다
