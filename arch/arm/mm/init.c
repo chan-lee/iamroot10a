@@ -328,7 +328,7 @@ static void __init arm_bootmem_free(unsigned long min, unsigned long max_low,
 			arm_dma_zone_size >> PAGE_SHIFT);
 #endif
 
-    // 책 2.3 Zone Initialization
+    //@@ 책 2.3 Zone Initialization
 	free_area_init_node(0, zone_size, min, zhole_size);
 }
 
@@ -444,7 +444,7 @@ void __init bootmem_init(void)
 
 	max_low = max_high = 0;
 
-    // 책 2.2.2 Calculating the Size of Zones
+    //@@ 책 2.2.2 Calculating the Size of Zones
 	find_limits(&min, &max_low, &max_high);
 	//@@ min: 첫번째 뱅크 start의 PFN , min_low_pfn
 	//@@ max_low: normal의 마지막 뱅크 end의 PFN, max_low_pfn
@@ -468,7 +468,7 @@ void __init bootmem_init(void)
 	 * the sparse mem_map arrays initialized by sparse_init()
 	 * for memmap_init_zone(), otherwise all PFNs are invalid.
 	 */
-    // 책 2.3 Zone Initialization
+    //@@ 책 2.3 Zone Initialization
 	arm_bootmem_free(min, max_low, max_high); //@@ [20131221] 볼려다가 끝. 책 p.251
 
 	/*
@@ -645,6 +645,10 @@ void __init mem_init(void)
 #endif
 
 	max_mapnr   = pfn_to_page(max_pfn + PHYS_PFN_OFFSET) - mem_map;
+
+  //@@ max_pfn: 4gb support? 
+  //@@ PHYS_PFN_OFFSET: The PFN of the first RAM page in the kernel (0x80000 /4 -> 0x20000)
+  //@@ mem_map: mem_map array의 첫 번째 주소
 
 	/* this will put all unused low memory onto the freelists */
 	free_unused_memmap(&meminfo);

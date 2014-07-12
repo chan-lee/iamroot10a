@@ -3056,10 +3056,10 @@ EXPORT_SYMBOL(names_cachep);
 
 EXPORT_SYMBOL(d_genocide);
 
-void __init vfs_caches_init_early(void)
+void __init vfs_caches_init_early(void) //@@ virtual file system
 {
-	dcache_init_early();
-	inode_init_early();
+	dcache_init_early(); //@@ dentry cache에 대한 hash 초기화
+	inode_init_early(); //@@ inode cache에 대한 hash 초기화
 }
 
 void __init vfs_caches_init(unsigned long mempages)

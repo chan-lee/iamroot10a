@@ -420,7 +420,7 @@ void __init parse_early_param(void)
 	static __initdata char tmp_cmdline[COMMAND_LINE_SIZE];
 
 	if (done)
-		return;
+		return; //@@ 부팅 중 한번만 수행
 
 	/* All fall through to do_early_param. */
 	strlcpy(tmp_cmdline, boot_command_line, COMMAND_LINE_SIZE);
@@ -472,8 +472,8 @@ static void __init mm_init(void)
 	 * page_cgroup requires contiguous pages,
 	 * bigger than MAX_ORDER unless SPARSEMEM.
 	 */
-	page_cgroup_init_flatmem();
-	mem_init();
+	page_cgroup_init_flatmem(); //@@ 우리는 sparse mem 이므로 실행되지 않음.
+	mem_init(); //@@ [2014.07.12] 중단
 	kmem_cache_init();
 	percpu_init_late();
 	pgtable_cache_init();
@@ -546,22 +546,23 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	build_all_zonelists(NULL, NULL); //@@ 2014.03.22 end
 	page_alloc_init(); //@@ 2014.03.28 start
 
-	pr_notice("Kernel command line: %s\n", boot_command_line);
-	parse_early_param();
+	pr_notice("Kernel command line: %s\n", boot_command_line); //@@ 2014.07.12 start
+	parse_early_param(); //@@ ARM architecture는 setup_arch 에서 이미 수행함
 	parse_args("Booting kernel", static_command_line, __start___param,
 		   __stop___param - __start___param,
 		   -1, -1, &unknown_bootoption);
 
-	jump_label_init();
+	jump_label_init(); //@@ ./Documentation/static-keys.txt 참고
+  //@@ 우리는 HAVE_JUMP_LABEL 이 undefined 되어 있으므로 수행되지 않는다
 
 	/*
 	 * These use large bootmem allocations and must precede
 	 * kmem_cache_init()
 	 */
-	setup_log_buf(0);
-	pidhash_init();
-	vfs_caches_init_early();
-	sort_main_extable();
+	setup_log_buf(0); //@@ bootmem을 이용해서 log buf 할당
+	pidhash_init(); //@@ pid_hash 초기화
+	vfs_caches_init_early(); //@@ virtual file system의 dentry cache 및 inode cache 의 hash table 초기화
+	sort_main_extable(); //@@ exception table (table 자체는 architecture dependent) sorting (binary search를 위해서, 그리고 overflow 검사)
 	trap_init();
 	mm_init();
 

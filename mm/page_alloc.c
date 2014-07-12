@@ -5812,12 +5812,12 @@ void *__init alloc_large_system_hash(const char *tablename,
 	if (numentries > max)
 		numentries = max;
 
-	log2qty = ilog2(numentries);
+	log2qty = ilog2(numentries); //@@ pid hash list 개수
 
 	do {
 		size = bucketsize << log2qty;
 		if (flags & HASH_EARLY)
-			table = alloc_bootmem_nopanic(size);
+			table = alloc_bootmem_nopanic(size); //@@ 여기서 할당
 		else if (hashdist)
 			table = __vmalloc(size, GFP_ATOMIC, PAGE_KERNEL);
 		else {

@@ -186,7 +186,7 @@ static enum jump_label_type jump_label_type(struct static_key *key)
 
 void __init jump_label_init(void)
 {
-	struct jump_entry *iter_start = __start___jump_table;
+	struct jump_entry *iter_start = __start___jump_table; //@@ ./include/asm-generic/vmlinux.lds.h
 	struct jump_entry *iter_stop = __stop___jump_table;
 	struct static_key *key = NULL;
 	struct jump_entry *iter;
