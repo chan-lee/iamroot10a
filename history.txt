@@ -900,4 +900,13 @@ kernel to physical (real) hardware memory mapping
 우리 architecture 에서는 실제 물리 메모리가 0x40000000 부터 시작하고,
 커널 메모리는 0xC0000000 부터 시작한다.
 그 커널 메모리에서 0x80000000 을 빼서 실제 물리 메모리와 매핑이 된다.
-유저 영역 (1~3gb) 는 pgd 를 이용해서 매핑이 됨.
+유저 영역 (0~3gb) 는 pgd 를 이용해서 매핑이 됨.
+
+----------------------------------------------------------------------
+[2014.07.19]
+
+mm_init() -> mem_init() 분석 중
+mm/page_alloc.c
+__free_pages_bootmem -> __free_pages() -> __free_pages_ok() -> free_one_page() 분석 중 마침
+다음 시간 virtual memory management 책 6 장 읽고 다시 코드 분석 할 예정
+

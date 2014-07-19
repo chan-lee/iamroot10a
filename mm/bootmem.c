@@ -216,13 +216,13 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 		 * BITS_PER_LONG block of pages in front of us, free
 		 * it in one go.
 		 */
-		if (IS_ALIGNED(start, BITS_PER_LONG) && vec == ~0UL) {
-			int order = ilog2(BITS_PER_LONG);
+		if (IS_ALIGNED(start, BITS_PER_LONG) && vec == ~0UL) { //@@ bootmem 의 bitmap 을 참고로 order 의 개수만큼 buddy allocator 를 위해서 free 시킴
+			int order = ilog2(BITS_PER_LONG); //@@ order : 5
 
 			__free_pages_bootmem(pfn_to_page(start), order);
 			count += BITS_PER_LONG;
 			start += BITS_PER_LONG;
-		} else {
+		} else { //@@ order 가 0 인 경우
 			unsigned long cur = start;
 
 			start = ALIGN(start + 1, BITS_PER_LONG);
@@ -238,6 +238,7 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 		}
 	}
 
+  //@@ bootmem 의 bimap 영역에 해당하는 pages 초기화
 	page = virt_to_page(bdata->node_bootmem_map);
 	pages = bdata->node_low_pfn - bdata->node_min_pfn;
 	pages = bootmem_bootmap_pages(pages);
@@ -256,18 +257,18 @@ static inline void __init reset_node_managed_pages(pg_data_t *pgdat)
 {
 	struct zone *z;
 
-	if (reset_managed_pages_done)
+	if (reset_managed_pages_done) //@@ 이미 reset managed code 를 수행했다면 한번만 수행함
 		return;
 
 	for (z = pgdat->node_zones; z < pgdat->node_zones + MAX_NR_ZONES; z++)
-		z->managed_pages = 0;
+		z->managed_pages = 0; //@@ managed_pages: buddy system 에서 관리되는 present pages
 }
 
 void __init reset_all_zones_managed_pages(void)
 {
 	struct pglist_data *pgdat;
 
-	for_each_online_pgdat(pgdat)
+	for_each_online_pgdat(pgdat) //@@ NUMA 노드마다
 		reset_node_managed_pages(pgdat);
 	reset_managed_pages_done = 1;
 }

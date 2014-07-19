@@ -473,7 +473,7 @@ static void __init mm_init(void)
 	 * bigger than MAX_ORDER unless SPARSEMEM.
 	 */
 	page_cgroup_init_flatmem(); //@@ 우리는 sparse mem 이므로 실행되지 않음.
-	mem_init(); //@@ [2014.07.12] 중단
+	mem_init(); //@@ [2014.07.12] 중단, [2014.07.19] 시작
 	kmem_cache_init();
 	percpu_init_late();
 	pgtable_cache_init();

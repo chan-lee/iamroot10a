@@ -558,7 +558,7 @@ static void __init free_unused_memmap(struct meminfo *mi)
 		 * between the current bank and the previous, free it.
 		 */
 		if (prev_bank_end && prev_bank_end < bank_start)
-			free_memmap(prev_bank_end, bank_start);
+			free_memmap(prev_bank_end, bank_start); //@@ bank 사이의 align?
 
 		/*
 		 * Align up here since the VM subsystem insists that the
@@ -644,14 +644,20 @@ void __init mem_init(void)
 	extern u32 itcm_end;
 #endif
 
-	max_mapnr   = pfn_to_page(max_pfn + PHYS_PFN_OFFSET) - mem_map;
-
-  //@@ max_pfn: 4gb support? 
-  //@@ PHYS_PFN_OFFSET: The PFN of the first RAM page in the kernel (0x80000 /4 -> 0x20000)
+  //@@ max_pfn: 아마도 최대 4gb support
+	//@@ max_high = bank_pfn_end(&mi->bank[mi->nr_banks - 1]);	//@@ 마지막 뱅크 end의 PFN
+  //@@ max_pfn = max_high - PHYS_PFN_OFFSET
+  //@@ PHYS_PFN_OFFSET: The PFN of the first RAM page in the kernel (0x80000000 / 0x1000 -> 0x80000)
   //@@ mem_map: mem_map array의 첫 번째 주소
+	
+  max_mapnr   = pfn_to_page(max_pfn + PHYS_PFN_OFFSET) - mem_map;
+  //@@ max_mapnr = pfn_to_page(max_high) - mem_map;
+  //@@ mem_high 는 물리 메모리의 가장 높은 메모리 주소 
+  //@@ pfn_to_page(max_high) 를 통해 mem_map 의 마지막 주소 (struct page) 를 얻음
+  //@@ max_mapnr = mem_map 에 mapping 되는 struct page 개수 (최대 map 의 개수를 가지는 변수)
 
 	/* this will put all unused low memory onto the freelists */
-	free_unused_memmap(&meminfo);
+	free_unused_memmap(&meminfo); //@@ bank 사이에 연속되지 않은 영역이나 align 이 안된 부분의 mem_map 을 free 함 (free_memmap)
 	free_all_bootmem();
 
 #ifdef CONFIG_SA1111

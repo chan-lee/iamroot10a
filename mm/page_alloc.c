@@ -544,7 +544,7 @@ static inline void __free_one_page(struct page *page,
 {
 	unsigned long page_idx;
 	unsigned long combined_idx;
-	unsigned long uninitialized_var(buddy_idx);
+	unsigned long uninitialized_var(buddy_idx); //@@ macro expr : unsigned long buddy_idx = buddy_idx;
 	struct page *buddy;
 
 	VM_BUG_ON(!zone_is_initialized(zone));
@@ -702,7 +702,7 @@ static void free_one_page(struct zone *zone, struct page *page, int order,
 	zone->pages_scanned = 0;
 
 	__free_one_page(page, zone, order, migratetype);
-	if (unlikely(!is_migrate_isolate(migratetype)))
+	if (unlikely(!is_migrate_isolate(migratetype))) //@@ 우리 architecture는 ISOLATE 타입이 define 되있지 않으므로 항상 실행한다
 		__mod_zone_freepage_state(zone, 1 << order, migratetype);
 	spin_unlock(&zone->lock);
 }
@@ -751,21 +751,21 @@ static void __free_pages_ok(struct page *page, unsigned int order)
 
 void __init __free_pages_bootmem(struct page *page, unsigned int order)
 {
-	unsigned int nr_pages = 1 << order;
+	unsigned int nr_pages = 1 << order; //@@ order: buddy allocator 의 order (처음에는 0이거나 5) (max = 10)
 	unsigned int loop;
 
-	prefetchw(page);
+	prefetchw(page); //@@ prefetch (caching)
 	for (loop = 0; loop < nr_pages; loop++) {
 		struct page *p = &page[loop];
 
 		if (loop + 1 < nr_pages)
-			prefetchw(p + 1);
+			prefetchw(p + 1); //@@ 다음 페이지
 		__ClearPageReserved(p);
 		set_page_count(p, 0);
 	}
 
-	page_zone(page)->managed_pages += 1 << order;
-	set_page_refcounted(page);
+	page_zone(page)->managed_pages += 1 << order; //@@ managed_pages 증가
+	set_page_refcounted(page); //@@ struct page 의 _count 를 1 으로 세팅
 	__free_pages(page, order);
 }
 
@@ -1314,7 +1314,7 @@ void mark_free_pages(struct zone *zone)
  * Free a 0-order page
  * cold == 1 ? free a cold page : free a hot page
  */
-void free_hot_cold_page(struct page *page, int cold)
+void free_hot_cold_page(struct page *page, int cold) //@@ cold -> lru_tail, else -> lru_add
 {
 	struct zone *zone = page_zone(page);
 	struct per_cpu_pages *pcp;
@@ -1337,18 +1337,19 @@ void free_hot_cold_page(struct page *page, int cold)
 	 * excessively into the page allocator
 	 */
 	if (migratetype >= MIGRATE_PCPTYPES) {
-		if (unlikely(is_migrate_isolate(migratetype))) {
+		if (unlikely(is_migrate_isolate(migratetype))) { //@@ 우리는 PCP_ISOLATE define 이 안되어 있으므로 이 곳으로 흐르지 않음
 			free_one_page(zone, page, 0, migratetype);
 			goto out;
 		}
 		migratetype = MIGRATE_MOVABLE;
 	}
 
+  //@@ 실제로 free 하는 대신에 lru_add_tail 또는 lru_add 를 함
 	pcp = &this_cpu_ptr(zone->pageset)->pcp;
 	if (cold)
-		list_add_tail(&page->lru, &pcp->lists[migratetype]);
+		list_add_tail(&page->lru, &pcp->lists[migratetype]); //@@ list 에서 천천히 검색 (cold page)
 	else
-		list_add(&page->lru, &pcp->lists[migratetype]);
+		list_add(&page->lru, &pcp->lists[migratetype]); //@@ list 에서 빨리 검색되도록 (hot page)
 	pcp->count++;
 	if (pcp->count >= pcp->high) {
 		unsigned long batch = ACCESS_ONCE(pcp->batch);
@@ -2710,11 +2711,11 @@ EXPORT_SYMBOL(get_zeroed_page);
 
 void __free_pages(struct page *page, unsigned int order)
 {
-	if (put_page_testzero(page)) {
+	if (put_page_testzero(page)) { //@@ page ref count 를 1 감소시키고 0 이라면 true 임
 		if (order == 0)
 			free_hot_cold_page(page, 0);
 		else
-			__free_pages_ok(page, order);
+			__free_pages_ok(page, order); //@@ [2014.07.19] __free_pages_ok -> free_one_page() 분석 중.
 	}
 }
 
