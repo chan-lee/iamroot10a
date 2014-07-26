@@ -190,7 +190,7 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 	end = bdata->node_low_pfn;
 
 	bdebug("nid=%td start=%lx end=%lx\n",
-		bdata - bootmem_node_data, start, end);
+			bdata - bootmem_node_data, start, end);
 
 	while (start < end) {
 		unsigned long *map, idx, vec;
@@ -238,7 +238,7 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 		}
 	}
 
-  //@@ bootmem 의 bimap 영역에 해당하는 pages 초기화
+	//@@ bootmem 의 bimap 영역에 해당하는 pages 초기화
 	page = virt_to_page(bdata->node_bootmem_map);
 	pages = bdata->node_low_pfn - bdata->node_min_pfn;
 	pages = bootmem_bootmap_pages(pages);

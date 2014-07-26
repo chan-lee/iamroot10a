@@ -910,3 +910,27 @@ mm/page_alloc.c
 __free_pages_bootmem -> __free_pages() -> __free_pages_ok() -> free_one_page() 분석 중 마침
 다음 시간 virtual memory management 책 6 장 읽고 다시 코드 분석 할 예정
 
+----------------------------------------------------------------------
+[2014.07.26]
+
+Virtual Memory Manager. Chapter 6. Physical Memory Allocator
+
+6.1. Managing Free Blocks
+  struct free_area:
+  map: bitmap [2.4 커널에서만 있음] order 에 따라 비트(맵)의 개수가 달라진다. (order = 9 -> 1개, order = 0 -> 256개, 합은 511개)
+  nr_free: 3.x 에서 free page blocks 의 개수를 알려주는 unsigned long data type 있음
+
+6.2. Allocating Pages
+  __alloc_page : 3.x 커널에서는 다양한 여러 함수이 있음 (e.g., __alloc_pages_high_priority(..))
+  __alloc_pages_nodemask(..): the 'heart' of the zoned buddy allocator
+  _alloc_pages 없어짐. 호출과정이 변경됨.
+
+6.3. Free Pages
+  2.4 kernel mm/page_alloc.c -> -mask = 1 + ~mask ? (최적화인가?)
+
+6.4. Get Free Page (GFP) Flags
+  GFP 플래그들: ./include/linux/mm.h -> ./include/linux/gfp.h (3.x) 로 변경
+
+6.5. Process Flags
+6.6. Avoiding Fragmentation
+6.7. What's New in 2.6
