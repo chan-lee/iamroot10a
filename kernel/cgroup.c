@@ -4891,11 +4891,11 @@ int __init cgroup_init_early(void)
 	atomic_set(&init_css_set.refcount, 1);
 	//@@ kernel/cgroup.c - init_css_set
 	//@@ refcount.counter = 1
-        //더블 링크드 리스트 초기화 
+	//@@ 더블 링크드 리스트 초기화 
 	INIT_LIST_HEAD(&init_css_set.cgrp_links);
 	INIT_LIST_HEAD(&init_css_set.tasks);
-        //HLIST는 HASH 구조체에서 성능을 높이기 위한 노드
-        //http://stackoverflow.com/questions/3058592/use-of-double-pointer-in-linux-kernel-hash-list-implementation
+	//@@ HLIST는 HASH 구조체에서 성능을 높이기 위한 노드
+	//@@ http://stackoverflow.com/questions/3058592/use-of-double-pointer-in-linux-kernel-hash-list-implementation
 	INIT_HLIST_NODE(&init_css_set.hlist);
 	css_set_count = 1;
 	init_cgroup_root(&cgroup_dummy_root); //@@ cgroup root 초기화 작업 수행
@@ -4910,7 +4910,7 @@ int __init cgroup_init_early(void)
 	list_add(&init_cgrp_cset_link.cgrp_link, &init_css_set.cgrp_links);
 
 	/* at bootup time, we don't worry about modular subsystems */
-        //cgroup_subsys 을 돌기 위한 매크로
+	//@@ cgroup_subsys 을 돌기 위한 매크로
 	for_each_builtin_subsys(ss, i) {
 		BUG_ON(!ss->name);
 		BUG_ON(strlen(ss->name) > MAX_CGROUP_TYPE_NAMELEN);
@@ -4919,7 +4919,7 @@ int __init cgroup_init_early(void)
 
 		if (ss->subsys_id != i) {
 			printk(KERN_ERR "cgroup: Subsys %s id == %d\n",
-			       ss->name, ss->subsys_id);
+					ss->name, ss->subsys_id);
 			BUG();
 		}
 

@@ -288,12 +288,12 @@ do {							\
 	raw_spin_lock_init(&(_lock)->rlock);		\
 } while (0)
 
-//raw_spin_lock_init(&(_lock)->rlock); 매크로 확장 
-// do {
-//     *(&(_lock)->rlock) = (raw_spinlock_t) {
-//       .raw_lock = { { 0 } } ,
-//     } 
-//   } while (0); 
+//@@ raw_spin_lock_init(&(_lock)->rlock); 매크로 확장 
+//@@ do {
+//@@     *(&(_lock)->rlock) = (raw_spinlock_t) {
+//@@       .raw_lock = { { 0 } } ,
+//@@     } 
+//@@ } while (0); 
 
 static inline void spin_lock(spinlock_t *lock)
 {

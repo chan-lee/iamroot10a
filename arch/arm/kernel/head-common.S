@@ -128,9 +128,9 @@ __mmap_switched_data:
  * This provides a C-API version of __lookup_processor_type
  */
 ENTRY(lookup_processor_type)
-	stmfd	sp!, {r4 - r6, r9, lr}	//@@ 스택에 r4-r6, r9, lr를 저장
-	mov	r9, r0						//@@ r9에 r0를 저장
-	bl	__lookup_processor_type		//@@ __lookup_processor_type으로 점프
+	stmfd	sp!, {r4 - r6, r9, lr}		@@ 스택에 r4-r6, r9, lr를 저장
+	mov	r9, r0				@@ r9에 r0를 저장
+	bl	__lookup_processor_type		@@ __lookup_processor_type으로 점프
 	mov	r0, r5
 	ldmfd	sp!, {r4 - r6, r9, pc}
 ENDPROC(lookup_processor_type)

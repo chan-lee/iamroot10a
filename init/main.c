@@ -420,7 +420,9 @@ void __init parse_early_param(void)
 	static __initdata char tmp_cmdline[COMMAND_LINE_SIZE];
 
 	if (done)
-		return; //@@ 부팅 중 한번만 수행
+		//@@ 부팅 중 한번만 수행
+		//@@ setup_arch() 를 통해 machine dependent 하게 실행함
+		return;
 
 	/* All fall through to do_early_param. */
 	strlcpy(tmp_cmdline, boot_command_line, COMMAND_LINE_SIZE);
@@ -436,23 +438,29 @@ static void __init boot_cpu_init(void)
 {
 	int cpu = smp_processor_id(); //@@ [2013.12.14] [END] 책 10.1 까지 읽음 thread_info의 cpu는 어디서 설정되었나? 참고:http://www.iamroot.org/xe/Kernel_8_ARM/62934 //@@ cpu == 0
 
-	/* Mark the boot cpu "present", "online" etc for SMP and UP case */
-	//각 cpu 상태에 대한 자료 : http://studyfoss.egloos.com/5444259
-	// cpu_possible_mask - 해당 비트에 대한 CPU가 존재할 수 있다. */
-	// cpu_present_mask - 해당 비트에 대한 CPU가 존재한다. */
-	// cpu_online_mask - 해당 비트에 대한 CPU가 존재하며 스케줄러가 이를 관리한다. */
-	// cpu_active_mask - 해당 비트에 대한 CPU가 존재하며 task migration 시 이를 이용할 수 있다. */
-	// 참고로 CPU hotplug가 활성화되지 않은 환경이라면 present == possible이고 active == oneline이다. */
+	//@@ Mark the boot cpu "present", "online" etc for SMP and UP case
+	//@@ 각 cpu 상태에 대한 자료 : http://studyfoss.egloos.com/5444259
+	//@@ cpu_possible_mask - 해당 비트에 대한 CPU가 존재할 수 있다.
+	//@@ cpu_present_mask - 해당 비트에 대한 CPU가 존재한다.
+	//@@ cpu_online_mask - 해당 비트에 대한 CPU가 존재하며 스케줄러가 이를 관리한다.
+	//@@ cpu_active_mask - 해당 비트에 대한 CPU가 존재하며 task migration 시 이를 이용할 수 있다.
+	//@@ 참고로 CPU hotplug가 활성화되지 않은 환경이라면 present == possible이고 active == oneline이다.
 	
 	//@@ [2013.12.21] [15:00-18:00] [START]
-	set_cpu_online(cpu, true);
-	set_cpu_active(cpu, true);
-	set_cpu_present(cpu, true);
-	set_cpu_possible(cpu, true);
+	set_cpu_online(cpu, true); //@@ 스케쥴러 관리 비트맵 세팅
+	set_cpu_active(cpu, true); //@@ task migration 시 이용 비트맵 세팅
+	set_cpu_present(cpu, true); //@@ 해당 비트에 존재하는 CPU 비트맵 세팅
+	set_cpu_possible(cpu, true); //@@ 해당 비트에 존재할 수 있는 CPU 비트맵 세팅
 }
 
-// __weak 가 설정되지 않는 동일한 이름의 함수가 존재한다면 그 함수를 수행.
-// 그렇지 않다면 __weak 가 설정된 함수가 수행됨
+//@@ __weak 가 설정되지 않는 동일한 이름의 함수가 존재한다면 그 함수를 수행.
+//@@ 그렇지 않다면 __weak 가 설정된 함수가 수행됨 (__weak 은 낮은 우선순위를 가짐).
+//@@ 용도는 아키텍처별로 함수를 정의해 놓고 사용할 수 있게 할 수 있음 (호환성)
+//@@ gcc-nm 유틸을 이용해서 나온 결과가 T: global, t: local, W : weak 을 의미한다. 
+//@@ local 은 static keyword 가 붙었을때고, 안붙이면 global 이 된다.
+//@@ http://llvm.org/docs/CommandGuide/llvm-nm.html 참고
+//@@ ./arch/arm/kernel/setup.c 에 smp_setup_processor_id(void) 가 있으므로
+//@@ 우리는 arch/arm/kernel/setup.c 에 있는 코드를 실행한다.
 void __init __weak smp_setup_processor_id(void)
 {
 }
@@ -481,30 +489,30 @@ static void __init mm_init(void)
 }
 
 //@@@ start 130907
-//asmlinkage 는 x86을 위한 코드. arm 에서는 별다른 역할 없다.
-// __init 은 특정 section 에 두고 부팅시만 쓰고 부팅이 끝나면 사라진다.
-// http://venkateshabbarapu.blogspot.kr/2012/09/init-call-mechanism-in-linux-kernel.html 참고
+//@@ asmlinkage: assembly 코드에서 함수를 호출하도록 컴파일 하라는 지시자.
+//@@ 함수의 parameter passing, return value 등에서 규약 때문에 생김.
+//@@ x86의 경우 이론적으로 스택을 통해 인자를 전달 받지만 컴파일 과정에서 함수 호출이
+//@@ 최적화되면 레지스터를 통해서 인자가 전달되는데, 이 때 어셈블리에서의 사용되는 레지스터와 충돌 할 수 있기 때문에
+//@@ asmlinkage 는 스택을 통해서 인자를 전달하도록 해준다.
+//@@ ARM 은 함수의 인자를 전달받는 특수한 레지스터가 있기 때문에 고려할 필요가 없다.
+//@@ __init: 코드 데이터를 특정 section 에 두고 부팅시만 쓰고 부팅이 끝나면 사라진다.
+//@@ http://venkateshabbarapu.blogspot.kr/2012/09/init-call-mechanism-in-linux-kernel.html 참고
 asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 {
-	char * command_line;
+	char * command_line; //@@ 부트로더에서 콘솔 설정등이 ATAGS 를 통해 전달
 	extern const struct kernel_param __start___param[], __stop___param[];
-	//  __start___param[], __stop___param[] 변수는 linker script(include/asm-generic/vmlinux.lds.h) 에서 선언 및 초기화한 변수이다.
+	//@@  __start___param[], __stop___param[] 변수는 linker script(include/asm-generic/vmlinux.lds.h) 에서 선언 및 초기화한 변수이다.
 
 	/*
 	 * Need to run as early as possible, to initialize the
 	 * lockdep hash:
 	 */
-	lockdep_init(); // 아무 작업 안함.
-	smp_setup_processor_id(); // http://www.iamroot.org/xe/index.php?_filter=search&mid=Kernel_10_ARM&search_keyword=__weak&search_target=content&document_srl=181691 참고
-	// 아키텍쳐별로 함수를 정의해 놓고 사용할 수 있게 __weak 을 정의한다.
-	// gcc-nm 유틸을 이용해서 나온 결과가 
-	// T: global, t: local, W : weak 을 의미한다. 
-	// local 은 static keyword 가 붙었을때고, 안붙이면 global 이 된다.
-	// http://llvm.org/docs/CommandGuide/llvm-nm.html 참고 
+	lockdep_init(); //@@ 아무 작업 안함.
+	smp_setup_processor_id(); //@@ http://www.iamroot.org/xe/index.php?_filter=search&mid=Kernel_10_ARM&search_keyword=__weak&search_target=content&document_srl=181691 참고
 	//@@ [2013.11.30] [15:00-18:00] [END]
 
 	//@@ [2013.12.07] [15:00-18:00] [START]
-	debug_objects_early_init(); // CONFIG_DEBUG_OBJECTS 가 설정되어 있으면 수행. //@@ CONFIG_DEBUG_OBJECTS is not set
+	debug_objects_early_init(); //@@ CONFIG_DEBUG_OBJECTS 가 설정되어 있으면 수행. //@@ CONFIG_DEBUG_OBJECTS is not set
 	//@@ 모기향 P115 참조
 
 	/*
@@ -513,33 +521,32 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	//@@ [모기향] P117
 	boot_init_stack_canary(); //@@ current->stack_canary에 canary 값을 구하여 저장
 
-	//cgroup 참조 링크 : https://access.redhat.com/site/documentation/ko-KR/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/ch01.html
-	//디폴트 설정에서는 사용하지 않도록 되어 있지만 분석하기로 결정  2013.09.14
+	//@@ cgroup 참조 링크 : https://access.redhat.com/site/documentation/ko-KR/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/ch01.html
+	//@@ 디폴트 설정에서는 사용하지 않도록 되어 있지만 분석하기로 결정  2013.09.14
+	cgroup_init_early(); //@@ 시스템 부팅시점에서 하는 cgroup 초기화 작업
 
-	cgroup_init_early();
-
-        //cpsid i 인스트럭션 호출
+        //@@ cpsid i 인스트럭션 호출
 	local_irq_disable();
 	early_boot_irqs_disabled = true;
 
-/*
- * Interrupts are still disabled. Do necessary setups, then
- * enable them
- */
-	//cpu를 online, active, present, possible 상태로 초기화
+	/*
+	 * Interrupts are still disabled. Do necessary setups, then
+	 * enable them
+	 */
+	//@@ cpu를 online, active, present, possible 상태로 초기화
 	boot_cpu_init();
 	//@@ [2014.01.04] [15:00-18:00] [START]
 	page_address_init(); //@@highmem을 위한 page_address_htable를 초기화.[20131221]
 	pr_notice("%s", linux_banner);
 	setup_arch(&command_line);
-    //@@ [2014.02.15] end
-    //@@ [2014.02.22] start
+	//@@ [2014.02.15] end
+	//@@ [2014.02.22] start
 	mm_init_owner(&init_mm, &init_task);
 	mm_init_cpumask(&init_mm);
 	setup_command_line(command_line);
 	setup_nr_cpu_ids();
-    //@@ [2014.02.22] end
-    //@@ [2014.03.01] start
+	//@@ [2014.02.22] end
+	//@@ [2014.03.01] start
 	setup_per_cpu_areas();
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 
@@ -549,11 +556,11 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	pr_notice("Kernel command line: %s\n", boot_command_line); //@@ 2014.07.12 start
 	parse_early_param(); //@@ ARM architecture는 setup_arch 에서 이미 수행함
 	parse_args("Booting kernel", static_command_line, __start___param,
-		   __stop___param - __start___param,
-		   -1, -1, &unknown_bootoption);
+			__stop___param - __start___param,
+			-1, -1, &unknown_bootoption);
 
 	jump_label_init(); //@@ ./Documentation/static-keys.txt 참고
-  //@@ 우리는 HAVE_JUMP_LABEL 이 undefined 되어 있으므로 수행되지 않는다
+	//@@ 우리는 HAVE_JUMP_LABEL 이 undefined 되어 있으므로 수행되지 않는다
 
 	/*
 	 * These use large bootmem allocations and must precede

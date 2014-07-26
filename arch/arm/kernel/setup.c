@@ -422,10 +422,10 @@ static void __init feat_v6_fixup(void)
 void notrace cpu_init(void)
 {
 #ifndef CONFIG_CPU_V7M
-	unsigned int cpu = smp_processor_id(); //@@ 현재 cpu id는 0으로 보고있음.
+	unsigned int cpu = smp_processor_id();	//@@ 현재 cpu id는 0으로 보고있음.
 	struct stack *stk = &stacks[cpu];
 
-	if (cpu >= NR_CPUS) { //@@ NR_CPUS 2
+	if (cpu >= NR_CPUS) { 			//@@ NR_CPUS 2
 		printk(KERN_CRIT "CPU%u: bad primary CPU number\n", cpu);
 		BUG();
 	}
@@ -434,8 +434,8 @@ void notrace cpu_init(void)
 	 * This only works on resume and secondary cores. For booting on the
 	 * boot cpu, smp_prepare_boot_cpu is called after percpu area setup.
 	 */
-	//http://studyfoss.egloos.com/5375570
-	//percpu 영역 내에서 각 cpu 별로 실제 데이터가 존재하는 offset 값 설정
+	//@@ http://studyfoss.egloos.com/5375570
+	//@@ percpu 영역 내에서 각 cpu 별로 실제 데이터가 존재하는 offset 값 설정
 	set_my_cpu_offset(per_cpu_offset(cpu)); //@@ TPIDRPRW의 Thread ID에 0을 저장.
 	//@@ [2014.01.11] [15:00-18:00] [END]  per_cpu_offset 에 대해서 한번 더 확인 하고 갈것(아래링크).
 	//@@ http://blog.naver.com/PostView.nhn?blogId=nix102guri&logNo=90098904482
@@ -485,14 +485,15 @@ void __init smp_setup_processor_id(void)
 {
 	int i;
 	u32 mpidr = is_smp() ? read_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0;
-	u32 cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0); // MPIDR 의 affinity level 0 에 대한 값만 쓰겠다.
+	u32 cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0); //@@ MPIDR 의 affinity level 0 에 대한 값만 쓰겠다.
 	//@@ #define MPIDR_AFFINITY_LEVEL(mpidr, level) \
-	//@@ 	((mpidr >> (MPIDR_LEVEL_BITS * level)) & MPIDR_LEVEL_MASK)
-        
-	cpu_logical_map(0) = cpu; // __cpu_logical_map[0] = cpu;
+	//@@ 	((mpidr >> (MPIDR_LEVEL_BITS * level)) & MPIDR_LEVEL_MASK)		
 
-	for (i = 1; i < nr_cpu_ids; ++i) // nr_cpu_ids == 2
-          cpu_logical_map(i) = i == cpu ? 0 : i; // i==cpu 인지 확인해서 같으면 0을, 아니면 i 를 배열에 넣는다.
+	cpu_logical_map(0) = cpu; //@@ __cpu_logical_map[0] = cpu;
+
+	//@@ Logical CPU mapping
+	for (i = 1; i < nr_cpu_ids; ++i) //@@ nr_cpu_ids == 2
+		cpu_logical_map(i) = i == cpu ? 0 : i; //@@ i==cpu 이면 0을, 아니면 i 를 배열에 넣는다.
 
 	/*
 	 * clear __my_cpu_offset on boot CPU to avoid hang caused by
@@ -501,7 +502,7 @@ void __init smp_setup_processor_id(void)
 	 */
 	set_my_cpu_offset(0);
 
-	printk(KERN_INFO "Booting Linux on physical CPU 0x%x\n", mpidr);
+	printk(KERN_INFO "Booting Linux on physical CPU 0x%x\n", mpidr); //@@ 현재 부팅에 사용되는 코어
 }
 
 struct mpidr_hash mpidr_hash;
@@ -591,7 +592,7 @@ static void __init setup_processor(void)
 	//@@ arm 아키텍쳐 버전 정보
 	__cpu_architecture = __get_cpu_architecture();
 
-	///@@ 일단 4개의 설정 모두 사용한다고 가정
+	//@@ 일단 4개의 설정 모두 사용한다고 가정
 #ifdef MULTI_CPU
 	processor = *list->proc;
 #endif
@@ -610,13 +611,13 @@ static void __init setup_processor(void)
 	       proc_arch[cpu_architecture()], cr_alignment);
 
 	//@@ [2014.01.04] UTS(Unix Time-sharing System)
-	//init_uts_ns 구조체는 사용하는 UTS 시스템에 대한 간략한 정보를 담고 있음
+	//@@ init_uts_ns 구조체는 사용하는 UTS 시스템에 대한 간략한 정보를 담고 있음
 	snprintf(init_utsname()->machine, __NEW_UTS_LEN + 1, "%s%c",
 		 list->arch_name, ENDIANNESS);
 	snprintf(elf_platform, ELF_PLATFORM_SIZE, "%s%c",
 		 list->elf_name, ENDIANNESS);
 	elf_hwcap = list->elf_hwcap;
-	//elf_hwpcap : 하드웨어 지원 사항을 나타내는 flag
+	//@@ elf_hwpcap : 하드웨어 지원 사항을 나타내는 flag
 	cpuid_init_hwcaps();
 	//@@ [2014.01.04] [END] [15:00-18:00]
 
@@ -624,10 +625,10 @@ static void __init setup_processor(void)
 	elf_hwcap &= ~(HWCAP_THUMB | HWCAP_IDIVT);
 #endif
 	//@@ [2014.01.11] [START] [15:00-18:00]
-	feat_v6_fixup(); //@@ v6 이후에서 TLS 기능 설정
+	feat_v6_fixup(); 	//@@ v6 이후에서 TLS 기능 설정
 
-	cacheid_init(); //@@ VIPT nonaliasing,
-	cpu_init();   //@@ [2014.01.18] [ 15:00-18:00] [start]
+	cacheid_init();		//@@ VIPT nonaliasing,
+	cpu_init(); 		//@@ [2014.01.18] [ 15:00-18:00] [start]
 }
 
 void __init dump_machine_table(void)
@@ -887,21 +888,21 @@ void __init setup_arch(char **cmdline_p)
 
 	setup_processor(); //@@ [2014.01.18] cache, cpu_init ... 설정
 
-    //@@ __atags_pointer는 atag의 pointer 혹은 fdt의 pointer이고
-    //@@ fdt라 가정하고 먼저 찾아본후 아무런 정보가 없으면 atag라 생각한다.
+	//@@ __atags_pointer는 atag의 pointer 혹은 fdt의 pointer이고
+	//@@ fdt라 가정하고 먼저 찾아본후 아무런 정보가 없으면 atag라 생각한다.
 	mdesc = setup_machine_fdt(__atags_pointer); //@@ [2013.11.16] REVIEW  [2014.01.18] review, devtree->magic로 dtb 유무체크
 	if (!mdesc)
-		// dtb 가 아닌 atag가 넘어왔을때 
-        //@@ [2014.01.25] review start
-        //@@ machine_desc를 찾고, atag 정보를 parse하고,
-        //@@ boot_command_line에 default_command_line을 저장한다.
+		//@@ dtb 가 아닌 atag가 넘어왔을때 
+		//@@ [2014.01.25] review start
+		//@@ machine_desc를 찾고, atag 정보를 parse하고,
+		//@@ boot_command_line에 default_command_line을 저장한다.
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
 	machine_desc = mdesc;
 	machine_name = mdesc->name;
 
-	setup_dma_zone(mdesc); // 우리는 실행 안함
+	setup_dma_zone(mdesc); 			//@@ 우리는 실행 안함
 
-	if (mdesc->reboot_mode != REBOOT_HARD) // hard reboot 아닌 경우에는 reboot 전에 값을 설정했을 것이다.
+	if (mdesc->reboot_mode != REBOOT_HARD) 	//@@ hard reboot 아닌 경우에는 reboot 전에 값을 설정했을 것이다.
 		reboot_mode = mdesc->reboot_mode;
 
 	init_mm.start_code = (unsigned long) _text;
@@ -910,39 +911,39 @@ void __init setup_arch(char **cmdline_p)
 	init_mm.brk	   = (unsigned long) _end;
 
 	/* populate cmd_line too for later use, preserving boot_command_line */
-	// boot_command_line 에는 dtb(혹은 atags) 에서 읽어온 bootargs 가 들어있다.
+	//@@ boot_command_line 에는 dtb(혹은 atags) 에서 읽어온 bootargs 가 들어있다.
 	strlcpy(cmd_line, boot_command_line, COMMAND_LINE_SIZE);
 	*cmdline_p = cmd_line;
 
-	// "earlycon=" 옵션과 "console=" 옵션을 파싱한다.
+	//@@ "earlycon=" 옵션과 "console=" 옵션을 파싱한다.
 	parse_early_param();
 
-	// memory bank 에서 시작 address로 정렬하는 함수
-	// meminfo 구조체 변수는 early_init_dt_add_memory_arch()에서 초기화 하였다.
-    // heap sort
+	//@@ memory bank 에서 시작 address로 정렬하는 함수
+	//@@ meminfo 구조체 변수는 early_init_dt_add_memory_arch()에서 초기화 하였다.
+	//@@ heap sort
 	sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
-    //@@ [2014.01.25] review end
+	//@@ [2014.01.25] review end
 
-	// 131005 end. sanity_shceck_meminfo 진입 후 끝남.
-    // [2014.02.15] review start
-    //@@ membank를 돌면서 highmem인지 체크하고, high와 normal이 겹쳐 있을 경우
-    //@@ 나눈다. 그리고 high_memory의 값을 기록하고, section size로 align된 memblock_limit을
-    //@@ 설정한다.
-	sanity_check_meminfo(); // 2013.10.12 시작
-    // [2014.02.15] review end
+	//@@ 131005 end. sanity_shceck_meminfo 진입 후 끝남.
+	//@@ [2014.02.15] review start
+	//@@ membank를 돌면서 highmem인지 체크하고, high와 normal이 겹쳐 있을 경우
+	//@@ 나눈다. 그리고 high_memory의 값을 기록하고, section size로 align된 memblock_limit을
+	//@@ 설정한다.
+	sanity_check_meminfo(); //@@ 2013.10.12 시작
+	//@@ [2014.02.15] review end
 
-    //@@ [2014.02.22] review start
-    //@@ meminfo로부터 memblock.memory->region을 만들고,
-    //@@ kernel text/bss, initrd, swapper_pg_dir, dt내의 reverve영역,
-    //@@ mdesc->reserve영역, DMB contiguos 부분을 memblock.reserve에 추가한다.
+	//@@ [2014.02.22] review start
+	//@@ meminfo로부터 memblock.memory->region을 만들고,
+	//@@ kernel text/bss, initrd, swapper_pg_dir, dt내의 reverve영역,
+	//@@ mdesc->reserve영역, DMB contiguos 부분을 memblock.reserve에 추가한다.
 	arm_memblock_init(&meminfo, mdesc);
 
 	paging_init(mdesc);
-    //@@ iomem_resource와 ioport_resource 설정
-    //@@ iomem에는 region별 system ram이 할당된다.
+	//@@ iomem_resource와 ioport_resource 설정
+	//@@ iomem에는 region별 system ram이 할당된다.
 	request_standard_resources(mdesc);
 
-    //@@ restart시에 사용하는 function pointer
+	//@@ restart시에 사용하는 function pointer
 	if (mdesc->restart)
 		arm_pm_restart = mdesc->restart;
 
@@ -950,7 +951,7 @@ void __init setup_arch(char **cmdline_p)
 
 	arm_dt_init_cpu_maps();
 
-    //@@ PSCI: Power State Coordination Interface
+	//@@ PSCI: Power State Coordination Interface
 	psci_init();
 #ifdef CONFIG_SMP
 	if (is_smp()) {
@@ -961,7 +962,7 @@ void __init setup_arch(char **cmdline_p)
 				smp_set_ops(mdesc->smp);
 		}
 		smp_init_cpus();
-        //@@ TODO: pass 함
+		//@@ TODO: pass 함
 		smp_build_mpidr_hash();
 	}
 #endif
@@ -969,7 +970,7 @@ void __init setup_arch(char **cmdline_p)
 	if (!is_smp())
 		hyp_mode_check();
 
-    //@@ crashkernel일 경우 공간 할당
+	//@@ crashkernel일 경우 공간 할당
 	reserve_crashkernel();
 
 #ifdef CONFIG_MULTI_IRQ_HANDLER
@@ -980,12 +981,12 @@ void __init setup_arch(char **cmdline_p)
 #if defined(CONFIG_VGA_CONSOLE)
 	conswitchp = &vga_con;
 #elif defined(CONFIG_DUMMY_CONSOLE)
-    //@@ CONFIG_DUMMY_CONSOLE = yes
+	//@@ CONFIG_DUMMY_CONSOLE = yes
 	conswitchp = &dummy_con;
 #endif
 #endif
 
-    // @@ 없는듯하다.
+	// @@ 없는듯하다.
 	if (mdesc->init_early)
 		mdesc->init_early();
 }

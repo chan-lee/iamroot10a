@@ -186,23 +186,25 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys) //@@ [2013.
 
 #ifdef CONFIG_ARCH_MULTIPLATFORM //@@ is not set
 	DT_MACHINE_START(GENERIC_DT, "Generic DT based system")
-	MACHINE_END
+		MACHINE_END
 
-	mdesc_best = (struct machine_desc *)&__mach_desc_GENERIC_DT;
+		mdesc_best = (struct machine_desc *)&__mach_desc_GENERIC_DT;
 #endif
 
 	if (!dt_phys)
 		return NULL;
-	//http://stackoverflow.com/questions/16909655/virtual-to-physical-address-conversion-in-linux-kernel
-	//To Do : 변환 원리를 이해 못함..
+	//@@ http://stackoverflow.com/questions/16909655/virtual-to-physical-address-conversion-in-linux-kernel
+	//@@ To Do : 변환 원리를 이해 못함..
 	devtree = phys_to_virt(dt_phys); //@@ phys(atags/dtb pointer) to virt(atags/dtb pointer)
 
 	/* check device tree validity */
-	if (be32_to_cpu(devtree->magic) != OF_DT_HEADER) //@@ TODO: be32_to_cpu()
+	if (be32_to_cpu(devtree->magic) != OF_DT_HEADER)
+		//@@ be32_to_cpu: big endian -> little endian. little endian -> little endian
+		//@@ 일반적으로 device tree 는 big endian 으로 저장되기 때문에 little endian 을 사용하는 경우 변환을 해주어야 한다.
 		return NULL;
 
 	/* Search the mdescs for the 'best' compatible value match */
-	//To Do: 호환 가능한 dtb 버전 찾는 과정
+	//@@ To Do: 호환 가능한 dtb 버전 찾는 과정
 	initial_boot_params = devtree;
 
 	/*
@@ -227,7 +229,7 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys) //@@ [2013.
 
 	dt_root = of_get_flat_dt_root(); //@@ dt_root = OF_DT_PROP(Device Tree 구조)  //@@ root property를 먼저 찾는다.
 
-    // @@ DTB의 /의 compatible과 machine_desc들을 비교하여 찾는다.
+	// @@ DTB의 /의 compatible과 machine_desc들을 비교하여 찾는다.
 	for_each_machine_desc(mdesc) { //@@ __arch_info_begin to __arch_info_end (arch.info.init 영역) //@@ skip
 		score = of_flat_dt_match(dt_root, mdesc->dt_compat);
 
@@ -243,7 +245,7 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys) //@@ [2013.
 		long size;
 
 		early_print("\nError: unrecognized/unsupported "
-			    "device tree compatible list:\n[ ");
+				"device tree compatible list:\n[ ");
 
 		prop = of_get_flat_dt_prop(dt_root, "compatible", &size);
 		while (size > 0) {

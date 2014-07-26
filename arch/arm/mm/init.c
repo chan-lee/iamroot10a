@@ -381,15 +381,15 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
         //@@ region 을 추가하고 합치는 함수 
         //@@ region은 인접한 memory bank끼리 묶어 놓은것.
         //@@ ex) bank0 : 512 ~ 1024, bank1: 1024 ~ 1536 => region cnt :1
-        //       bank0 : 512 ~ 1024, bank1: 1536 ~ 2048 => region cnt :2
+        //@@     bank0 : 512 ~ 1024, bank1: 1536 ~ 2048 => region cnt :2
 		memblock_add(mi->bank[i].start, mi->bank[i].size);
 
 	/* Register the kernel text, kernel data and initrd with memblock. */
 #ifdef CONFIG_XIP_KERNEL
 	memblock_reserve(__pa(_sdata), _end - _sdata);
 #else
-	memblock_reserve(__pa(_stext), _end - _stext); // _end - _stext : kernel의 text와 bss size를 합친 크기
-	// text, bss 영역을 reserve 영역으로 설정 
+	memblock_reserve(__pa(_stext), _end - _stext); //@@ _end - _stext : kernel의 text와 bss size를 합친 크기
+	//@@ text, bss 영역을 reserve 영역으로 설정 
 #endif
 
 #ifdef CONFIG_BLK_DEV_INITRD

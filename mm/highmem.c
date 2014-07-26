@@ -333,8 +333,9 @@ static struct page_address_slot {
 	struct list_head lh;			/* List of page_address_maps */
 	spinlock_t lock;			/* Protect this bucket's list */
 } ____cacheline_aligned_in_smp page_address_htable[1 << PA_HASH_ORDER]; //@@ PA_HASH_ORDER[7]
-//To Do  ____cacheline_aligned_in_smp 사용 하는 이유
-//L1 캐시 사이즈로 align시켜 주는데 최소한의 캐쉬라인에 모두 들어가게 하기 위함이 아닐까??
+//@@ ____cacheline_aligned_in_smp: cache line 사이즈에 맞게 align 시켜주는 attribute (최적화)
+//@@ L1 cache 의 cache line 사이즈에 align 되지 않을 경우, (align 으로 인해 비록 공간을 더 차지하게 될 수 있음에도 불구하고)
+//@@ false sharing 과 같은 불필요한 cache flushing 이 일어날 수 있다.
 
 static struct page_address_slot *page_slot(const struct page *page)
 {
