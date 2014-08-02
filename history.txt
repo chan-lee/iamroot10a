@@ -562,7 +562,9 @@ kernel 영역과 user 영역은 주소공간 관리가 다르다.
 (kernel image를 위해 페이지 테이블을 미리 초기화한다)
 
 kernel address space 
-vmalloc_reserved -> highmemory system 에서 128mb를 예약함.
+vmalloc_reserved -> highmemory system 에서 최소 128mb를 예약함.
+lowmemory system 에서는 더 커질수 있다. 1G - physical memory size 만큼
+추가 설명은 7장 history 참조 
 
 4.2. Managing the Address Space
 vm_area_struct에 대한 설명 다시함.
@@ -934,3 +936,48 @@ Virtual Memory Manager. Chapter 6. Physical Memory Allocator
 6.5. Process Flags
 6.6. Avoiding Fragmentation
 6.7. What's New in 2.6
+
+----------------------------------------------------------------------
+[2014.08.02]
+Chapter 7 Noncontiguous Memory Allocation
+cache와 memory-access-latency 때문에 많은 양의 메모리를 다룰 때는연속적인
+실제 메모리 페이지를 사용하려고 한다. 하지만 buddy allocator의
+external fragment 때문에 항상 가능하지는 않다. linux는 vmalloc()을 통해서
+불연속(nocontigouous)한 물리 메모리를 연속적인 가상메모리로 제공한다.
+VMALLOC_START와 VMALLOC_END사이에 그 공간이 예약되어 있는데, 이 부분은
+x86의 경우 최소 128MB(VMALLOC_RESERVE)이다. p.54에 있는 그림 참조
+만약 1G 이상의 물리 메모리를 가졌다면
+    VMALLOC_START는 3G + 896M 가 VMALLOC_START이다. (reservered 128M)
+만약 512M의 물리 메모리라면
+    VMALLOC_START는 3G + 512 + VMALLOC_OFFSET(8M) 이다. (reserved 512M 근처) 
+(VMALLOC_OFFSET이 항상 포함되는지는 잘 모르겠음)
+
+7.1 Describing Virtual Memory Areas
+struct vm_struct{} // <linux/vmalloc.h>
+위의 구조체를 이용하여 list로 운영되며 adress로 정렬되어 있다.
+
+7.2 Allocating a Noncotiguous Area
+vmalloc(), vmalloc_dma(), vmalloc_32()를 이용하여 할당
+vmalloc_area_pages()를 위한 master page table은 init_mm->pgd 에 있으며
+한 프로세스가 page fault exception을 일으키면 init_mm->pgd를 이용하여
+PGD, PMD, PTE를 할당하고 최종적으로 alloc_page()를 호출한다. 그리고 이것을
+이용하여 현재 프로세스의 page table을 update한다. (그림 7.3 참조)
+
+7.3 Feeing a Noncontiguous Area
+vmalloc_area_pages()의 반대되는 함수로 vmfree_area_pages()가 존재
+
+7.4 What's New in 2.6
+map_vm_area() array가 추가. 정확히는 모르겠다.
+get_vm_area()와 vmap()도 변화가 있다고 하나 생략
+
+code review
+init/main.c - mm_init()
+  init/main.c - mem_init()
+    arch/arm/mm/init.c - free_unused_memmap() // bank와 bank사이의 사용하지 않는 부분 free. 이유 모름
+    mm/bootmem.c - free_all_bootmem()
+      mm/bootmem.c - free_all_bootmem_core()
+        mm/page_alloc.c - __free_pages_bootmem() // order에 따라 buddy를 이용해 free
+          mm/page_alloc.c - __free_pages()
+            mm/page_alloc.c - free_hot_cold_page() // order 1일 때 호출되며 lru에 넣거나
+                // free_pcppage_bulk를 호출. 다음시간 할 차례
+            // free_pages_prepare도 안봄

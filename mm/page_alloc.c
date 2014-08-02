@@ -749,6 +749,9 @@ static void __free_pages_ok(struct page *page, unsigned int order)
 	local_irq_restore(flags);
 }
 
+// @@ bootmem allocator로 부터 buddy allocator를 사용하기 위해 호출
+// @@ 함수 이름에 bootmem이 있지만 실제 bootmem에 관련된 정보는 없다.
+// UVMM p.102
 void __init __free_pages_bootmem(struct page *page, unsigned int order)
 {
 	unsigned int nr_pages = 1 << order; //@@ order: buddy allocator 의 order (처음에는 0이거나 5) (max = 10)
@@ -761,11 +764,12 @@ void __init __free_pages_bootmem(struct page *page, unsigned int order)
 		if (loop + 1 < nr_pages)
 			prefetchw(p + 1); //@@ 다음 페이지
 		__ClearPageReserved(p);
-		set_page_count(p, 0);
+		set_page_count(p, 0); // _count = 0
 	}
 
 	page_zone(page)->managed_pages += 1 << order; //@@ managed_pages 증가
-	set_page_refcounted(page); //@@ struct page 의 _count 를 1 으로 세팅
+	set_page_refcounted(page); //@@ struct page 의 _count 를 1 으로 세팅. buddy가 참조하고 있다는
+    // @@ 소리인데, 아래의 __free_pages를 가동하기 위해 더해준다.
 	__free_pages(page, order);
 }
 
@@ -1351,7 +1355,7 @@ void free_hot_cold_page(struct page *page, int cold) //@@ cold -> lru_tail, else
 	else
 		list_add(&page->lru, &pcp->lists[migratetype]); //@@ list 에서 빨리 검색되도록 (hot page)
 	pcp->count++;
-	if (pcp->count >= pcp->high) {
+	if (pcp->count >= pcp->high) { // @@ high water mark일 경우, free하여 coalescing함. p.114
 		unsigned long batch = ACCESS_ONCE(pcp->batch);
 		free_pcppages_bulk(zone, batch, pcp);
 		pcp->count -= batch;

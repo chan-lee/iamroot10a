@@ -658,6 +658,8 @@ void __init mem_init(void)
 
 	/* this will put all unused low memory onto the freelists */
 	free_unused_memmap(&meminfo); //@@ bank 사이에 연속되지 않은 영역이나 align 이 안된 부분의 mem_map 을 free 함 (free_memmap)
+    // @@ 다시 말하면 bank와 bank사이의 bitmap을 free하는데, 이 공간은 사용 못하는 공간일듯 한데
+    // @@ 왜 하는 이유는 잘 모르겠다.
 	free_all_bootmem();
 
 #ifdef CONFIG_SA1111
