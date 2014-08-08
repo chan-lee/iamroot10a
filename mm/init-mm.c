@@ -21,5 +21,5 @@ struct mm_struct init_mm = {
 	.mmap_sem	= __RWSEM_INITIALIZER(init_mm.mmap_sem),
 	.page_table_lock =  __SPIN_LOCK_UNLOCKED(init_mm.page_table_lock),
 	.mmlist		= LIST_HEAD_INIT(init_mm.mmlist),
-	INIT_MM_CONTEXT(init_mm) // 다른 아키텍쳐 에서는 위에서 초기화된 mm_struct 의 멤버외 다른 멤버를 초기화 할수 있게 매크로를 정해놓았다. ex) arch/s390/
+	INIT_MM_CONTEXT(init_mm) //@@ 다른 아키텍쳐 에서는 위에서 초기화된 mm_struct 의 멤버외 다른 멤버를 초기화 할수 있게 매크로를 정해놓았다. ex) arch/s390/
 };

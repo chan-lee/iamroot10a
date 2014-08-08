@@ -410,7 +410,7 @@ static int __init do_early_param(char *param, char *val, const char *unused)
 
 void __init parse_early_options(char *cmdline)
 {
-	parse_args("early options", cmdline, NULL, 0, 0, 0, do_early_param);
+	parse_args("early options", cmdline, NULL, 0, 0, 0, do_early_param); //@@ go to ./kernel/params.c
 }
 
 /* Arch code calls this early on, or if not, just before other parsing. */
@@ -480,8 +480,8 @@ static void __init mm_init(void)
 	 * page_cgroup requires contiguous pages,
 	 * bigger than MAX_ORDER unless SPARSEMEM.
 	 */
-	page_cgroup_init_flatmem(); //@@ 우리는 sparse mem 이므로 실행되지 않음.
-    // @@ ULVMM p.101
+	page_cgroup_init_flatmem(); //@@ 우리는 sparse mem 이므로 실행되지 않음
+	//@@ ULVMM p.101
 	mem_init(); //@@ [2014.07.12] 중단, [2014.07.19] 시작
 	kmem_cache_init();
 	percpu_init_late();
@@ -508,7 +508,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	 * Need to run as early as possible, to initialize the
 	 * lockdep hash:
 	 */
-	lockdep_init(); //@@ 아무 작업 안함.
+	lockdep_init(); //@@ 디버깅을 위해 lock 들 간의 의존관계를 기록할 구조체를 초기화 (우리는 해당사항 없다.)
 	smp_setup_processor_id(); //@@ http://www.iamroot.org/xe/index.php?_filter=search&mid=Kernel_10_ARM&search_keyword=__weak&search_target=content&document_srl=181691 참고
 	//@@ [2013.11.30] [15:00-18:00] [END]
 
@@ -526,8 +526,9 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	//@@ 디폴트 설정에서는 사용하지 않도록 되어 있지만 분석하기로 결정  2013.09.14
 	cgroup_init_early(); //@@ 시스템 부팅시점에서 하는 cgroup 초기화 작업
 
-        //@@ cpsid i 인스트럭션 호출
-	local_irq_disable();
+        //@@ cpsid i 인스트럭션 호출 (arm v6 이상)
+	//@@ 이 두 operation 은 초기화 과정이 끝나고 이 함수 (start_kernel) 뒷 부분에서 다시 enable 됨
+	local_irq_disable(); //@@ CPU interrupt masking handling, interrupt disable
 	early_boot_irqs_disabled = true;
 
 	/*
@@ -537,8 +538,10 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	//@@ cpu를 online, active, present, possible 상태로 초기화
 	boot_cpu_init();
 	//@@ [2014.01.04] [15:00-18:00] [START]
-	page_address_init(); //@@highmem을 위한 page_address_htable를 초기화.[20131221]
-	pr_notice("%s", linux_banner);
+	//@@ highmem 을 위한 page_address_htable 을 초기화. [20131221]
+	//@@ mm/highmem.c
+	page_address_init();
+	pr_notice("%s", linux_banner); //@@ pr_notice macro: printk(KERN_NOTICE, ..) 를 의미
 	setup_arch(&command_line);
 	//@@ [2014.02.15] end
 	//@@ [2014.02.22] start
@@ -571,7 +574,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	pidhash_init(); //@@ pid_hash 초기화
 	vfs_caches_init_early(); //@@ virtual file system의 dentry cache 및 inode cache 의 hash table 초기화
 	sort_main_extable(); //@@ exception table (table 자체는 architecture dependent) sorting (binary search를 위해서, 그리고 overflow 검사)
-	trap_init();
+	trap_init(); //@@ null 함수 (architecture dependent)
 	mm_init();
 
 	/*

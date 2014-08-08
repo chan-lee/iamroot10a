@@ -640,7 +640,7 @@ static inline int free_pages_check(struct page *page)
  * pinned" detection logic.
  */
 static void free_pcppages_bulk(struct zone *zone, int count,
-					struct per_cpu_pages *pcp)
+		struct per_cpu_pages *pcp)
 {
 	int migratetype = 0;
 	int batch_free = 0;
@@ -672,7 +672,7 @@ static void free_pcppages_bulk(struct zone *zone, int count,
 		if (batch_free == MIGRATE_PCPTYPES) //@@ MIGRATE_PCPTYPES 까지 오면 모두 다 free 시킨다
 			batch_free = to_free;
 
-    //@@ free시킬 lists에서, page 하나씩 free 시킴
+		//@@ free시킬 lists에서, page 하나씩 free 시킴
 		do {
 			int mt;	/* migratetype of the to-be-freed page */
 
@@ -680,7 +680,7 @@ static void free_pcppages_bulk(struct zone *zone, int count,
 			/* must delete as __free_one_page list manipulates */
 			list_del(&page->lru); //@@ [2014.04.05] [END]
 			mt = get_freepage_migratetype(page);
-      //@@ page의 MIGRATE_TYPE을 받아옴
+			//@@ page의 MIGRATE_TYPE을 받아옴
 			/* MIGRATE_MOVABLE list may include MIGRATE_RESERVEs */
 			__free_one_page(page, zone, 0, mt);
 			trace_mm_page_pcpu_drain(page, 0, mt);
@@ -695,7 +695,7 @@ static void free_pcppages_bulk(struct zone *zone, int count,
 }
 
 static void free_one_page(struct zone *zone, struct page *page, int order,
-				int migratetype)
+		int migratetype)
 {
 	spin_lock(&zone->lock);
 	zone->all_unreclaimable = 0;
@@ -749,9 +749,9 @@ static void __free_pages_ok(struct page *page, unsigned int order)
 	local_irq_restore(flags);
 }
 
-// @@ bootmem allocator로 부터 buddy allocator를 사용하기 위해 호출
-// @@ 함수 이름에 bootmem이 있지만 실제 bootmem에 관련된 정보는 없다.
-// UVMM p.102
+//@@ bootmem allocator로 부터 buddy allocator를 사용하기 위해 호출
+//@@ 함수 이름에 bootmem이 있지만 실제 bootmem에 관련된 정보는 없다.
+//@@ UVMM p.102
 void __init __free_pages_bootmem(struct page *page, unsigned int order)
 {
 	unsigned int nr_pages = 1 << order; //@@ order: buddy allocator 의 order (처음에는 0이거나 5) (max = 10)
@@ -764,12 +764,12 @@ void __init __free_pages_bootmem(struct page *page, unsigned int order)
 		if (loop + 1 < nr_pages)
 			prefetchw(p + 1); //@@ 다음 페이지
 		__ClearPageReserved(p);
-		set_page_count(p, 0); // _count = 0
+		set_page_count(p, 0); //@@ _count = 0
 	}
 
 	page_zone(page)->managed_pages += 1 << order; //@@ managed_pages 증가
 	set_page_refcounted(page); //@@ struct page 의 _count 를 1 으로 세팅. buddy가 참조하고 있다는
-    // @@ 소리인데, 아래의 __free_pages를 가동하기 위해 더해준다.
+	//@@ 소리인데, 아래의 __free_pages를 가동하기 위해 더해준다.
 	__free_pages(page, order);
 }
 
@@ -1348,14 +1348,14 @@ void free_hot_cold_page(struct page *page, int cold) //@@ cold -> lru_tail, else
 		migratetype = MIGRATE_MOVABLE;
 	}
 
-  //@@ 실제로 free 하는 대신에 lru_add_tail 또는 lru_add 를 함
+	//@@ 실제로 free 하는 대신에 lru_add_tail 또는 lru_add 를 함
 	pcp = &this_cpu_ptr(zone->pageset)->pcp;
 	if (cold)
 		list_add_tail(&page->lru, &pcp->lists[migratetype]); //@@ list 에서 천천히 검색 (cold page)
 	else
 		list_add(&page->lru, &pcp->lists[migratetype]); //@@ list 에서 빨리 검색되도록 (hot page)
 	pcp->count++;
-	if (pcp->count >= pcp->high) { // @@ high water mark일 경우, free하여 coalescing함. p.114
+	if (pcp->count >= pcp->high) { //@@ high water mark일 경우, free하여 coalescing함. p.114
 		unsigned long batch = ACCESS_ONCE(pcp->batch);
 		free_pcppages_bulk(zone, batch, pcp);
 		pcp->count -= batch;
@@ -3687,8 +3687,8 @@ static int __build_all_zonelists(void *data)
 	 * (a chicken-egg dilemma).
 	 */
 
-    // @@ pageset 참조:
-    // https://www.kernel.org/doc/gorman/html/understand/understand009.html
+	//@@ pageset 참조:
+	//@@ https://www.kernel.org/doc/gorman/html/understand/understand009.html
 	for_each_possible_cpu(cpu) {
 		setup_pageset(&per_cpu(boot_pageset, cpu), 0);
 
@@ -3719,7 +3719,7 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 
 	if (system_state == SYSTEM_BOOTING) {
 		__build_all_zonelists(NULL);
-        // @@ 2014.03.08 end
+		//@@ 2014.03.08 end
 		//@@ 2014.03.22 start
 		mminit_verify_zonelist();
 		cpuset_init_current_mems_allowed();
@@ -3748,7 +3748,7 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 		page_group_by_mobility_disabled = 0;
 
 	printk("Built %i zonelists in %s order, mobility grouping %s.  "
-		"Total pages: %ld\n",
+			"Total pages: %ld\n",
 			nr_online_nodes,
 			zonelist_order_name[current_zonelist_order],
 			page_group_by_mobility_disabled ? "off" : "on",
@@ -3974,11 +3974,11 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 		 * check here not to call set_pageblock_migratetype() against
 		 * pfn out of zone.
 		 */
-        //@@ TODO pageblock이 의미하는 것을 정확히 모르겠다. sparse의 use_map(section의 시작 포인터)
-        //@@ 인듯한데 그것을 왜 pageblock_flag에 저장하는지 모르겠다.
+		//@@ TODO pageblock이 의미하는 것을 정확히 모르겠다. sparse의 use_map(section의 시작 포인터)
+		//@@ 인듯한데 그것을 왜 pageblock_flag에 저장하는지 모르겠다.
 		if ((z->zone_start_pfn <= pfn)
-		    && (pfn < zone_end_pfn(z))
-		    && !(pfn & (pageblock_nr_pages - 1)))
+				&& (pfn < zone_end_pfn(z))
+				&& !(pfn & (pageblock_nr_pages - 1)))
 			set_pageblock_migratetype(page, MIGRATE_MOVABLE);
 
 		INIT_LIST_HEAD(&page->lru);
@@ -4159,7 +4159,7 @@ void __init setup_per_cpu_pageset(void)
 		setup_zone_pageset(zone);
 }
 
-static noinline __init_refok
+	static noinline __init_refok
 int zone_wait_table_init(struct zone *zone, unsigned long zone_size_pages)
 {
 	int i;
@@ -4171,14 +4171,14 @@ int zone_wait_table_init(struct zone *zone, unsigned long zone_size_pages)
 	 * per zone.
 	 */
 	zone->wait_table_hash_nr_entries =
-		 wait_table_hash_nr_entries(zone_size_pages);
+		wait_table_hash_nr_entries(zone_size_pages);
 	zone->wait_table_bits =
 		wait_table_bits(zone->wait_table_hash_nr_entries);
 	alloc_size = zone->wait_table_hash_nr_entries
-					* sizeof(wait_queue_head_t);
+		* sizeof(wait_queue_head_t);
 
 	if (!slab_is_available()) {
-        // 2.2.3 Zone Wait Queue Table 참조. history 참조 
+		//@@ 2.2.3 Zone Wait Queue Table 참조. history 참조 
 		zone->wait_table = (wait_queue_head_t *)
 			alloc_bootmem_node_nopanic(pgdat, alloc_size);
 	} else {
@@ -4197,10 +4197,10 @@ int zone_wait_table_init(struct zone *zone, unsigned long zone_size_pages)
 	if (!zone->wait_table)
 		return -ENOMEM;
 
-    // @@ wait_table공간에 wait_queue_head_t 사이즈만큼씩 건너 뛰면서
-    // @@ waitqueue_list의 head로 할당한다.
-    // @@ 결과적으로는 wait_queue_head_t wait_table[wait_table_hash_nr_enties] 과 같은
-    // @@ 효과를 낸다.
+	// @@ wait_table공간에 wait_queue_head_t 사이즈만큼씩 건너 뛰면서
+	// @@ waitqueue_list의 head로 할당한다.
+	// @@ 결과적으로는 wait_queue_head_t wait_table[wait_table_hash_nr_enties] 과 같은
+	// @@ 효과를 낸다.
 	for(i = 0; i < zone->wait_table_hash_nr_entries; ++i)
 		init_waitqueue_head(zone->wait_table + i);
 
@@ -4688,18 +4688,18 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 #endif
 	init_waitqueue_head(&pgdat->kswapd_wait);
 	init_waitqueue_head(&pgdat->pfmemalloc_wait);
-	pgdat_page_cgroup_init(pgdat);    //@@ CONFIG_MEMCG_SWAP define, 빈함수.
+	pgdat_page_cgroup_init(pgdat); //@@ CONFIG_MEMCG_SWAP define, 빈함수.
 
-	for (j = 0; j < MAX_NR_ZONES; j++) {    //@@ zone_type: ZONE_NORMAL, HIGHMEM, MOVABLE, MAX_NR_ZONES=3
+	for (j = 0; j < MAX_NR_ZONES; j++) { //@@ zone_type: ZONE_NORMAL, HIGHMEM, MOVABLE, MAX_NR_ZONES=3
 		struct zone *zone = pgdat->node_zones + j;
 		unsigned long size, realsize, freesize, memmap_pages;
 
 		size = zone_spanned_pages_in_node(nid, j, node_start_pfn,
-						  node_end_pfn, zones_size); //@@ CONFIG_HAVE_MEMBLOCK_NODE_MAP, no define. return zones_size[zone_type];-arm_bootmem_free에서 설정되어 있음.
+				node_end_pfn, zones_size); //@@ CONFIG_HAVE_MEMBLOCK_NODE_MAP, no define. return zones_size[zone_type];-arm_bootmem_free에서 설정되어 있음.
 		realsize = freesize = size - zone_absent_pages_in_node(nid, j,
-								node_start_pfn,
-								node_end_pfn,
-								zholes_size); //@@ zone_absent_pages_in_node() : return zholes_size[zone_type];-arm_bootmem_free에서 설정되어 있음.
+				node_start_pfn,
+				node_end_pfn,
+				zholes_size); //@@ zone_absent_pages_in_node() : return zholes_size[zone_type];-arm_bootmem_free에서 설정되어 있음.
 
 		/*
 		 * Adjust freesize so that it accounts for how much memory
@@ -4711,14 +4711,15 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 			freesize -= memmap_pages; //@@ memmap_pages:페이지구조체들을 저장된 공간 , freesize: 진짜 (사용가능한)존의 크기
 			if (memmap_pages) //@@ 페이지구조체들의 크기가 유효하다면 
 				printk(KERN_DEBUG
-				       "  %s zone: %lu pages used for memmap\n",
-				       zone_names[j], memmap_pages);
+						"  %s zone: %lu pages used for memmap\n",
+						zone_names[j], memmap_pages);
 		} else
 			printk(KERN_WARNING
-				"  %s zone: %lu pages exceeds freesize %lu\n",
-				zone_names[j], memmap_pages, freesize);
+					"  %s zone: %lu pages exceeds freesize %lu\n",
+					zone_names[j], memmap_pages, freesize);
 
-		/* Account for reserved pages */ //@@ 우리는 DMA ZONE 을 사용하지 않아서 dma_reserve 값이 0일 것이다.
+		/* Account for reserved pages */
+		//@@ 우리는 DMA ZONE 을 사용하지 않아서 dma_reserve 값이 0일 것이다.
 		if (j == 0 && freesize > dma_reserve) {
 			freesize -= dma_reserve;
 			printk(KERN_DEBUG "  %s zone: %lu pages reserved\n",
@@ -4743,7 +4744,7 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 #ifdef CONFIG_NUMA //@@ not use
 		zone->node = nid;
 		zone->min_unmapped_pages = (freesize*sysctl_min_unmapped_ratio)
-						/ 100; //@@ min_unmapped_ratio: Documentation/sysctl/vm.txt 412 line.
+			/ 100; //@@ min_unmapped_ratio: Documentation/sysctl/vm.txt 412 line.
 		zone->min_slab_pages = (freesize * sysctl_min_slab_ratio) / 100; //@@ min_slab_ratio : Documentation/sysctl/vm.txt 412 line.
 #endif
 		zone->name = zone_names[j];
@@ -4759,12 +4760,12 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 
 		set_pageblock_order();  //@@ 빈함수. 우리는 define값으로 설정이 되어 있다. include/linux/pageblock-flags.h pageblock_order: 10 
 		setup_usemap(pgdat, zone, zone_start_pfn, size); //@@ CONFIG_SPARSEMEM define. 빈함수. [2014.01.18][18:00-22:00][END]
-        //@@ [2014.01.25] normal start
-        //@@ zone의 wait_table과 free_list를 할당하고 초기화
+		//@@ [2014.01.25] normal start
+		//@@ zone의 wait_table과 free_list를 할당하고 초기화
 		ret = init_currently_empty_zone(zone, zone_start_pfn,
-						size, MEMMAP_EARLY);
+				size, MEMMAP_EARLY);
 		BUG_ON(ret);
-        //@@ page에다 zone, nid, page_count, mapcount 등을 설정
+		//@@ page에다 zone, nid, page_count, mapcount 등을 설정
 		memmap_init(size, nid, j, zone_start_pfn);
 		zone_start_pfn += size;
 	}
@@ -4826,23 +4827,23 @@ void __paginginit free_area_init_node(int nid, unsigned long *zones_size,
 
 	//@@ [2014.01.11] [ 18:00 - 22:00 ] [START] //@@ 2014-01-11 0. start
 	pgdat->node_id = nid;	
-	pgdat->node_start_pfn = node_start_pfn; //min
+	pgdat->node_start_pfn = node_start_pfn; //@@ min
 	init_zone_allows_reclaim(nid); //@@ empty function , NUMA가 아닌 경우에.
 #ifdef CONFIG_HAVE_MEMBLOCK_NODE_MAP
 	get_pfn_range_for_nid(nid, &start_pfn, &end_pfn);
 #endif
 	calculate_node_totalpages(pgdat, start_pfn, end_pfn,
-				  zones_size, zholes_size); //@@ 2014-01-11 2.  TODO: 분석은 나중에.
+			zones_size, zholes_size); //@@ 2014-01-11 2.  TODO: 분석은 나중에.
 
 	alloc_node_mem_map(pgdat);  //@@ pgdat 메모리(가상주소) 할당. [2014.01.11] [18:00 - 22:00] [END]
 #ifdef CONFIG_FLAT_NODE_MEM_MAP
 	printk(KERN_DEBUG "free_area_init_node: node %d, pgdat %08lx, node_mem_map %08lx\n",
-		nid, (unsigned long)pgdat,
-		(unsigned long)pgdat->node_mem_map);
+			nid, (unsigned long)pgdat,
+			(unsigned long)pgdat->node_mem_map);
 #endif
 
 	free_area_init_core(pgdat, start_pfn, end_pfn,
-			    zones_size, zholes_size); //@@ [2014.01.18][18:00 - 22:00] [START]
+			zones_size, zholes_size); //@@ [2014.01.18][18:00 - 22:00] [START]
 }
 
 #ifdef CONFIG_HAVE_MEMBLOCK_NODE_MAP
@@ -5374,14 +5375,14 @@ static int page_alloc_cpu_notify(struct notifier_block *self,
 
 	if (action == CPU_DEAD || action == CPU_DEAD_FROZEN) {
 		lru_add_drain_cpu(cpu); //@@ pagevec (lru lists 를 옮겨줌
-    //@@ [2014.04.05] start
-    //@@ &per_cpu(lru_add_pvec) : pagecache의 inactive list 인가 아닌가?
-    //@@ &per_cpu(lru_*) : Pagecache 영역을 per_cpu 관점에서 가리킴
-    //@@ zone->lruvec*: Pagecache 영역을 zone 의 관점에서 가리킴
+		//@@ [2014.04.05] start
+		//@@ &per_cpu(lru_add_pvec) : pagecache의 inactive list 인가 아닌가?
+		//@@ &per_cpu(lru_*) : Pagecache 영역을 per_cpu 관점에서 가리킴
+		//@@ zone->lruvec*: Pagecache 영역을 zone 의 관점에서 가리킴
 		drain_pages(cpu); //@@ percpu 로 관리되는 pageset 을 drain 해줌
 
-    //@@ lru_add_drain_all: percpu의 Pagecache영역 drain(free, rotate, move_tail)
-    //@@ drain_pages: 일반 Pages영역 drain
+		//@@ lru_add_drain_all: percpu의 Pagecache영역 drain(free, rotate, move_tail)
+		//@@ drain_pages: 일반 Pages영역 drain
 
 		/*
 		 * Spill the event counters of the dead processor
@@ -5913,7 +5914,7 @@ unsigned long get_pageblock_flags_group(struct page *page,
  * @flags: The flags to set
  */
 void set_pageblock_flags_group(struct page *page, unsigned long flags,
-					int start_bitidx, int end_bitidx)
+		int start_bitidx, int end_bitidx)
 {
 	struct zone *zone;
 	unsigned long *bitmap;

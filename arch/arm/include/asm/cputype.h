@@ -190,7 +190,7 @@ static inline unsigned int __attribute_const__ xscale_cpu_arch_version(void)
 
 static inline unsigned int __attribute_const__ read_cpuid_cachetype(void)
 {
-    //CTR 레지스터 정보 반환
+	//@@ CTR 레지스터 정보 반환
 	return read_cpuid(CPUID_CACHETYPE); //@@ CPUID_CACHETYPE 1
 }
 
@@ -200,8 +200,8 @@ static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)
 }
 
 static inline unsigned int __attribute_const__ read_cpuid_mpidr(void)
-// __attribute_const__ 는 __attribute__((__const__)) 임. 
-// __const 같은 경우 함수 내부에서 절대로 전역 변수에 접근할 수 없고, 포인터 인수를 받을 수도 없도록 한다.
+//@@ __attribute_const__ 는 __attribute__((__const__)) 임. 
+//@@ __const 같은 경우 함수 내부에서 절대로 전역 변수에 접근할 수 없고, 포인터 인수를 받을 수도 없도록 한다. (함수의 상수화)
 {
 	return read_cpuid(CPUID_MPIDR);	//@@ CPUID_MPIDR = 5
 }

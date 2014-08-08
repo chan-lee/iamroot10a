@@ -25,9 +25,9 @@
 
 #ifndef CONFIG_NEED_MULTIPLE_NODES
 
-// UMA의 경우 한개의 pg_data_t를 contig_page_data로 사용한다. NUMA일 경우는 잘 모르겠다.
+//@@ UMA의 경우 한개의 pg_data_t를 contig_page_data로 사용한다. NUMA일 경우는 잘 모르겠다.
 struct pglist_data __refdata contig_page_data = {
-	.bdata = &bootmem_node_data[0] 	/* //@@ arm 인 경우에 node가 한개 */
+	.bdata = &bootmem_node_data[0] 	//@@ arm 인 경우에 node가 한개
 };
 EXPORT_SYMBOL(contig_page_data);
 #endif
@@ -69,13 +69,13 @@ static unsigned long __init bootmap_bytes(unsigned long pages)
  */
 unsigned long __init bootmem_bootmap_pages(unsigned long pages)	//@@ pages: 사용가능한 페이지프레임의 개수
 {
-    //페이지를 비트맵으로 표현하는데 필요한 바이트 수
-    	unsigned long bytes = bootmap_bytes(pages);
-    /* #define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE) */
-    /* #define ALIGN(x, a)		__ALIGN_KERNEL((x), (a)) */
-    /* #define __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1) */
-    /* #define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask)) */
-    //@@((((addr)) + ( (typeof((addr)))( ( PAGE_SIZE)) - 1)) & ~( (typeof((addr)))( ( PAGE_SIZE)) - 1))
+	//@@ 페이지를 비트맵으로 표현하는데 필요한 바이트 수
+	unsigned long bytes = bootmap_bytes(pages);
+	/* #define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE) */
+	/* #define ALIGN(x, a)		__ALIGN_KERNEL((x), (a)) */
+	/* #define __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1) */
+	/* #define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask)) */
+	//@@((((addr)) + ( (typeof((addr)))( ( PAGE_SIZE)) - 1)) & ~( (typeof((addr)))( ( PAGE_SIZE)) - 1))
 	//bytes 를 할당하는데 필요한 페이지 수 반환
 	return PAGE_ALIGN(bytes) >> PAGE_SHIFT;
 }
@@ -544,7 +544,7 @@ static void * __init alloc_bootmem_bdata(struct bootmem_data *bdata,
 		 * Handle the valid case of sidx being zero and still
 		 * catch the fallback below.
 		 */
-		fallback = sidx + 1;   //@@ fallback : hint_idx를 사용하기 위해 start을 fallback에 저장. 이후 할당할수 없으면 fallback으로 옮.
+		fallback = sidx + 1; //@@ fallback : hint_idx를 사용하기 위해 start을 fallback에 저장. 이후 할당할수 없으면 fallback으로 옮.
 		sidx = align_idx(bdata, bdata->hint_idx, step);
 	}
 

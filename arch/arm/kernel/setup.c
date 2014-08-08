@@ -310,19 +310,19 @@ static void __init cacheid_init(void)
 		cacheid = 0;
 	} else if (arch >= CPU_ARCH_ARMv6) { 
 		unsigned int cachetype = read_cpuid_cachetype();
-		if ((cachetype & (7 << 29)) == 4 << 29) {   //@@ check ARMv7 format.
+		if ((cachetype & (7 << 29)) == 4 << 29) { //@@ check ARMv7 format.
 			/* ARMv7 register format */
 			arch = CPU_ARCH_ARMv7;
-			//CACHEID_VIPT_NONALIASING = 2
+			//@@ CACHEID_VIPT_NONALIASING = 2
 			cacheid = CACHEID_VIPT_NONALIASING; //@@ VIPT로 설정, CACHEID_VIPT_NONALIASING  (1 << 1)
-			//Level 1 instruction cache policy.
-			switch (cachetype & (3 << 14)) {		//@@ for the L1 instruction cache, TODO: 어떤 값을 가지고 있는지...
-			case (1 << 14):
-				cacheid |= CACHEID_ASID_TAGGED; 
-				break;
-			case (3 << 14):
-				cacheid |= CACHEID_PIPT; //@@ Physically-indexed,	physically-tagged (PIPT) caches
-				break;
+			//@@ Level 1 instruction cache policy.
+			switch (cachetype & (3 << 14)) { //@@ for the L1 instruction cache, TODO: 어떤 값을 가지고 있는지...
+				case (1 << 14):
+					cacheid |= CACHEID_ASID_TAGGED; 
+					break;
+				case (3 << 14):
+					cacheid |= CACHEID_PIPT; //@@ Physically-indexed, physically-tagged (PIPT) caches
+					break;
 			}
 		} else {
 			arch = CPU_ARCH_ARMv6;
@@ -334,19 +334,19 @@ static void __init cacheid_init(void)
 		if (cpu_has_aliasing_icache(arch))
 			cacheid |= CACHEID_VIPT_I_ALIASING;
 	} else {
-	    //CACHEID_VIVT = 1
-		cacheid = CACHEID_VIVT;  //@@ CACHEID_VIVT      (1 << 0)
+		//@@ CACHEID_VIVT = 1
+		cacheid = CACHEID_VIVT; //@@ CACHEID_VIVT (1 << 0)
 	}
 
 	printk("CPU: %s data cache, %s instruction cache\n",
-		cache_is_vivt() ? "VIVT" :
-		cache_is_vipt_aliasing() ? "VIPT aliasing" :
-		cache_is_vipt_nonaliasing() ? "PIPT / VIPT nonaliasing" : "unknown",
-		cache_is_vivt() ? "VIVT" :
-		icache_is_vivt_asid_tagged() ? "VIVT ASID tagged" :
-		icache_is_vipt_aliasing() ? "VIPT aliasing" :
-		icache_is_pipt() ? "PIPT" :
-		cache_is_vipt_nonaliasing() ? "VIPT nonaliasing" : "unknown");
+			cache_is_vivt() ? "VIVT" :
+			cache_is_vipt_aliasing() ? "VIPT aliasing" :
+			cache_is_vipt_nonaliasing() ? "PIPT / VIPT nonaliasing" : "unknown",
+			cache_is_vivt() ? "VIVT" :
+			icache_is_vivt_asid_tagged() ? "VIVT ASID tagged" :
+			icache_is_vipt_aliasing() ? "VIPT aliasing" :
+			icache_is_pipt() ? "PIPT" :
+			cache_is_vipt_nonaliasing() ? "VIPT nonaliasing" : "unknown");
 }
 
 /*
@@ -380,6 +380,7 @@ static void __init cpuid_init_hwcaps(void)
 
 	divide_instrs = (read_cpuid_ext(CPUID_EXT_ISAR0) & 0x0f000000) >> 24; //@@ CPUID_EXT_ISAR0["c2, 0"]
 
+	//@@ divide instruction 을 지원하는지 검사
 	switch (divide_instrs) {
 	case 2: //@@ Adds SDIV and UDIV in the ARM instruction set. (Thumb 포함)
 		elf_hwcap |= HWCAP_IDIVA;
@@ -422,10 +423,10 @@ static void __init feat_v6_fixup(void)
 void notrace cpu_init(void)
 {
 #ifndef CONFIG_CPU_V7M
-	unsigned int cpu = smp_processor_id();	//@@ 현재 cpu id는 0으로 보고있음.
+	unsigned int cpu = smp_processor_id(); //@@ 현재 cpu id는 0으로 보고있음.
 	struct stack *stk = &stacks[cpu];
 
-	if (cpu >= NR_CPUS) { 			//@@ NR_CPUS 2
+	if (cpu >= NR_CPUS) { //@@ NR_CPUS 2
 		printk(KERN_CRIT "CPU%u: bad primary CPU number\n", cpu);
 		BUG();
 	}
@@ -440,13 +441,13 @@ void notrace cpu_init(void)
 	//@@ [2014.01.11] [15:00-18:00] [END]  per_cpu_offset 에 대해서 한번 더 확인 하고 갈것(아래링크).
 	//@@ http://blog.naver.com/PostView.nhn?blogId=nix102guri&logNo=90098904482
 
-	cpu_proc_init();  //@@ cpu_v7_proc_init, arch/arm/mm/proc-v7.S, p.193
+	cpu_proc_init(); //@@ cpu_v7_proc_init, arch/arm/mm/proc-v7.S, p.193
 
 	/*
 	 * Define the placement constraint for the inline asm directive below.
 	 * In Thumb-2, msr with an immediate value is not allowed.
 	 */
-#ifdef CONFIG_THUMB2_KERNEL  //@@ not define
+#ifdef CONFIG_THUMB2_KERNEL //@@ not define
 #define PLC	"r"
 #else
 #define PLC	"I"
@@ -484,7 +485,7 @@ u32 __cpu_logical_map[NR_CPUS] = { [0 ... NR_CPUS-1] = MPIDR_INVALID };
 void __init smp_setup_processor_id(void)
 {
 	int i;
-	u32 mpidr = is_smp() ? read_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0;
+	u32 mpidr = is_smp() ? read_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0; //@@ is_smp() 는 true (1)
 	u32 cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0); //@@ MPIDR 의 affinity level 0 에 대한 값만 쓰겠다.
 	//@@ #define MPIDR_AFFINITY_LEVEL(mpidr, level) \
 	//@@ 	((mpidr >> (MPIDR_LEVEL_BITS * level)) & MPIDR_LEVEL_MASK)		
@@ -573,6 +574,10 @@ static void __init smp_build_mpidr_hash(void)
 
 static void __init setup_processor(void)
 {
+	//@@ processor information 을 위한 data structure
+	//@@ multi CPU 를 사용할 때 사용되지만
+	//@@ single CPU 를 사용할 때도 존재는 하고 있음.
+	//@@ arch/arm/mm/proc-*.S 와 arch/arm/kernel/head.S 에서 어셈블리를 통해서 정의되는 것임.
 	struct proc_info_list *list;
 
 	/*
@@ -580,7 +585,7 @@ static void __init setup_processor(void)
 	 * types.  The linker builds this table for us from the
 	 * entries in arch/arm/mm/proc-*.S
 	 */
-	list = lookup_processor_type(read_cpuid_id());
+	list = lookup_processor_type(read_cpuid_id());  //@@ arch/arm/kernel/head-common.S 에 정의
 
 	if (!list) {
 		printk("CPU configuration botched (ID %08x), unable "
@@ -593,6 +598,7 @@ static void __init setup_processor(void)
 	__cpu_architecture = __get_cpu_architecture();
 
 	//@@ 일단 4개의 설정 모두 사용한다고 가정
+	//@@ processor tlb, use, cache 값 등을 복사
 #ifdef MULTI_CPU
 	processor = *list->proc;
 #endif
@@ -617,7 +623,7 @@ static void __init setup_processor(void)
 	snprintf(elf_platform, ELF_PLATFORM_SIZE, "%s%c",
 		 list->elf_name, ENDIANNESS);
 	elf_hwcap = list->elf_hwcap;
-	//@@ elf_hwpcap : 하드웨어 지원 사항을 나타내는 flag
+	//@@ elf_hwpcap : 하드웨어 지원 사항 (hardware capability) 을 나타내는 flag
 	cpuid_init_hwcaps();
 	//@@ [2014.01.04] [END] [15:00-18:00]
 
@@ -625,10 +631,10 @@ static void __init setup_processor(void)
 	elf_hwcap &= ~(HWCAP_THUMB | HWCAP_IDIVT);
 #endif
 	//@@ [2014.01.11] [START] [15:00-18:00]
-	feat_v6_fixup(); 	//@@ v6 이후에서 TLS 기능 설정
+	feat_v6_fixup(); //@@ v6 이후에서 TLS 기능 설정
 
-	cacheid_init();		//@@ VIPT nonaliasing,
-	cpu_init(); 		//@@ [2014.01.18] [ 15:00-18:00] [start]
+	cacheid_init(); //@@ VIPT nonaliasing,
+	cpu_init(); //@@ [2014.01.18] [ 15:00-18:00] [start]
 }
 
 void __init dump_machine_table(void)
@@ -900,9 +906,9 @@ void __init setup_arch(char **cmdline_p)
 	machine_desc = mdesc;
 	machine_name = mdesc->name;
 
-	setup_dma_zone(mdesc); 			//@@ 우리는 실행 안함
+	setup_dma_zone(mdesc); //@@ 우리는 실행 안함
 
-	if (mdesc->reboot_mode != REBOOT_HARD) 	//@@ hard reboot 아닌 경우에는 reboot 전에 값을 설정했을 것이다.
+	if (mdesc->reboot_mode != REBOOT_HARD) //@@ hard reboot 아닌 경우에는 reboot 전에 값을 설정했을 것이다.
 		reboot_mode = mdesc->reboot_mode;
 
 	init_mm.start_code = (unsigned long) _text;
@@ -916,7 +922,7 @@ void __init setup_arch(char **cmdline_p)
 	*cmdline_p = cmd_line;
 
 	//@@ "earlycon=" 옵션과 "console=" 옵션을 파싱한다.
-	parse_early_param();
+	parse_early_param(); //@@ early 관련 파라미터 처리
 
 	//@@ memory bank 에서 시작 address로 정렬하는 함수
 	//@@ meminfo 구조체 변수는 early_init_dt_add_memory_arch()에서 초기화 하였다.
@@ -986,7 +992,7 @@ void __init setup_arch(char **cmdline_p)
 #endif
 #endif
 
-	// @@ 없는듯하다.
+	//@@ 없는듯하다.
 	if (mdesc->init_early)
 		mdesc->init_early();
 }

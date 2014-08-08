@@ -260,13 +260,13 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys) //@@ [2013.
 
 	model = of_get_flat_dt_prop(dt_root, "model", NULL);
 	if (!model)
-		// compatible 속성을 찾아 model 에 저장
+		//@@ compatible 속성을 찾아 model 에 저장
 		model = of_get_flat_dt_prop(dt_root, "compatible", NULL);
 	if (!model)
 		model = "<unknown>";
 	pr_info("Machine: %s, model: %s\n", mdesc_best->name, model);
 
-	// root node 에서 chosen, (size,address), memory 속성을 찾음
+	//@@ root node 에서 chosen, (size,address), memory 속성을 찾음
 	/* Retrieve various information from the /chosen node */
 	of_scan_flat_dt(early_init_dt_scan_chosen, boot_command_line);
 	/* Initialize {size,address}-cells info */

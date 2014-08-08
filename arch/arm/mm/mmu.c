@@ -399,7 +399,7 @@ static void __init build_mem_type_table(void)
 	/*
 	 * Mark the device areas according to the CPU/architecture.
 	 */
-    //@@ CR_XP CR register: Extended Page Table
+	//@@ CR_XP CR register: Extended Page Table
 	if (cpu_is_xsc3() || (cpu_arch >= CPU_ARCH_ARMv6 && (cr & CR_XP))) {
 		if (!cpu_is_xsc3()) {
 			/*
@@ -958,8 +958,8 @@ void __init debug_ll_io_init(void)
 }
 #endif
 
-// @@ VMALLOC_END = 0xFF000000
-// @@ VMALOC_OFFSET = 8 * 1024 * 1024
+//@@ VMALLOC_END = 0xFF000000
+//@@ VMALOC_OFFSET = 8 * 1024 * 1024
 static void * __initdata vmalloc_min =
 	(void *)(VMALLOC_END - (240 << 20) - VMALLOC_OFFSET);
 
@@ -1000,9 +1000,9 @@ void __init sanity_check_meminfo(void)
 {
 	phys_addr_t memblock_limit = 0;
 	int i, j, highmem = 0;
-    // @@ vmalloc_min = 0xEF800000(760MB) HIGHMEN의 시작 위치
-    // @@ X86의 경우 896MB이다.
-    // http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&page=3&document_srl=185255
+	//@@ vmalloc_min = 0xEF800000(760MB) HIGHMEN의 시작 위치
+	//@@ X86의 경우 896MB이다.
+	//@@ http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&page=3&document_srl=185255
 	phys_addr_t vmalloc_limit = __pa(vmalloc_min - 1) + 1;
 
 	for (i = 0, j = 0; i < meminfo.nr_banks; i++) {
@@ -1024,15 +1024,15 @@ void __init sanity_check_meminfo(void)
 		 * Split those memory banks which are partially overlapping
 		 * the vmalloc area greatly simplifying things later.
 		 */
-        // @@ highmem 변수는 bank->start만 검사할뿐, 겹친 것은 알아내지 못하므로
-        // @@ 아래와 같이 연산
-		if (!highmem && bank->size > size_limit) { // 메모리 ZONE_HIMEM에 겹치는 메모리 뱅크를 재배치
-			if (meminfo.nr_banks >= NR_BANKS) { // @@ 나눌 공간이 모자르다. 
+		//@@ highmem 변수는 bank->start만 검사할뿐, 겹친 것은 알아내지 못하므로
+		//@@ 아래와 같이 연산
+		if (!highmem && bank->size > size_limit) { //@@ 메모리 ZONE_HIMEM에 겹치는 메모리 뱅크를 재배치
+			if (meminfo.nr_banks >= NR_BANKS) { //@@ 나눌 공간이 모자르다. 
 				printk(KERN_CRIT "NR_BANKS too low, "
-						 "ignoring high memory\n");
+						"ignoring high memory\n");
 			} else {
 				memmove(bank + 1, bank,
-					(meminfo.nr_banks - i) * sizeof(*bank)); // overlap 되면 overlap된 bank와 그 이후 bank를 복사하여  이동한다.
+						(meminfo.nr_banks - i) * sizeof(*bank)); //@@ overlap 되면 overlap된 bank와 그 이후 bank를 복사하여  이동한다.
 				meminfo.nr_banks++;
 				i++;
 				bank[1].size -= size_limit;
@@ -1048,9 +1048,9 @@ void __init sanity_check_meminfo(void)
 		 */
 		if (highmem) {
 			printk(KERN_NOTICE "Ignoring RAM at %.8llx-%.8llx "
-			       "(!CONFIG_HIGHMEM).\n",
-			       (unsigned long long)bank->start,
-			       (unsigned long long)bank->start + bank->size - 1);
+					"(!CONFIG_HIGHMEM).\n",
+					(unsigned long long)bank->start,
+					(unsigned long long)bank->start + bank->size - 1);
 			continue;
 		}
 
@@ -1060,14 +1060,14 @@ void __init sanity_check_meminfo(void)
 		 */
 		if (bank->size > size_limit) {
 			printk(KERN_NOTICE "Truncating RAM at %.8llx-%.8llx "
-			       "to -%.8llx (vmalloc region overlap).\n",
-			       (unsigned long long)bank->start,
-			       (unsigned long long)bank->start + bank->size - 1,
-			       (unsigned long long)bank->start + size_limit - 1);
+					"to -%.8llx (vmalloc region overlap).\n",
+					(unsigned long long)bank->start,
+					(unsigned long long)bank->start + bank->size - 1,
+					(unsigned long long)bank->start + size_limit - 1);
 			bank->size = size_limit;
 		}
 #endif
-		if (!bank->highmem) { // 뱅크의 마지막 주소를 지정한 후, bank->start와 bank->end를 1MB 정렬
+		if (!bank->highmem) { //@@ 뱅크의 마지막 주소를 지정한 후, bank->start와 bank->end를 1MB 정렬
 			phys_addr_t bank_end = bank->start + bank->size;
 
 			if (bank_end > arm_lowmem_limit)
@@ -1109,7 +1109,7 @@ void __init sanity_check_meminfo(void)
 		}
 		if (reason) {
 			printk(KERN_CRIT "HIGHMEM is not supported %s, ignoring high memory\n",
-				reason);
+					reason);
 			while (j > 0 && meminfo.bank[j - 1].highmem)
 				j--;
 		}
@@ -1137,15 +1137,15 @@ static inline void prepare_page_table(void)
 	unsigned long addr;
 	phys_addr_t end;
 
-    // virtual address 구조는 다음을 참조
-    // http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=189745
+	//@@ virtual address 구조는 다음을 참조
+	//@@ http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=189745
 	/*
 	 * Clear out all the mappings below the kernel image.
 	 */
-	//#define MODULES_VADDR (PAGE_OFFSET - SZ_8M) kernel 아래에 module공간의 주소
-	//리눅스 커널에서는 페이지 디렉토리 엔트리를 2메가 단위로 관리
-	//#define PMD_SIZE		(1UL << 21) => 2M
-	//실제 페이지 엔트리 크기는 1메가 이므로 , 2개의 배열 처럼 관리
+	//@@ #define MODULES_VADDR (PAGE_OFFSET - SZ_8M) kernel 아래에 module공간의 주소
+	//@@ 리눅스 커널에서는 페이지 디렉토리 엔트리를 2메가 단위로 관리
+	//@@ #define PMD_SIZE		(1UL << 21) => 2M
+	//@@ 실제 페이지 엔트리 크기는 1메가 이므로 , 2개의 배열 처럼 관리
 	for (addr = 0; addr < MODULES_VADDR; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
 
@@ -1168,9 +1168,9 @@ static inline void prepare_page_table(void)
 	 * memory bank, up to the vmalloc region.
 	 */
 	for (addr = __phys_to_virt(end);
-	     addr < VMALLOC_START; addr += PMD_SIZE)
+			addr < VMALLOC_START; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
-	// 2013.10.19 함수 분석
+	//@@ 2013.10.19 함수 분석
 }
 
 #ifdef CONFIG_ARM_LPAE
@@ -1208,7 +1208,7 @@ void __init arm_mm_memblock_reserve(void)
  * called function.  This means you can't use any function or debugging
  * method which may touch any device, otherwise the kernel _will_ crash.
  */
-// @@ p.211 참조
+//@@ p.211 참조
 static void __init devicemaps_init(struct machine_desc *mdesc)
 {
 	struct map_desc map;
@@ -1287,7 +1287,7 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	/*
 	 * Ask the machine support to map in the statically mapped devices.
 	 */
-	//@@ToDo 디바이스트리에서의 설정과 무엇이 다른가???
+	//@@ ToDo 디바이스트리에서의 설정과 무엇이 다른가???
 	if (mdesc->map_io)
 		mdesc->map_io();
 	else
@@ -1297,9 +1297,9 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 
 	/* Reserve fixed i/o space in VMALLOC region */
 	pci_reserve_io(); // @@ PCI 영역을 static_vmlist에 추가
-	// vmalloc에서 중요한 구조체는 struct vm_struct 와 struct static_vm가
-    // 있는데, staic_vm은 staic_vmlist의 node고 그것들이 각 vm_struct를
-    // list로 들고 있다.
+	//@@ vmalloc에서 중요한 구조체는 struct vm_struct 와 struct static_vm가
+	//@@ 있는데, staic_vm은 staic_vmlist의 node고 그것들이 각 vm_struct를
+	//@@ list로 들고 있다.
 
 	/*
 	 * Finally flush the caches and tlb to ensure that we're in a
@@ -1319,7 +1319,7 @@ static void __init kmap_init(void)
 #endif
 }
 
-// @@ p.211 참조
+//@@ p.211 참조
 static void __init map_lowmem(void)
 {
 	struct memblock_region *reg;
@@ -1342,8 +1342,8 @@ static void __init map_lowmem(void)
 
 		create_mapping(&map);
 	}
-	//물리 주소로 저장 되어 있던 주소를 가상주소로 변환
-	//2013.10.19 
+	//@@ 물리 주소로 저장 되어 있던 주소를 가상주소로 변환
+	//@@ 2013.10.19 
 }
 
 /*
@@ -1354,20 +1354,20 @@ void __init paging_init(struct machine_desc *mdesc)
 {
 	void *zero_page;
 
-	build_mem_type_table(); //@@ 페이지 타입 설정.ToDo 타입별 의미는 파악 못함
-    //@@ 2014.2.22 review end
-    // @@ 2014.03.01 review start
-    // @@ PMD(1차 page table entries) 초기화
+	build_mem_type_table(); //@@ 페이지 타입 설정 (architecture version 에 따른 mem_type 설정). ToDo 타입별 의미는 파악 못함
+	//@@ 2014.2.22 review end
+	//@@ 2014.03.01 review start
+	//@@ PMD(1차 page table entries) 초기화
 	prepare_page_table();
-    // @@ 2014.03.01 review end
-    // @@ 2014.03.08 review start
-	map_lowmem(); // @@ lowmem 영역에 대해 pgd, pud, pmd, pte를 설정한다.
-	dma_contiguous_remap(); // @@ dma 영역에 대해 다시 mapping
-	devicemaps_init(mdesc); // @@ 각 장치에 대해 mapping, gap을 메꾸고, pci를 static_vmlist에 등록
-	kmap_init(); // @@ p.215 TODO  왜 하나의 PMD가 필요한지 잘 모르겠다.
-    // @@ 2014.03.08 review end
-	//cortex a15는 tcm지원 하지 않음
-	tcm_init(); // @@ tightly coupled memory
+	//@@ 2014.03.01 review end
+	//@@ 2014.03.08 review start
+	map_lowmem(); //@@ lowmem 영역에 대해 pgd, pud, pmd, pte를 설정한다.
+	dma_contiguous_remap(); //@@ dma 영역에 대해 다시 mapping
+	devicemaps_init(mdesc); //@@ 각 장치에 대해 mapping, gap을 메꾸고, pci를 static_vmlist에 등록
+	kmap_init(); //@@ p.215 TODO  왜 하나의 PMD가 필요한지 잘 모르겠다.
+	//@@ 2014.03.08 review end
+	//@@ cortex a15는 tcm지원 하지 않음
+	tcm_init(); //@@ tightly coupled memory
 
 	top_pmd = pmd_off_k(0xffff0000);
 
@@ -1375,12 +1375,12 @@ void __init paging_init(struct machine_desc *mdesc)
 	zero_page = early_alloc(PAGE_SIZE);
 
 	bootmem_init(); //@@ [2013.11.23] bootmem_init() 부터 다시 시작
-    //@@ [2014.01.25] normal end
+	//@@ [2014.01.25] normal end
 
-    //@@ [2014.01.15] start
-    //@@ p.216 참조. 읽기만을 위해서 만든 page.
+	//@@ [2014.01.15] start
+	//@@ p.216 참조. 읽기만을 위해서 만든 page.
 	empty_zero_page = virt_to_page(zero_page);
-    //@@ TODO _flush_dcache_page를 왜 호출하는지와 내부를 이해하기가 힘들다.
-    //@@ p.221 참조
+	//@@ TODO _flush_dcache_page를 왜 호출하는지와 내부를 이해하기가 힘들다.
+	//@@ p.221 참조
 	__flush_dcache_page(NULL, empty_zero_page);
 }
