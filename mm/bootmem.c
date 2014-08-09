@@ -283,6 +283,9 @@ unsigned long __init free_all_bootmem(void)
 	unsigned long total_pages = 0;
 	bootmem_data_t *bdata;
 
+	//@@ 각 NUMA 노드 (pglist_data) 마다,
+	//@@ 그리고 노드 안에 각 zone 마다
+	//@@ managed_pages 를 0 으로 해줌.
 	reset_all_zones_managed_pages();
 
 	list_for_each_entry(bdata, &bdata_list, list)

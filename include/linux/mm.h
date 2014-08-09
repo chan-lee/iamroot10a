@@ -255,7 +255,7 @@ static inline void set_freepage_migratetype(struct page *page, int migratetype)
 /* It's valid only if the page is free path or free_list */
 static inline int get_freepage_migratetype(struct page *page)
 {
-	return page->index;
+	return page->index; //@@ 페이지를 free 할 때 migrate type 을 page->index 에 저장해 놓는다.
 }
 
 /*
@@ -830,7 +830,7 @@ struct address_space *page_file_mapping(struct page *page)
 
 static inline int PageAnon(struct page *page)
 {
-	return ((unsigned long)page->mapping & PAGE_MAPPING_ANON) != 0;
+	return ((unsigned long)page->mapping & PAGE_MAPPING_ANON) != 0; //@@ file 이나 device 매핑할 경우, 하위 비트가 0 으로 세팅되어서 anonymous page 가 아니고 page caches 로 됨.
 }
 
 /*

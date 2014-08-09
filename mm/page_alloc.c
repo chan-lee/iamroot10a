@@ -647,8 +647,8 @@ static void free_pcppages_bulk(struct zone *zone, int count,
 	int to_free = count;
 
 	spin_lock(&zone->lock);
-	zone->all_unreclaimable = 0;
-	zone->pages_scanned = 0;
+	zone->all_unreclaimable = 0; //@@ "all pages pinned" 를 clear 함.
+	zone->pages_scanned = 0; //@@ pages_scanned 를 clear 하면 "all pages are pinned" 감지를 하지 않는다
 
 	while (to_free) {
 		struct page *page;
@@ -669,18 +669,19 @@ static void free_pcppages_bulk(struct zone *zone, int count,
 		} while (list_empty(list)); //@@ per_cpu_pages의 lists 중에서 free 할 페이지가 있는 lists 를 찾아낸다
 
 		/* This is the only non-empty list. Free them all. */
-		if (batch_free == MIGRATE_PCPTYPES) //@@ MIGRATE_PCPTYPES 까지 오면 모두 다 free 시킨다
+		if (batch_free == MIGRATE_PCPTYPES) //@@ PCP 리스트 중에 하나에만 원소들이 있을 경우, 그 리스트에서 나머지 to_free 개수 만큼 free 시킨다.
 			batch_free = to_free;
 
 		//@@ free시킬 lists에서, page 하나씩 free 시킴
 		do {
 			int mt;	/* migratetype of the to-be-freed page */
 
+			//@@ percpu list 의 뒤에서 (cold page) 부터 free
 			page = list_entry(list->prev, struct page, lru);
 			/* must delete as __free_one_page list manipulates */
 			list_del(&page->lru); //@@ [2014.04.05] [END]
-			mt = get_freepage_migratetype(page);
 			//@@ page의 MIGRATE_TYPE을 받아옴
+			mt = get_freepage_migratetype(page);
 			/* MIGRATE_MOVABLE list may include MIGRATE_RESERVEs */
 			__free_one_page(page, zone, 0, mt);
 			trace_mm_page_pcpu_drain(page, 0, mt);
@@ -712,14 +713,14 @@ static bool free_pages_prepare(struct page *page, unsigned int order)
 	int i;
 	int bad = 0;
 
-	trace_mm_page_free(page, order);
-	kmemcheck_free_shadow(page, order);
+	trace_mm_page_free(page, order); //@@ 디버깅 할때
+	kmemcheck_free_shadow(page, order); //@@ kmemcheck (페이지의 안정성을 위해 추가적인 정보를 두어 검사함, 리눅스 패치) 할 경우에 page 의 shadow 모두 프리함
 
 	if (PageAnon(page))
 		page->mapping = NULL;
 	for (i = 0; i < (1 << order); i++)
 		bad += free_pages_check(page + i);
-	if (bad)
+	if (bad) //@@ buddy 중에 bad page 가 하나라도 있으면
 		return false;
 
 	if (!PageHighMem(page)) {
@@ -727,8 +728,8 @@ static bool free_pages_prepare(struct page *page, unsigned int order)
 		debug_check_no_obj_freed(page_address(page),
 					   PAGE_SIZE << order);
 	}
-	arch_free_page(page, order);
-	kernel_map_pages(page, 1 << order, 0);
+	arch_free_page(page, order); //@@ hardware dependent
+	kernel_map_pages(page, 1 << order, 0); //@@ 3번째 인자가 enable, unenable 옵션으로, 0 인 경우 PAGE_POISON 으로 세팅
 
 	return true;
 }
@@ -1318,20 +1319,20 @@ void mark_free_pages(struct zone *zone)
  * Free a 0-order page
  * cold == 1 ? free a cold page : free a hot page
  */
-void free_hot_cold_page(struct page *page, int cold) //@@ cold -> lru_tail, else -> lru_add
+void free_hot_cold_page(struct page *page, int cold) //@@ cold -> tail, else -> add (pcplist 의 head)
 {
 	struct zone *zone = page_zone(page);
 	struct per_cpu_pages *pcp;
 	unsigned long flags;
 	int migratetype;
 
-	if (!free_pages_prepare(page, 0))
+	if (!free_pages_prepare(page, 0)) //@@ free 가능한지 (페이지 및 페이지의 모든 버디) 검사
 		return;
 
 	migratetype = get_pageblock_migratetype(page);
-	set_freepage_migratetype(page, migratetype);
+	set_freepage_migratetype(page, migratetype); //@@ page->index 에 위에서 계산한 migrate_type 을 넣음
 	local_irq_save(flags);
-	__count_vm_event(PGFREE);
+	__count_vm_event(PGFREE); //@@ PER_CPU 에서 event counter 증가시킴
 
 	/*
 	 * We only track unmovable, reclaimable and movable on pcp lists.
@@ -1348,15 +1349,20 @@ void free_hot_cold_page(struct page *page, int cold) //@@ cold -> lru_tail, else
 		migratetype = MIGRATE_MOVABLE;
 	}
 
-	//@@ 실제로 free 하는 대신에 lru_add_tail 또는 lru_add 를 함
+	//@@ 실제로 free 하는 대신에 pcp->list[migratetype] 의 tail 이나 head 에 삽입
 	pcp = &this_cpu_ptr(zone->pageset)->pcp;
 	if (cold)
-		list_add_tail(&page->lru, &pcp->lists[migratetype]); //@@ list 에서 천천히 검색 (cold page)
+		//@@ list_add_tail(new, list); // 넣는 원소가 앞에, 대상이 뒤에 옴
+		//@@ list 에서 천천히 검색 (cold)
+		list_add_tail(&page->lru, &pcp->lists[migratetype]);
 	else
-		list_add(&page->lru, &pcp->lists[migratetype]); //@@ list 에서 빨리 검색되도록 (hot page)
+		//@@ list 에서 빨리 검색 (hot page)
+		list_add(&page->lru, &pcp->lists[migratetype]);
 	pcp->count++;
 	if (pcp->count >= pcp->high) { //@@ high water mark일 경우, free하여 coalescing함. p.114
 		unsigned long batch = ACCESS_ONCE(pcp->batch);
+		//@@ pcp->batch: chunk size for buddy add/remove
+		//@@ batch: free 할 페이지의 개수로 전달됨
 		free_pcppages_bulk(zone, batch, pcp);
 		pcp->count -= batch;
 	}
@@ -5860,9 +5866,9 @@ void *__init alloc_large_system_hash(const char *tablename,
 static inline unsigned long *get_pageblock_bitmap(struct zone *zone,
 							unsigned long pfn)
 {
-#ifdef CONFIG_SPARSEMEM
+#ifdef CONFIG_SPARSEMEM //@@ struct mem_section 의 pageblock_flag
 	return __pfn_to_section(pfn)->pageblock_flags;
-#else
+#else //@@ SPARSEMEM 이 아닌 경우 zone 에서 하나의 pageblock_flag 가짐
 	return zone->pageblock_flags;
 #endif /* CONFIG_SPARSEMEM */
 }
@@ -5896,14 +5902,15 @@ unsigned long get_pageblock_flags_group(struct page *page,
 
 	zone = page_zone(page);
 	pfn = page_to_pfn(page);
-	bitmap = get_pageblock_bitmap(zone, pfn);
+	bitmap = get_pageblock_bitmap(zone, pfn); //@@ zone 마다 page block bitmap 을 가리키는 포인터가 있음. 이를 반환
 	bitidx = pfn_to_bitidx(zone, pfn);
 
+	//@@ start_bit 와 end_bit 사이에 있는 비트들 검사
 	for (; start_bitidx <= end_bitidx; start_bitidx++, value <<= 1)
 		if (test_bit(bitidx + start_bitidx, bitmap))
 			flags |= value;
 
-	return flags;
+	return flags; //@@ zone 에 page block bitmap 을 통해 flags 구성
 }
 
 /**
