@@ -981,3 +981,22 @@ init/main.c - mm_init()
             mm/page_alloc.c - free_hot_cold_page() // order 1일 때 호출되며 lru에 넣거나
                 // free_pcppage_bulk를 호출. 다음시간 할 차례
             // free_pages_prepare도 안봄
+
+----------------------------------------------------------------------
+[2014.08.16]
+              mm/page_alloc.c - free_pcppage_bulk()
+                mm/page_alloc.c - __free_one_page()
+  buddy를 검사하고 buddy가 free이면 다음 order로 이동.
+  합쳐지는 루틴이 끝난후 다음 order까지 검사해 보고
+  더 합쳐질 가능성이 있으면 lru를 freepage의 뒤로 넣고
+  아니면 앞으로 넣는다.
+  CompoundPage는 HugeTLB(HugePage)를 이용할 때 여러 개의
+  페이지를 합쳤다는 뜻으로 최근에는 PG_tail과 PG_head로 세분화 되었다.
+  page->lru는 무엇인지 잘 모르겠다.
+
+                  mm/page_alloc.c - page_is_buddy()
+  buddy가 page가 guard page이면서 order가 같거나
+  buddy가 free(PageBuddy()호출)이면서 order가 같을 경우 true이다.
+
+  다음 시간 lru의 정체를 밝혀보자.
+

@@ -447,8 +447,8 @@ static inline void clear_page_guard_flag(struct page *page) { }
 
 static inline void set_page_order(struct page *page, int order)
 {
-	set_page_private(page, order);
-	__SetPageBuddy(page);
+	set_page_private(page, order); // @@ order setting
+	__SetPageBuddy(page); // @@ set free
 }
 
 static inline void rmv_page_order(struct page *page)
@@ -502,11 +502,13 @@ static inline int page_is_buddy(struct page *page, struct page *buddy,
 	if (page_zone_id(page) != page_zone_id(buddy))
 		return 0;
 
+  // @@ page->private에 buddy order 혹은 buffer_heads 혹은 swp_entry_t가 기록되어 있다.
 	if (page_is_guard(buddy) && page_order(buddy) == order) {
 		VM_BUG_ON(page_count(buddy) != 0);
 		return 1;
 	}
 
+  // @@ buddy page가 free인지 PageBuddy()를 이용해서 검사
 	if (PageBuddy(buddy) && page_order(buddy) == order) {
 		VM_BUG_ON(page_count(buddy) != 0);
 		return 1;
@@ -550,11 +552,12 @@ static inline void __free_one_page(struct page *page,
 	VM_BUG_ON(!zone_is_initialized(zone));
 
 	if (unlikely(PageCompound(page)))
-		if (unlikely(destroy_compound_page(page, order)))
+		if (unlikely(destroy_compound_page(page, order))) // @@ TODO 넘어감
 			return;
 
 	VM_BUG_ON(migratetype == -1);
 
+  // @@ 2^ MAX_ODER -1 = 1024 page => 4MB내에서의 index
 	page_idx = page_to_pfn(page) & ((1 << MAX_ORDER) - 1);
 
 	VM_BUG_ON(page_idx & ((1 << order) - 1));
@@ -573,15 +576,15 @@ static inline void __free_one_page(struct page *page,
 			clear_page_guard_flag(buddy);
 			set_page_private(page, 0);
 			__mod_zone_freepage_state(zone, 1 << order,
-						  migratetype);
+						  migratetype); // @@ skip
 		} else {
-			list_del(&buddy->lru);
+			list_del(&buddy->lru); // @@ TODO lru에는 무엇이 있는가?
 			zone->free_area[order].nr_free--;
 			rmv_page_order(buddy);
 		}
 		combined_idx = buddy_idx & page_idx;
-		page = page + (combined_idx - page_idx);
-		page_idx = combined_idx;
+		page = page + (combined_idx - page_idx); // @@ 두개의 버디중 앞에것
+		page_idx = combined_idx; // @@ parent
 		order++;
 	}
 	set_page_order(page, order);
@@ -594,6 +597,7 @@ static inline void __free_one_page(struct page *page,
 	 * so it's less likely to be used soon and more likely to be merged
 	 * as a higher order page
 	 */
+  // @@ 다음 order에서 합쳐질수 있는 것은 free_area의 tail로 옮김
 	if ((order < MAX_ORDER-2) && pfn_valid_within(page_to_pfn(buddy))) {
 		struct page *higher_page, *higher_buddy;
 		combined_idx = buddy_idx & page_idx;
@@ -607,6 +611,7 @@ static inline void __free_one_page(struct page *page,
 		}
 	}
 
+  // @@ 합쳐질 가능성이 없으면 그냥 앞에 넣는다.
 	list_add(&page->lru, &zone->free_area[order].free_list[migratetype]);
 out:
 	zone->free_area[order].nr_free++;
