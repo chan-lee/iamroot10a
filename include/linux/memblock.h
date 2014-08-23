@@ -36,8 +36,8 @@ struct memblock_type {
 
 struct memblock {
 	phys_addr_t current_limit;
-	struct memblock_type memory;
-	struct memblock_type reserved;
+	struct memblock_type memory; //@@ free, 안쓰는 영역
+	struct memblock_type reserved; //@@ reserved, 쓰고 있는 영역
 };
 
 extern struct memblock memblock;

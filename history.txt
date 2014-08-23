@@ -1000,3 +1000,21 @@ init/main.c - mm_init()
 
   다음 시간 lru의 정체를 밝혀보자.
 
+----------------------------------------------------------------------
+[2014.08.23]
+
+1. mm_init()->mem_init(): 버디 할당자 초기화
+코드 분석 완료
+2. mm_init()->kmem_cache_init(): 슬랩(슬랩/슬롭/슬럽) 할당자 초기화
+코드 분석 시작
+3. Understanding Linux Virtual Memory Management 책
+챕터. 8. 슬랩할당자 시작: Introduction 까지 읽음
+
+다음 시간:
+Understanding Linux Virtual Memory Management 책 읽고(8.1. Cache 부터),
+kmem_cache_init() 슬럽 부분 분석하도록 한다.
+
+그리고:
+page->lru 는 아직 확인 못함.
+
+

@@ -586,12 +586,18 @@ static void __init free_highpages(void)
 {
 #ifdef CONFIG_HIGHMEM
 	unsigned long max_low = max_low_pfn + PHYS_PFN_OFFSET;
+	//@@ max_low (CPU address) = max_low_pfn (메모리 주소 공간에서 low memory 의 최대 위치)
+	//@@ + PHYS_PFN_OFFSET (메모리가 시작하는 CPU address 위치);
 	struct memblock_region *mem, *res;
 
 	/* set highmem page free */
-	for_each_memblock(memory, mem) {
-		unsigned long start = memblock_region_memory_base_pfn(mem);
-		unsigned long end = memblock_region_memory_end_pfn(mem);
+	//@@ memory(global var): struct memblock memblock; 의 memblock->memblock_type memory; 를 가리킴
+	//@@ in ./include/linux/memblock.h 
+	//@@ memblock_type memory: free한 영역을 의미함.
+	//@@ TODO: memory 의 단위에 대해서는 나중에.
+	for_each_memblock(memory, mem) { //@@ memory block 의 모든 region 순회
+		unsigned long start = memblock_region_memory_base_pfn(mem); //@@ 'mem' region 의 초기 주소(base) 의 pfn 반환
+		unsigned long end = memblock_region_memory_end_pfn(mem); //@@ 물리 주소 마지막 pfn 반환 (base+size)
 
 		/* Ignore complete lowmem entries */
 		if (end <= max_low)
@@ -602,12 +608,17 @@ static void __init free_highpages(void)
 			start = max_low;
 
 		/* Find and exclude any reserved regions */
+		//@@ reserved: struct memblock -> memblock_type reserved;
+		//@@ reserved: memblock 에서 이미 할당 된 블록을 의미함.
+		//@@ memory 와 reserved 는 독립적임.
+		//@@ region 을 순회하면서, region 사이에 비어있는 영역을 free 시킴.
 		for_each_memblock(reserved, res) {
 			unsigned long res_start, res_end;
 
 			res_start = memblock_region_reserved_base_pfn(res);
 			res_end = memblock_region_reserved_end_pfn(res);
 
+			//@@ memory 안에서 region 위치의 가능한 경우들.
 			if (res_end < start)
 				continue;
 			if (res_start < start)
@@ -617,7 +628,7 @@ static void __init free_highpages(void)
 			if (res_end > end)
 				res_end = end;
 			if (res_start != start)
-				free_area_high(start, res_start);
+				free_area_high(start, res_start); //@@ region 앞에 비어 있는 경우 free 하는 함수
 			start = res_end;
 			if (start == end)
 				break;
@@ -625,6 +636,7 @@ static void __init free_highpages(void)
 
 		/* And now free anything which remains */
 		if (start < end)
+			//@@ region 뒤에 (그리고 memory 안에) 비어있는 영역을 free 시킴.
 			free_area_high(start, end);
 	}
 #endif
@@ -659,13 +671,21 @@ void __init mem_init(void)
 	free_unused_memmap(&meminfo); //@@ bank 사이에 연속되지 않은 영역이나 align 이 안된 부분의 mem_map 을 free 함 (free_memmap)
 	//@@ 다시 말하면 bank와 bank사이의 bitmap을 free하는데, 이 공간은 사용 못하는 공간일듯 한데
 	//@@ 왜 하는 이유는 잘 모르겠다.
-	free_all_bootmem();
+	
+	//@@ bootmem 으로 할당된 메모리 free 하고,
+	//@@ buddy allocator 로 다 초기화 함.
+	//@@ bootmem 해제할 때, buddy allocator 의 free_pages 관련 코드를 이용한다.
+	//@@ ./mm/page_alloc.c: buddy allocator 관련 코드
+	free_all_bootmem(); //@@ [2014.08.23] 완료.
 
 #ifdef CONFIG_SA1111
 	/* now that our DMA memory is actually so designated, we can free it */
 	free_reserved_area(__va(PHYS_OFFSET), swapper_pg_dir, -1, NULL);
 #endif
 
+	//@@ bootmem 으로 관리되지 않았던 high memory 영역을 free 함.
+	//@@ high memory 영역은 memblock 으로 관리되었던 영역이고,
+	//@@ memory 영역과 reserved 영역을 참고해서 free 함.
 	free_highpages();
 
 	mem_init_print_info(NULL);

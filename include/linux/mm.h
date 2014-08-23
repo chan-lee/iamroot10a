@@ -1328,8 +1328,9 @@ extern void mem_init_print_info(const char *str);
 /* Free the reserved page into the buddy system, so it gets managed. */
 static inline void __free_reserved_page(struct page *page)
 {
+	//@@ PG_reserve 는 시스템 부팅할 때와, 부팅되고 나서 각각 다른 용도로 사용된다.
 	ClearPageReserved(page);
-	init_page_count(page);
+	init_page_count(page); //@@ page ref count 를 1 로 setting: __free_page 호출하기 위해서
 	__free_page(page);
 }
 
