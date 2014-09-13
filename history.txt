@@ -1017,4 +1017,58 @@ kmem_cache_init() 슬럽 부분 분석하도록 한다.
 그리고:
 page->lru 는 아직 확인 못함.
 
+----------------------------------------------------------------------
+[2014.08.30]
+8.1 Caches
+/proc/slabinfo 를 하면 cache descriptor 정보가 나온다.
 
+8.1.1 Cache Descriptor
+각 object type 별로 cache에 저장될 때 사용할 정보를 만들어 놓는다.
+kmem_cache_s 구조체는 kmem_cache로 바뀌었으며
+현재 커널에서는 slab 은 include/linux/slab_def.h에
+slub은 inlclude/linux/slub_def.h 에
+slob은 inlclude/linux/slab.h 저장되어 있다.
+
+8.1.2 Cache Static Flags
+CFGS_OFF_SLAB
+
+SLAB_HWCACHE_ALIGN : L1 CPU cache 크기에 align
+SLAB_NO_REAP: 메모리가 모자를 때 reap하는데 이때 reap 하지 않도록...
+
+8.1.3 Cache Dynamic Flags
+kmem_cache_grow()되면 set되는데, set이 되면 kmem_cache_reap()시에 한번
+넘어가게 되서 reap 되지 않는다. 하지만 넘어가면서 clear된다.
+
+8.1.4 Cache Allocation Flags
+
+8.1.5 Cache Coloring
+L1_CACHE_BYTES에 맞춰(pentium 2는 32 bytes, 우리 ARM은 64bytes) object가
+cache될 때 몇개의 line을 사용하는지를 계산 해 놓는다.
+colour 는 추가 offset 개수
+colour_off 는 각 offset 크기
+100 bytes object는 colour는 3이고 colour_off는 32. (PII 에서.)
+
+8.1.6 Cache Creation
+
+8.1.7 Cache Reaping
+kswapd에 의해 메모리가 부족하게 되면 하나의 cache를 선택해
+메모리를 줄인다. SLAB_NO_REAP이면 넘어가고, DFLGS_GROWN이면 한번 넘어간다.
+선택된 cache는 slabs_free의 절반을 free 시킨다.
+
+8.1.8 Cache Shrinking
+per-CPU caches에 있는 모든 object를 삭제한다.
+gwrowing하고 있지 않다면 slabs_free에 있는 slab도 삭제한다.
+
+8.1.9 Cache Destroying
+
+8.2 Slabs
+
+8.2.1 Stroing the Slab Descriptor
+
+8.2.2 Slab Creation
+
+8.2.3 Tracking Free Objects
+
+8.2.4 Initializing the kmem_bufctl_t Array
+
+정리는 다음주에
