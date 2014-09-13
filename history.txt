@@ -1071,4 +1071,89 @@ gwrowing하고 있지 않다면 slabs_free에 있는 slab도 삭제한다.
 
 8.2.4 Initializing the kmem_bufctl_t Array
 
-정리는 다음주에
+kmem_bufctl_t 는 고정된 사이즈의 array 로, 각 element 는 각 object 의
+offset (또는 포인터) 을 가리키게 됨.
+각 element 에는 다음 free object 의 index number 를 저장하고 있어서
+free object 를 관리한다.
+free 변수가 가장 상위의 free element 를 저장하고 있어 stack 처럼 동작
+하게 된다.
+자세한 내용은 책을 참고.
+
+----------------------------------------------------------------------
+[2014.09.13]
+
+8.2.5 Finding the Next Free Object
+object 에서 다음 free object 를 찾는 방법 설명.
+kmem_bufctl_t[slab_t->free]; // free 는 다음 free object 의
+index value 를 가지고 있다.
+
+8.2.6 Updating kmem_bufctl_t
+kmem_bufctl_t 의 값을 갱신하는 내용 관련.
+kmem_bufctl_t 의 값은 오직 어떤 object 가 free 할 때 변경된다.
+element 의 값이 다음의 free object index value 를 가진다.
+free 변수는 이 값을 읽어 다음에 사용할 free object 의 index value 를
+가지게 된다.
+
+8.2.7 Calculating the Number of Objects on a Slab
+slab 을 만들 때, kmem_cache_estimate 에서 얼마나 많은 object 개수가
+생기는지, 얼마나 많은 bytes 가 낭비되는지 (cache coloring, fragmentation)
+등을 계산한다.
+
+8.2.8 Slab Destroying
+slab 을 shrunk 하거나 destroy 할 때와 관련된 내용.
+각 object 의 destructor 가 불린다.
+
+8.3 Objects
+slab 에서 object 들의 할당 및 해제 과정
+
+8.3.1 Initializing Objects in a Slab
+kmem_cache_init_objs(): initializing the objects
+
+8.3.2 Object Allocation
+kmem_cache_alloc(): 한 object 할당. slab_partial 먼저 채우고 slab_free 에서 채움.
+slab_free 가 없으면, slab 을 더 확장한다.
+object 할당은 UP 와 SMP 에서 다르게 동작하는데,
+SMP 에서 percpu cache 를 사용한다는 것이 다르다.
+이 부분은 8.5 장을 더 읽어보고 자세히 이해하도록 한다.
+
+8.3.3 Object Freeing
+kmem_cache_free(): destructor 를 호출하면서 object 를 해제하고 초기화한다.
+할당과 마찬가지로 UP 와 SMP 에서 다르게 동작하는데,
+역시 SMP 에서 percpu cache 를 사용한다.
+
+8.4 Sizes Cache
+자주 사용되는 data structures 뿐 만 아니라, 범용 목적 (그리고 DMA) 을 위해서
+2의 멱승의 sizes 를 slab 으로 예약해 놓음 (일반과 DMA 각각)
+# cat /proc/slabinfo
+
+8.4.1 kmalloc()
+8.4.2 kfree()
+kmalloc 및 kfree 는 slab 을 이용하는 메모리 할당/해제 interface 정도로 보면 됨.
+
+< on-cache, off-cache >
+on-cache: slab_t, bufctl 이 object 들과 한 페이지에 함께 있는 경우
+off-cache: object 들이 slab_t (bufctl) 과 다른 페이지에 떨어져 있는 경우
+: object 의 사이즈가 작아서 아주 많은 buf index 가 필요한 경우 off-cache 가 됨.
+
+8.5 Per-CPU Object Cache
+Per CPU 마다 object pointer 들의 집합을 가지고 있다.
+Per CPU 에서 관리되는 Object Cache 는 CPU 들 사이에서 disjoint 되어 있기 때문에,
+spin lock 등을 하지 않아도 된다.
+Per CPU object cache 들은 memory pool 처럼 동작한다. (해제 시에 곧바로 destroy 
+하지 않고, 나중 할당 시에 이용할 수 있도록 한다.) -> 이 부분은 좀 더 확인이 필요하다.
+
+8.5.1 Describing the Per-CPU Object Cache
+
+8.5.2 Adding/Removing Objects From the Per-CPU Cache
+
+8.5.3 Enabling Per-CPU Caches
+
+8.5.4 Updating Per-CPU Information
+
+8.5.5 Draining a Per-CPU Cache
+
+8.6 Slab Allocator Initialization
+
+8.7 Interfacing With the Buddy Allocator
+
+8.8 What's New in 2.6
