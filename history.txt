@@ -1157,3 +1157,21 @@ Per CPU object cache 들은 memory pool 처럼 동작한다. (해제 시에 곧�
 8.7 Interfacing With the Buddy Allocator
 
 8.8 What's New in 2.6
+
+----------------------------------------------------------------------
+[2014.09.20]
+kmem_cache_s 는kmem_cache로 바뀌어 각 slab_def(SLAB), slab.h(SLOB), slub_def 등에 있으며
+kmem_list3는 kmem_cache_node로 변경되었다.
+cpucache_s는 array_cache로 변경되었다. (mm/slab.c)
+
+array_cache에 대한 설명은 UnderstadingKerenel P.335
+Local Caches of Free Slab Objects를 참조
+간략히 설명하면 slab으로 부터 하나씩 freed object를 얻어 오기 힘드므로
+cache 개념을 이용하여 batchcount 만큼 한번에 가져오고 해제하는 방식으로 동작한다.
+avail은 실제 slab object가 들어 있는 array의 index를 나타낸다.
+또 추가적인 정보는 다음 링크를 참조한다.
+동적 메모리 할당자 : slab, slub, slob - http://studyfoss.egloos.com/viewer/5332580
+
+void __init kmem_cache_init(void)
+  책의 cache_cache는 kmem_cache_boot로 변경
+  - int __kmem_cache_create (struct kmem_cache *cachep, unsigned long flags) 도중 마침

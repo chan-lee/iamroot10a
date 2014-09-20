@@ -288,6 +288,7 @@ struct arraycache_init {
 /*
  * Need this for bootstrapping a per node allocator.
  */
+// @@ TODO 왜 3을 곱하는가?
 #define NUM_INIT_LISTS (3 * MAX_NUMNODES)
 static struct kmem_cache_node __initdata init_kmem_cache_node[NUM_INIT_LISTS];
 #define	CACHE_CACHE 0
@@ -1508,6 +1509,7 @@ static void setup_node_pointer(struct kmem_cache *cachep)
  * Initialisation.  Called after the page allocator have been initialised and
  * before smp_init().
  */
+// @@ 2014.09.20 시작
 void __init kmem_cache_init(void)
 {
 	int i;
@@ -1521,6 +1523,8 @@ void __init kmem_cache_init(void)
 	for (i = 0; i < NUM_INIT_LISTS; i++)
 		kmem_cache_node_init(&init_kmem_cache_node[i]);
 
+  // @@ kmem_cache_node를 연결.
+  // @@ node에 next_reap을 설정하지만 무슨 의미인지는 모름
 	set_up_node(kmem_cache, CACHE_CACHE);
 
 	/*
@@ -2287,6 +2291,7 @@ __kmem_cache_create (struct kmem_cache *cachep, unsigned long flags)
 		gfp = GFP_NOWAIT;
 
 	setup_node_pointer(cachep);
+  // @@ 2014.09.20 끝
 #if DEBUG
 
 	/*
