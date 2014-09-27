@@ -1574,6 +1574,7 @@ void __init kmem_cache_init(void)
 	 * bug.
 	 */
 
+  // @@ 2014.09.27 끝
 	kmalloc_caches[INDEX_AC] = create_kmalloc_cache("kmalloc-ac",
 					kmalloc_size(INDEX_AC), ARCH_KMALLOC_FLAGS);
 
@@ -2101,6 +2102,9 @@ static size_t calculate_slab_order(struct kmem_cache *cachep,
 			 * use off-slab slabs. Needed to avoid a possible
 			 * looping condition in cache_grow().
 			 */
+      // @@ TODO slab당 object의 최대 개수를 나타내는데
+      // 연산의 정확한 의미를 모르겠다.
+      // 실제 각 slab의 크기는 object의 크기와 같다면 말이 되긴한다.
 			offslab_limit = size - sizeof(struct slab);
 			offslab_limit /= sizeof(kmem_bufctl_t);
 
@@ -2148,6 +2152,7 @@ static int __init_refok setup_cpu_cache(struct kmem_cache *cachep, gfp_t gfp)
 		 * The setup_node is taken care
 		 * of by the caller of __kmem_cache_create
 		 */
+    // @@ 초기 array cache 설정
 		cachep->array[smp_processor_id()] = &initarray_generic.cache;
 		slab_state = PARTIAL;
 	} else if (slab_state == PARTIAL) {
@@ -2187,6 +2192,7 @@ static int __init_refok setup_cpu_cache(struct kmem_cache *cachep, gfp_t gfp)
 			}
 		}
 	}
+  // @@ node 설정
 	cachep->node[numa_mem_id()]->next_reap =
 			jiffies + REAPTIMEOUT_LIST3 +
 			((unsigned long)cachep) % REAPTIMEOUT_LIST3;
@@ -2323,6 +2329,7 @@ __kmem_cache_create (struct kmem_cache *cachep, unsigned long flags)
 #endif
 #endif
 
+  // @@ 2014.09.27 시작
 	/*
 	 * Determine if the slab management is 'on' or 'off' slab.
 	 * (bootstrapping cannot cope with offslab caches so don't do
@@ -2339,6 +2346,7 @@ __kmem_cache_create (struct kmem_cache *cachep, unsigned long flags)
 
 	size = ALIGN(size, cachep->align);
 
+  // @@ num(slab당 들어가는 object 개수)과 gfporder(page 수), left_over를 얻어온다.
 	left_over = calculate_slab_order(cachep, size, cachep->align, flags);
 
 	if (!cachep->num)
@@ -2382,6 +2390,7 @@ __kmem_cache_create (struct kmem_cache *cachep, unsigned long flags)
 	if (CONFIG_ZONE_DMA_FLAG && (flags & SLAB_CACHE_DMA))
 		cachep->allocflags |= GFP_DMA;
 	cachep->size = size;
+  // @@ 역수? 역원?
 	cachep->reciprocal_buffer_size = reciprocal_value(size);
 
 	if (flags & CFLGS_OFF_SLAB) {
@@ -2396,6 +2405,7 @@ __kmem_cache_create (struct kmem_cache *cachep, unsigned long flags)
 		BUG_ON(ZERO_OR_NULL_PTR(cachep->slabp_cache));
 	}
 
+  // @@ array_cache를 초기값으로 설정한다.
 	err = setup_cpu_cache(cachep, gfp);
 	if (err) {
 		__kmem_cache_shutdown(cachep);

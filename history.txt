@@ -1175,3 +1175,14 @@ avail은 실제 slab object가 들어 있는 array의 index를 나타낸다.
 void __init kmem_cache_init(void)
   책의 cache_cache는 kmem_cache_boot로 변경
   - int __kmem_cache_create (struct kmem_cache *cachep, unsigned long flags) 도중 마침
+
+----------------------------------------------------------------------
+[2014.09.27]
+cache_cache인 "kmem_cache"를 설정하였고, 이를 slab_caches라는 전역 head에 저장한다.
+__kmem_cache_create()는 slab의 size를 결정하고, slab당 들어가는 object 개수,
+  gfporder등, kmem_cache 구조체의 값들을 설정한다. 그리고 array_cache 및 node를
+  초기화 한다.
+
+그 후 "kmalloc-ac"와 "kmalloc-node"를 실제로 slab으로 만든다.
+
+TODO : kmem_cache 자체의 object allocation은 안해도 되는것인가?
