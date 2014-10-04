@@ -1575,9 +1575,12 @@ void __init kmem_cache_init(void)
 	 */
 
   // @@ 2014.09.27 끝
+  // @@ 2014.10.04 시작
 	kmalloc_caches[INDEX_AC] = create_kmalloc_cache("kmalloc-ac",
 					kmalloc_size(INDEX_AC), ARCH_KMALLOC_FLAGS);
 
+  // @@ arraycache_init 구조체와 kmem_cache_node의 크기가 비슷하다면
+  // @@ kmalloc-node는 만들지 않는다.
 	if (INDEX_AC != INDEX_NODE)
 		kmalloc_caches[INDEX_NODE] =
 			create_kmalloc_cache("kmalloc-node",
