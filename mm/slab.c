@@ -280,7 +280,7 @@ static inline void clear_obj_pfmemalloc(void **objp)
  * cpuarrays are allocated from the generic caches...
  */
 #define BOOT_CPUCACHE_ENTRIES	1
-struct arraycache_init {
+struct arraycache_init { //@@ 전역 kmem_cache가 사용할 array_cache
 	struct array_cache cache;
 	void *entries[BOOT_CPUCACHE_ENTRIES];
 };
@@ -468,6 +468,7 @@ static inline struct slab *virt_to_slab(const void *obj)
 static inline void *index_to_obj(struct kmem_cache *cache, struct slab *slab,
 				 unsigned int idx)
 {
+	//@@ s_mem의 object를 들고 온다.
 	return slab->s_mem + cache->size * idx;
 }
 
@@ -954,6 +955,7 @@ static inline void ac_put_obj(struct kmem_cache *cachep, struct array_cache *ac,
  *
  * Return the number of entries transferred.
  */
+//@@ array_cache의 다른 cpu로 부터 batchcount만큼 object를 nr 만큼 들고 오겠다.
 static int transfer_objects(struct array_cache *to,
 		struct array_cache *from, unsigned int max)
 {
@@ -2637,7 +2639,7 @@ static struct slab *alloc_slabmgmt(struct kmem_cache *cachep, void *objp,
 	if (OFF_SLAB(cachep)) {
 		/* Slab management obj is off-slab. */
 		slabp = kmem_cache_alloc_node(cachep->slabp_cache,
-					      local_flags, nodeid);
+					      local_flags, nodeid); //@@ Off-Slab의 경우 object를 위한 공간를 할당
 		/*
 		 * If the first object in the slab is leaked (it's allocated
 		 * but no one has a reference to it), we want to make sure
@@ -2729,7 +2731,7 @@ static void *slab_get_obj(struct kmem_cache *cachep, struct slab *slabp,
 	kmem_bufctl_t next;
 
 	slabp->inuse++;
-	next = slab_bufctl(slabp)[slabp->free];
+	next = slab_bufctl(slabp)[slabp->free];//@@ next index를 bufctl로 부터 가지고 온다.
 #if DEBUG
 	slab_bufctl(slabp)[slabp->free] = BUFCTL_FREE;
 	WARN_ON(slabp->nodeid != nodeid);
@@ -2832,13 +2834,13 @@ static int cache_grow(struct kmem_cache *cachep,
 	 * 'nodeid'.
 	 */
 	if (!objp)
-		objp = kmem_getpages(cachep, local_flags, nodeid);
+		objp = kmem_getpages(cachep, local_flags, nodeid);//@@ TODO, slab에 할당할 page를 buddy로 부터할당.
 	if (!objp)
 		goto failed;
 
 	/* Get slab management. */
 	slabp = alloc_slabmgmt(cachep, objp, offset,
-			local_flags & ~GFP_CONSTRAINT_MASK, nodeid);
+			local_flags & ~GFP_CONSTRAINT_MASK, nodeid);  //@@ On-Slab, Off-Slab
 	if (!slabp)
 		goto opps1;
 
@@ -2990,13 +2992,13 @@ static void *cache_alloc_refill(struct kmem_cache *cachep, gfp_t flags,
 	int node;
 
 	check_irq_off();
-	node = numa_mem_id();
+	node = numa_mem_id();  //@@ 현재 cpu의 메모리 id
 	if (unlikely(force_refill))
 		goto force_grow;
 retry:
 	ac = cpu_cache_get(cachep);
-	batchcount = ac->batchcount;
-	if (!ac->touched && batchcount > BATCHREFILL_LIMIT) {
+	batchcount = ac->batchcount; //@@ ac->batchcount = 1
+	if (!ac->touched && batchcount > BATCHREFILL_LIMIT) {  //BATCHREFILL_LIMIT 16
 		/*
 		 * If there was little recent activity on this cache, then
 		 * perform only a partial refill.  Otherwise we could generate
@@ -3004,12 +3006,13 @@ retry:
 		 */
 		batchcount = BATCHREFILL_LIMIT;
 	}
-	n = cachep->node[node];
+	n = cachep->node[node];  //@@ AC에 정보가 없으니깐 node에서 가져오겠다.
 
 	BUG_ON(ac->avail > 0 || !n);
 	spin_lock(&n->list_lock);
 
 	/* See if we can refill from the shared array */
+	//@@ n->shared : array_cache 공유
 	if (n->shared && transfer_objects(ac, n->shared, batchcount)) {
 		n->shared->touched = 1;
 		goto alloc_done;
@@ -3020,13 +3023,14 @@ retry:
 		struct slab *slabp;
 		/* Get slab alloc is to come from. */
 		entry = n->slabs_partial.next;
-		if (entry == &n->slabs_partial) {
+		if (entry == &n->slabs_partial) {  //@@ if partial.next == entry, partial : empty
 			n->free_touched = 1;
 			entry = n->slabs_free.next;
 			if (entry == &n->slabs_free)
 				goto must_grow;
-		}
+		} //@@ partial, free : empty
 
+		//@@ partial, free 의 list가 존재 하면
 		slabp = list_entry(entry, struct slab, list);
 		check_slabp(cachep, slabp);
 		check_spinlock_acquired(cachep);
@@ -3042,15 +3046,15 @@ retry:
 			STATS_INC_ALLOCED(cachep);
 			STATS_INC_ACTIVE(cachep);
 			STATS_SET_HIGH(cachep);
-
+		  //@@slab으로부터 arrary_cache로 추가
 			ac_put_obj(cachep, ac, slab_get_obj(cachep, slabp,
 									node));
 		}
 		check_slabp(cachep, slabp);
 
 		/* move slabp to correct slabp list: */
-		list_del(&slabp->list);
-		if (slabp->free == BUFCTL_END)
+		list_del(&slabp->list);//@@ free 혹은 partial 에서 들고 왔으니깐 자기 자신을 list에서 삭제하고
+		if (slabp->free == BUFCTL_END)//@@ full이나 partial에 추가 한다.
 			list_add(&slabp->list, &n->slabs_full);
 		else
 			list_add(&slabp->list, &n->slabs_partial);
@@ -3152,7 +3156,7 @@ static void *cache_alloc_debugcheck_after(struct kmem_cache *cachep,
 
 static bool slab_should_failslab(struct kmem_cache *cachep, gfp_t flags)
 {
-	if (cachep == kmem_cache)
+	if (cachep == kmem_cache) //@@ cachep가 전역 kmem-cache인 경우
 		return false;
 
 	return should_failslab(cachep->object_size, flags, cachep->flags);
@@ -3166,10 +3170,10 @@ static inline void *____cache_alloc(struct kmem_cache *cachep, gfp_t flags)
 
 	check_irq_off();
 
-	ac = cpu_cache_get(cachep);
-	if (likely(ac->avail)) {
+	ac = cpu_cache_get(cachep); //@@ cachep->array[현재 cpu id]  2159라인.setup_cpu_cache에서 할당.
+	if (likely(ac->avail)) {  //@@ 처음에는 avail=0 일 것이다. 
 		ac->touched = 1;
-		objp = ac_get_obj(cachep, ac, flags, false);
+		objp = ac_get_obj(cachep, ac, flags, false); //@@ 있으면 가져오고 avail 감소
 
 		/*
 		 * Allow for the possibility all avail objects are not allowed
@@ -3482,7 +3486,7 @@ slab_alloc(struct kmem_cache *cachep, gfp_t flags, unsigned long caller)
 	if (slab_should_failslab(cachep, flags))
 		return NULL;
 
-	cachep = memcg_kmem_get_cache(cachep, flags);
+	cachep = memcg_kmem_get_cache(cachep, flags); //@@ MEMCG_CONFIG가 정의 되어 있지 않으면 cachep 리턴
 
 	cache_alloc_debugcheck_before(cachep, flags);
 	local_irq_save(save_flags);

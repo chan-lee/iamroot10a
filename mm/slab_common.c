@@ -309,11 +309,12 @@ void __init create_boot_cache(struct kmem_cache *s, const char *name, size_t siz
 struct kmem_cache *__init create_kmalloc_cache(const char *name, size_t size,
 				unsigned long flags)
 {
+	//@@ 전역 kmem_cache 내 kmem_cache 오브젝트를 생성 
 	struct kmem_cache *s = kmem_cache_zalloc(kmem_cache, GFP_NOWAIT);
 
 	if (!s)
 		panic("Out of memory when creating slab %s\n", name);
-
+	//@@ 반환된 kmem_cache를 해당 이름과 사이즈로 설정 
 	create_boot_cache(s, name, size, flags);
 	list_add(&s->list, &slab_caches);
 	s->refcount = 1;
