@@ -1594,6 +1594,7 @@ void __init kmem_cache_init(void)
 
 		ptr = kmalloc(sizeof(struct arraycache_init), GFP_NOWAIT);
 
+    // @@ cache cache용 ac
 		memcpy(ptr, cpu_cache_get(kmem_cache),
 		       sizeof(struct arraycache_init));
 		/*
@@ -1607,6 +1608,7 @@ void __init kmem_cache_init(void)
 
 		BUG_ON(cpu_cache_get(kmalloc_caches[INDEX_AC])
 		       != &initarray_generic.cache);
+    // @@ ac의 ac
 		memcpy(ptr, cpu_cache_get(kmalloc_caches[INDEX_AC]),
 		       sizeof(struct arraycache_init));
 		/*
@@ -1621,17 +1623,23 @@ void __init kmem_cache_init(void)
 		int nid;
 
 		for_each_online_node(nid) {
+      // @@ cache cache의 node를 추가
+      // @@ kmalloc 대신 kmalloc_node를 호출
+      // @@ kmalloc_node에서는 slab_alloc대신 slab_alloc_node를 호출
 			init_list(kmem_cache, &init_kmem_cache_node[CACHE_CACHE + nid], nid);
 
+      // @@ ac의 node를 추가
 			init_list(kmalloc_caches[INDEX_AC],
 				  &init_kmem_cache_node[SIZE_AC + nid], nid);
 
+      // @@ node의 node를 추가
 			if (INDEX_AC != INDEX_NODE) {
 				init_list(kmalloc_caches[INDEX_NODE],
 					  &init_kmem_cache_node[SIZE_NODE + nid], nid);
 			}
 		}
 	}
+  // @@ 2014.10.11 종료
 
 	create_kmalloc_caches(ARCH_KMALLOC_FLAGS);
 }
@@ -2834,8 +2842,10 @@ static int cache_grow(struct kmem_cache *cachep,
 	if (!slabp)
 		goto opps1;
 
+  // @@ 2014.10.11 시작
 	slab_map_pages(cachep, slabp, objp);
 
+  // @@ object를 buf_ctl에 할당
 	cache_init_objs(cachep, slabp);
 
 	if (local_flags & __GFP_WAIT)
@@ -3054,6 +3064,7 @@ alloc_done:
 	if (unlikely(!ac->avail)) {
 		int x;
 force_grow:
+    // @@ page를 할당 받아 slab과 object를 설정한다.
 		x = cache_grow(cachep, flags | GFP_THISNODE, node, NULL);
 
 		/* cache_grow can reenable interrupts, then ac could change. */
@@ -3172,6 +3183,9 @@ static inline void *____cache_alloc(struct kmem_cache *cachep, gfp_t flags)
 	}
 
 	STATS_INC_ALLOCMISS(cachep);
+  // @@ ac로부터 object를 얻어온다.  만약 ac가 비어 있다면
+  // @@ node의 slab으로부터 ac를 채우고, 만약 사용가는한 slab도 없다면
+  // @@ 새로 page를 할당 받아 slab을 만들고 ac를 채운후 반환한다
 	objp = cache_alloc_refill(cachep, flags, force_refill);
 	/*
 	 * the 'ac' may be updated by cache_alloc_refill(),
@@ -3356,6 +3370,7 @@ must_grow:
 	if (x)
 		goto retry;
 
+  // @@ 다른 노드를 찾아서 다시 __cache_alloc_node 해본다.
 	return fallback_alloc(cachep, flags);
 
 done:
@@ -3429,12 +3444,14 @@ __do_cache_alloc(struct kmem_cache *cache, gfp_t flags)
 		if (objp)
 			goto out;
 	}
+  // @@ ac(slab)으로 부터 object를 얻어온다.
 	objp = ____cache_alloc(cache, flags);
 
 	/*
 	 * We may just have run out of memory on the local node.
 	 * ____cache_alloc_node() knows how to locate memory on other nodes
 	 */
+  // @@ fallback_alloc()을 호출하여 다른 node에서 alloc을 시도한다.
 	if (!objp)
 		objp = ____cache_alloc_node(cache, flags, numa_mem_id());
 
@@ -3451,6 +3468,7 @@ __do_cache_alloc(struct kmem_cache *cachep, gfp_t flags)
 
 #endif /* CONFIG_NUMA */
 
+//@@ object를 할당 받고, kmemleak을 등록하고, kmemcheck_slab_alloc을 호출
 static __always_inline void *
 slab_alloc(struct kmem_cache *cachep, gfp_t flags, unsigned long caller)
 {
