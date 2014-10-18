@@ -1190,6 +1190,7 @@ void __init vmalloc_init(void)
 		va->va_start = (unsigned long)tmp->addr;
 		va->va_end = va->va_start + tmp->size;
 		va->vm = tmp;
+    // @@ rbnode를 재생성
 		__insert_vmap_area(va);
 	}
 

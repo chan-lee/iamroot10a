@@ -1186,3 +1186,36 @@ __kmem_cache_create()는 slab의 size를 결정하고, slab당 들어가는 obje
 그 후 "kmalloc-ac"와 "kmalloc-node"를 실제로 slab으로 만든다.
 
 TODO : kmem_cache 자체의 object allocation은 안해도 되는것인가?
+
+----------------------------------------------------------------------
+[2014.10.18]
+- RW lock 
+http://xucxo.blogspot.kr/2011/03/linux-programming-thread-rw-lock.html
+장점: 1 write thread, many reader thread에 유리 
+단점: writer가 굶을 수 있다.
+
+- seq lock
+장점: reader가 lock이 필요없다. writer가 굶지 않는다.
+단점: reader가 틀린 값을 가지고 있을 수 있도고 가정
+
+- RCU
+https://app.box.com/shared/x5r7ugx6o6
+장점: 변경되는 부분을 copy하여 만들고,
+원래 값을 가지고 있던 reader는 그것을 사용. 특히 pointer 구조에 사용
+
+- spin lock
+
+- CAS?
+
+참고 자료
+NDC2012 병렬 프로그래밍
+http://www.slideshare.net/tatis3/ndc12-12700288
+
+NDC2014 멀티 쓰레드 프로그래밍이 왜이리 힘드나요?
+http://www.slideshare.net/zzapuno/kgc2013-3
+
+NDC2014 헤테로지니어스 컴퓨팅 CPU -> GPU
+http://www.slideshare.net/zupet/ndc14-gpu
+
+
+User space: pthread_mutex, pthread_rwlock

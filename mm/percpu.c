@@ -1942,6 +1942,7 @@ void __init percpu_init_late(void)
 
 		BUILD_BUG_ON(size > PAGE_SIZE);
 
+    // @@ kmalloc filled with zero 
 		map = pcpu_mem_zalloc(size);
 		BUG_ON(!map);
 
