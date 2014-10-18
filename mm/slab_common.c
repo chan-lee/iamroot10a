@@ -336,30 +336,30 @@ EXPORT_SYMBOL(kmalloc_dma_caches);
  * fls.
  */
 static s8 size_index[24] = {
-	3,	/* 8 */
-	4,	/* 16 */
+	3,	/* 8 */   //@@ slab 에서, 나중에 5 로 바뀔 것
+	4,	/* 16 */  //@@ slab 에서, 나중에 5 로 바뀔 것
 	5,	/* 24 */
 	5,	/* 32 */
 	6,	/* 40 */
 	6,	/* 48 */
 	6,	/* 56 */
 	6,	/* 64 */
-	1,	/* 72 */
-	1,	/* 80 */
-	1,	/* 88 */
-	1,	/* 96 */
+	1,	/* 72 */  //@@ KMALLOC_MIN_SIZE >= 64 이면 7 로 바뀜
+	1,	/* 80 */  //@@ KMALLOC_MIN_SIZE >= 64 이면 7 로 바뀜
+	1,	/* 88 */  //@@ KMALLOC_MIN_SIZE >= 64 이면 7 로 바뀜
+	1,	/* 96 */  //@@ KMALLOC_MIN_SIZE >= 64 이면 7 로 바뀜
 	7,	/* 104 */
 	7,	/* 112 */
 	7,	/* 120 */
 	7,	/* 128 */
-	2,	/* 136 */
-	2,	/* 144 */
-	2,	/* 152 */
-	2,	/* 160 */
-	2,	/* 168 */
-	2,	/* 176 */
-	2,	/* 184 */
-	2	/* 192 */
+	2,	/* 136 */ //@@ KMALLOC_MIN_SIZE >= 128 이면 8 로 바뀜
+	2,	/* 144 */ //@@ KMALLOC_MIN_SIZE >= 128 이면 8 로 바뀜
+	2,	/* 152 */ //@@ KMALLOC_MIN_SIZE >= 128 이면 8 로 바뀜
+	2,	/* 160 */ //@@ KMALLOC_MIN_SIZE >= 128 이면 8 로 바뀜
+	2,	/* 168 */ //@@ KMALLOC_MIN_SIZE >= 128 이면 8 로 바뀜 
+	2,	/* 176 */ //@@ KMALLOC_MIN_SIZE >= 128 이면 8 로 바뀜
+	2,	/* 184 */ //@@ KMALLOC_MIN_SIZE >= 128 이면 8 로 바뀜
+	2	/* 192 */   //@@ KMALLOC_MIN_SIZE >= 128 이면 8 로 바뀜
 };
 
 static inline int size_index_elem(size_t bytes)
@@ -401,6 +401,8 @@ struct kmem_cache *kmalloc_slab(size_t size, gfp_t flags)
  * may already have been created because they were needed to
  * enable allocations for slab creation.
  */
+//@@ flags <- ARCH_KMALLOC_FLAGS <- SLAB_HWCACHE_ALIGN 0x00002000UL
+//@@ flags <- Align objs on cache lines
 void __init create_kmalloc_caches(unsigned long flags)
 {
 	int i;
@@ -416,14 +418,21 @@ void __init create_kmalloc_caches(unsigned long flags)
 	 * Make sure that nothing crazy happens if someone starts tinkering
 	 * around with ARCH_KMALLOC_MINALIGN
 	 */
+  //@@ 우리 아키텍쳐에서 slub 일 때 2^3, slab 일 때 2^5
+  //@@ size 검사 및 align 이 되어있는 지 검사.
 	BUILD_BUG_ON(KMALLOC_MIN_SIZE > 256 ||
 		(KMALLOC_MIN_SIZE & (KMALLOC_MIN_SIZE - 1)));
 
+  //@@ we perform 3 times
 	for (i = 8; i < KMALLOC_MIN_SIZE; i += 8) {
-		int elem = size_index_elem(i);
+		int elem = size_index_elem(i); //@@ (i-1)/8
+    //@@ 실제로 elem 은 0(i=8),1(i=16),2(i=24)
 
+    //@@ elem 이 인덱스 전체보다 클 때는 break
 		if (elem >= ARRAY_SIZE(size_index))
 			break;
+
+    //@@ size_index[0] = size_index[1] = size_index[2] = 5; (32 bytes)
 		size_index[elem] = KMALLOC_SHIFT_LOW;
 	}
 
@@ -446,10 +455,13 @@ void __init create_kmalloc_caches(unsigned long flags)
 		for (i = 128 + 8; i <= 192; i += 8)
 			size_index[size_index_elem(i)] = 8;
 	}
+
+  //@@ 구성된 size_index 를 참고해서 kmalloc_caches 만든다
+  //@@ TODO: kmalloc_caches[0] ?
 	for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
 		if (!kmalloc_caches[i]) {
 			kmalloc_caches[i] = create_kmalloc_cache(NULL,
-							1 << i, flags);
+							1 << i, flags); //@@ struct kmem_cache* return;
 		}
 
 		/*
@@ -472,6 +484,7 @@ void __init create_kmalloc_caches(unsigned long flags)
 		char *n;
 
 		if (s) {
+      //@@ kasprintf -> char* return
 			n = kasprintf(GFP_NOWAIT, "kmalloc-%d", kmalloc_size(i));
 
 			BUG_ON(!n);

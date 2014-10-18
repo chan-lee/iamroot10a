@@ -1946,6 +1946,8 @@ void __init percpu_init_late(void)
 		BUG_ON(!map);
 
 		spin_lock_irqsave(&pcpu_lock, flags);
+    //@@ map 으로 chunk->map 의 내용 복사
+    //@@ chunk 로 할당받은 pcpu 메모리 값들을 slab 으로 카피
 		memcpy(map, chunk->map, size);
 		chunk->map = map;
 		spin_unlock_irqrestore(&pcpu_lock, flags);

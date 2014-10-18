@@ -1641,7 +1641,8 @@ void __init kmem_cache_init(void)
 			}
 		}
 	}
-  // @@ 2014.10.11 종료
+  //@@ 2014.10.11 종료
+  //@@ 2014.10.18 시작
 
 	create_kmalloc_caches(ARCH_KMALLOC_FLAGS);
 }

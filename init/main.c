@@ -484,7 +484,7 @@ static void __init mm_init(void)
 	//@@ ULVMM p.101
 	//@@ buddy allocator 초기화 (bootmem 해제, highmem 도 초기화)
 	mem_init(); //@@ [2014.07.19] 시작, [2014.08.23] 완료.
-	kmem_cache_init(); //@@ [2014.08.23] 시작.
+	kmem_cache_init(); //@@ [2014.08.23] 시작. [2014.10.18] 완료.
 	percpu_init_late();
 	pgtable_cache_init();
 	vmalloc_init();
