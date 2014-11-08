@@ -211,16 +211,18 @@ int cpupri_init(struct cpupri *cp)
 
 	memset(cp, 0, sizeof(*cp));
 
-	for (i = 0; i < CPUPRI_NR_PRIORITIES; i++) {
+	for (i = 0; i < CPUPRI_NR_PRIORITIES; i++) {   //@@ CPUPRI_NR_PRIORITIES : 102 
 		struct cpupri_vec *vec = &cp->pri_to_cpu[i];
 
 		atomic_set(&vec->count, 0);
-		if (!zalloc_cpumask_var(&vec->mask, GFP_KERNEL))
+		if (!zalloc_cpumask_var(&vec->mask, GFP_KERNEL)) //@@ cpumask_clear(mask)
 			goto cleanup;
 	}
 
 	for_each_possible_cpu(i)
-		cp->cpu_to_pri[i] = CPUPRI_INVALID;
+		cp->cpu_to_pri[i] = CPUPRI_INVALID; //@@ CPUPRI_INVALID: -1 
+		//@@ INVALID: task가 다른 CPU로 이주가 안되는 상태를 말함
+
 	return 0;
 
 cleanup:

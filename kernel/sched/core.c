@@ -5026,7 +5026,7 @@ static int init_rootdomain(struct root_domain *rd)
 {
 	memset(rd, 0, sizeof(*rd));
 
-	if (!alloc_cpumask_var(&rd->span, GFP_KERNEL))
+	if (!alloc_cpumask_var(&rd->span, GFP_KERNEL)) //@@ alloc_cpumask_var:empty function,if CONFIG_CPUMASK_OFFSTACK=n 
 		goto out;
 	if (!alloc_cpumask_var(&rd->online, GFP_KERNEL))
 		goto free_span;
@@ -5055,9 +5055,9 @@ struct root_domain def_root_domain;
 
 static void init_defrootdomain(void)
 {
-	init_rootdomain(&def_root_domain);
+	init_rootdomain(&def_root_domain);   //@@ rootdomain를 위한 메모리를 할당 받고 각 cpu별 cpupri를 INVALID로 초기화. 
 
-	atomic_set(&def_root_domain.refcount, 1);
+	atomic_set(&def_root_domain.refcount, 1);  //@@ root domain의 refcont를 1로 설정.
 }
 
 static struct root_domain *alloc_rootdomain(void)
@@ -6388,24 +6388,25 @@ LIST_HEAD(task_groups);
 
 DECLARE_PER_CPU(cpumask_var_t, load_balance_mask);
 
+//@@ [20141105] start
 void __init sched_init(void)
 {
 	int i, j;
 	unsigned long alloc_size = 0, ptr;
 
-#ifdef CONFIG_FAIR_GROUP_SCHED
+#ifdef CONFIG_FAIR_GROUP_SCHED   //@@ No define
 	alloc_size += 2 * nr_cpu_ids * sizeof(void **);
 #endif
-#ifdef CONFIG_RT_GROUP_SCHED
+#ifdef CONFIG_RT_GROUP_SCHED		//@@ No define
 	alloc_size += 2 * nr_cpu_ids * sizeof(void **);
 #endif
-#ifdef CONFIG_CPUMASK_OFFSTACK
+#ifdef CONFIG_CPUMASK_OFFSTACK	//@@ No define
 	alloc_size += num_possible_cpus() * cpumask_size();
 #endif
 	if (alloc_size) {
 		ptr = (unsigned long)kzalloc(alloc_size, GFP_NOWAIT);
 
-#ifdef CONFIG_FAIR_GROUP_SCHED
+#ifdef CONFIG_FAIR_GROUP_SCHED	//@@ No define
 		root_task_group.se = (struct sched_entity **)ptr;
 		ptr += nr_cpu_ids * sizeof(void **);
 
@@ -6413,7 +6414,7 @@ void __init sched_init(void)
 		ptr += nr_cpu_ids * sizeof(void **);
 
 #endif /* CONFIG_FAIR_GROUP_SCHED */
-#ifdef CONFIG_RT_GROUP_SCHED
+#ifdef CONFIG_RT_GROUP_SCHED		//@@ No define
 		root_task_group.rt_se = (struct sched_rt_entity **)ptr;
 		ptr += nr_cpu_ids * sizeof(void **);
 
@@ -6421,7 +6422,7 @@ void __init sched_init(void)
 		ptr += nr_cpu_ids * sizeof(void **);
 
 #endif /* CONFIG_RT_GROUP_SCHED */
-#ifdef CONFIG_CPUMASK_OFFSTACK
+#ifdef CONFIG_CPUMASK_OFFSTACK	//@@ No define
 		for_each_possible_cpu(i) {
 			per_cpu(load_balance_mask, i) = (void *)ptr;
 			ptr += cpumask_size();
@@ -6430,11 +6431,12 @@ void __init sched_init(void)
 	}
 
 #ifdef CONFIG_SMP
-	init_defrootdomain();
+	init_defrootdomain();   //@@ rootdomain 초기화 및 rootdomain의 refer conunt를 1로 설정.
 #endif
 
 	init_rt_bandwidth(&def_rt_bandwidth,
-			global_rt_period(), global_rt_runtime());
+			global_rt_period(), global_rt_runtime()); //@@ 1초 마다 timer가 발생하고 0.95s내에 task를 끝내야한다.
+//@@ [20141108] init_rt_bandwidth end
 
 #ifdef CONFIG_RT_GROUP_SCHED
 	init_rt_bandwidth(&root_task_group.rt_bandwidth,

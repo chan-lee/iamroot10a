@@ -1254,3 +1254,52 @@ active와 expired가 있는데, 실행후 active에서 expired로 옮긴 후 모
 옮기고 나면 active와 expired를 swap 한다.
 Q: O(1) 스케줄러가 비선점형 커널의 주요 원인인가?
 
+================================================================================
+20141101
+code review
+
+================================================================================
+20141108
+shched_init() 시작
+	리눅스 스케쥴러의 변천사 O(1), CFS
+		http://enginius.tistory.com/97
+
+	init_defrootdomain():
+		1. cpupri를 위해 메모리를 할당 받고 각 cpu별 cpu_to_pri를 CPUPRI_INVALID=-1로 설정.
+			cpupri_init :
+				 참고)http://code.google.com/p/linuxkernel-iamroot/source/browse/trunk/kernel/sched_cpupri.c?r=60
+	init_rt_bandwith()
+		1. rt_bandwith의 rt_period, rt_runtime을 초기화
+		2. hrtimer( high resolution timer) 초기화    참고)http://studyfoss.egloos.com/viewer/5268468
+			 각 cpu별 hrtimer 및  timequeue 초기화	
+				.CLOCK_REALTIME (0) : 현재 시간을 기준으로 하여 시간을 계산한다. 시스템 시간 변경 시 영향을 받는다.
+				.CLOCK_MONOTONIC (1) : 커널이 동작한 시간을 기준으로 하여 시간을 계산한다. 외부의 영향을 받지 않는다.
+			-clock source의 종류
+				.RTC(real time clock)
+				.PIT(programable interval timer)
+				.hpet(high precision event timer)
+				.TSC(time stamp counter) : cpu 안에 들어있는 HW counter
+			timerqueue_init(&timer->node) : rb_node에 대해서 RB_CLEAR_NODE
+		3. hrtimer_forward() : 다음 interval을 위해서 만료 시간을 이 함수가  리턴되기 전에 설정해 둔다. 
+				그래야 다음 event시에 만료 시간을 알 수 있다. 
+			period 는 interval을 의미.
+
+                    timer                                current time
+											& -> forword or advancing           
+
+           -----------7----+------------+-------------+------**------
+                         
+									ovrrun   1            2             3      ; 현재 overrun 값은 3
+
+참고)professional Linux kernel Architecture(p.925)에서
+Let us illustrate the behavior by an example. If the old expiration time is 5, now is 12,
+and interval is 2, then the new expiration time will be 13. The return value is 4 because
+13 = 5 + 4 × 2.    overrun: 4개 (5, 7, 9, 11) 
+
+
+The high-resolution timer API
+참고) http://lwn.net/Articles/167897/
+		리눅스 커널 심층분석, 리눅스 커널의 이해
+
+메모리에서는 주소가 중요하다면, CPU에서는 시간이 중요하다.
+================================================================================

@@ -23,7 +23,7 @@ static enum hrtimer_restart sched_rt_period_timer(struct hrtimer *timer)
 
 	for (;;) {
 		now = hrtimer_cb_get_time(timer);
-		overrun = hrtimer_forward(timer, now, rt_b->rt_period);
+		overrun = hrtimer_forward(timer, now, rt_b->rt_period); //@@ 주어진 interval과 비교해서 overrun된 값을 획득.
 
 		if (!overrun)
 			break;
@@ -41,9 +41,11 @@ void init_rt_bandwidth(struct rt_bandwidth *rt_b, u64 period, u64 runtime)
 
 	raw_spin_lock_init(&rt_b->rt_runtime_lock);
 
+	//@@ 각 cpu별 high resolution timer 및 timequeue 초기화, rb_node의 root node를  clear
 	hrtimer_init(&rt_b->rt_period_timer,
 			CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	rt_b->rt_period_timer.function = sched_rt_period_timer;
+	rt_b->rt_period_timer.function = sched_rt_period_timer; 
+	//sched_rt_period_time() hrtimer_forword를 이용해서 overrun값을 구하고 이값이 0이상이면 최종 만료시간을 재설정. 
 }
 
 static void start_rt_bandwidth(struct rt_bandwidth *rt_b)

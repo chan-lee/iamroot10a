@@ -843,7 +843,7 @@ u64 hrtimer_forward(struct hrtimer *timer, ktime_t now, ktime_t interval)
 	u64 orun = 1;
 	ktime_t delta;
 
-	delta = ktime_sub(now, hrtimer_get_expires(timer));
+	delta = ktime_sub(now, hrtimer_get_expires(timer)); //@@ 연산 :  now - hrtimer_get~
 
 	if (delta.tv64 < 0)
 		return 0;
@@ -1190,7 +1190,7 @@ static void __hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 
 	base = hrtimer_clockid_to_base(clock_id);
 	timer->base = &cpu_base->clock_base[base];
-	timerqueue_init(&timer->node);
+	timerqueue_init(&timer->node);  //@@ rb_node에 대한  RB_CLEAR_NODE 실행
 
 #ifdef CONFIG_TIMER_STATS
 	timer->start_site = NULL;
@@ -1209,7 +1209,7 @@ void hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 		  enum hrtimer_mode mode)
 {
 	debug_init(timer, clock_id, mode);
-	__hrtimer_init(timer, clock_id, mode);
+	__hrtimer_init(timer, clock_id, mode); //@@ CPU별 time clock를 최기화하고 timerqueue도 초기화.
 }
 EXPORT_SYMBOL_GPL(hrtimer_init);
 
