@@ -45,7 +45,7 @@ void init_rt_bandwidth(struct rt_bandwidth *rt_b, u64 period, u64 runtime)
 	hrtimer_init(&rt_b->rt_period_timer,
 			CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	rt_b->rt_period_timer.function = sched_rt_period_timer; 
-	//sched_rt_period_time() hrtimer_forword를 이용해서 overrun값을 구하고 이값이 0이상이면 최종 만료시간을 재설정. 
+	//@@ sched_rt_period_time() hrtimer_forword를 이용해서 overrun값을 구하고 이값이 0이상이면 최종 만료시간을 재설정. 
 }
 
 static void start_rt_bandwidth(struct rt_bandwidth *rt_b)

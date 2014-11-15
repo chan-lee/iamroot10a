@@ -1209,7 +1209,7 @@ void hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 		  enum hrtimer_mode mode)
 {
 	debug_init(timer, clock_id, mode);
-	__hrtimer_init(timer, clock_id, mode); //@@ CPU별 time clock를 최기화하고 timerqueue도 초기화.
+	__hrtimer_init(timer, clock_id, mode); //@@ CPU별 time clock를 초기화하고 timerqueue도 초기화.
 }
 EXPORT_SYMBOL_GPL(hrtimer_init);
 

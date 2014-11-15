@@ -6438,7 +6438,10 @@ void __init sched_init(void)
 			global_rt_period(), global_rt_runtime()); //@@ 1초 마다 timer가 발생하고 0.95s내에 task를 끝내야한다.
 //@@ [20141108] init_rt_bandwidth end
 
+  //@@ [2014.11.15] 시작
+
 #ifdef CONFIG_RT_GROUP_SCHED
+  //@@ root_task_group: 부팅 하는 동안 모든 태스크들은 root_task_group 에 속한다.
 	init_rt_bandwidth(&root_task_group.rt_bandwidth,
 			global_rt_period(), global_rt_runtime());
 #endif /* CONFIG_RT_GROUP_SCHED */
@@ -6447,9 +6450,12 @@ void __init sched_init(void)
 	list_add(&root_task_group.list, &task_groups);
 	INIT_LIST_HEAD(&root_task_group.children);
 	INIT_LIST_HEAD(&root_task_group.siblings);
+  //@@ init_task 의 그룹 필드(autogroup) 를 세팅(초기화) 함. autogroup_default 로 초기화한다. autogroup_default 는 root_task_group 을 가리키고, 그 외에 세마포어나 nice 값 등도 있음.
 	autogroup_init(&init_task);
 
 #endif /* CONFIG_CGROUP_SCHED */
+
+  //@@ [2014.11.15] runqueue 자료 구조 분석 중 종료.
 
 	for_each_possible_cpu(i) {
 		struct rq *rq;
