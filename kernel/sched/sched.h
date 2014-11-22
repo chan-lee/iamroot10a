@@ -405,9 +405,9 @@ struct rq {
 	 * nr_running and cpu_load should be in the same cacheline because
 	 * remote CPUs use both these fields when doing load calculation.
 	 */
-	unsigned int nr_running;
+	unsigned int nr_running; //@@ 실행큐 내 실행가능한 프로세스 수
 	#define CPU_LOAD_IDX_MAX 5
-	unsigned long cpu_load[CPU_LOAD_IDX_MAX];
+	unsigned long cpu_load[CPU_LOAD_IDX_MAX]; //@@ 실행큐에서의 프로세스 cpu load 인자
 	unsigned long last_load_update_tick;
 #ifdef CONFIG_NO_HZ_COMMON
 	u64 nohz_stamp;
@@ -421,7 +421,7 @@ struct rq {
 	/* capture load from *all* tasks on this cpu: */
 	struct load_weight load;
 	unsigned long nr_load_updates;
-	u64 nr_switches;
+	u64 nr_switches; //@@ cpu에 의해 수행된 프로세스 전환 수
 
 	struct cfs_rq cfs;
 	struct rt_rq rt;
@@ -453,7 +453,7 @@ struct rq {
 	u64 clock;
 	u64 clock_task;
 
-	atomic_t nr_iowait;
+	atomic_t nr_iowait; //@@ 디스크 입출력이 완료되기를 기다리는 프로세스수
 
 #ifdef CONFIG_SMP
 	struct root_domain *rd;

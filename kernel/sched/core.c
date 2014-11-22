@@ -6452,13 +6452,16 @@ void __init sched_init(void)
 	INIT_LIST_HEAD(&root_task_group.siblings);
   //@@ init_task 의 그룹 필드(autogroup) 를 세팅(초기화) 함. autogroup_default 로 초기화한다. autogroup_default 는 root_task_group 을 가리키고, 그 외에 세마포어나 nice 값 등도 있음.
 	autogroup_init(&init_task);
+  //@@ heavy cpu load때 자주사용하는 프로세스 그룹(autogroup)를 따로 
+  //@@ 스케줄링하여 느려짐 방지 
 
 #endif /* CONFIG_CGROUP_SCHED */
 
   //@@ [2014.11.15] runqueue 자료 구조 분석 중 종료.
 
+  //@@ [2014.11.22] 시작
 	for_each_possible_cpu(i) {
-		struct rq *rq;
+		struct rq *rq; //@@ [2014.11.22] rq struct 분석 중 종료.
 
 		rq = cpu_rq(i);
 		raw_spin_lock_init(&rq->lock);
