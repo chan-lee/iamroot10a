@@ -1382,8 +1382,8 @@ Schedule Class => Stop, RT, Fair, Idle
 
 * CFS Schedule Class의 하부 policy로는
 SCHED_NORMAL(SCHED_OTHER)
-SCHED_BATCH, 선점당하지 않고 일을 처리하고 가끔 일반 태스크 실행. 상호작용에 비용
-SCHED_IDLE, nince 19보다 더 약하다고 하는데 정확한 존재이유는 잘 모르겠음
+SCHED_BATCH, 선점당하지 않고 일을 처리하고 가끔 일반 태스크 실행. 상호작용에 비용듬
+SCHED_IDLE, nice 19보다 더 약하다고 하는데 정확한 존재이유는 잘 모르겠음
 
 * RT의 하부 policy로는 
 SCHED_FIFO
@@ -1403,4 +1403,55 @@ CONFIG_CGROUP_SCHED : group scheduling 사용 유무
 - CONFIG_RT_GROUP_SCHED : group scheduling을 RT에 적용
 - CONFIG_FAIR_GROUP_SCHED : group scheduling을 FAIR에 적용
 Cgroup 설정 예제는 sched-design-CFS.txt 참조 
+
+================================================================================
+2014.12.20
+----------------
+Documentation/scheduler/sched-domains.txt
+* sched_domin
+ -span (cpu를 포함)
+* sched_group
+ -groups (모든 group의 합집합은 span)
+
+* load_balance() - 현재 sched domain에서 가장 바쁜group을 찾고, 다시 가장 바쁜 런큐(cpu)를 그 그룹에서
+찾는다. 그리고 현재 cpu의 런큐와 찾은 런큐를 모두 락을 걸고, 찾은 가장 바쁜 큐에서 task들을 가져온다.
+이동된 task의 양은 이전 sched domain 그룹에서 계산된 값들이다. 
+
+* SMT(hyper thread) -> SMP -> NUMA
+physical cpu - core? chip 하나?
+* domain 구조 두가지
+#define ARCH_HASH_SCHED_TUNE
+#define ARCH_HASH_SCHED_DOMAIN
+
+* Big.Little은 AMP인가? 에 대해 궁금해 하다가...
+Big.Little, cluster migration, MP(HMP), CPU migration
+8core -> 4 core/ 4 core cpu migration
+http://gamma0burst.tistory.com/613
+결과적으로 H/W는 AMP, S/W는 SMP 처럼 보인다.
+
+----------------
+sched-nice-design.txt
+* time slice와 hz에 기반해서 nice 가 동작했기 때문에 예전 스케줄러에서 잘 동작하지 않았음
+* O(1)에서 기존 2.4에서 보다 - nice값의 기울기를 조정하여 더 강하게 만듬
+* nice에 대한 3가지 불만 
+ - 1. +19의 경우 1ms 정도가 맞지만 그러면 rescheduling비용이 너무 증가하니 5ms정도로 함. 그랬더니 너무 많은 cpu를 차지함
+ - 2. 상대적인 nice 값의 차이가 구간별로 다른 차이를 나타냄
+ - 3. 버그 있는 RT가 FIFO로 돌때 뒤의 nice에게는 기회가 안옴
+
+ * 신규 스케줄러
+ - 1. Hz와 time slice(jiffy)의 값에 따라 +19가 1초당 차지하는 cpu 점유율이 변하게 되었는데
+ 이를 time slice와 Hz와 분리하여, +19는 1.5%의 cpu 점유율을 가지도록 함
+ - 2. nice의 값 차이에 따라 어느 구간이던 같은 비율을 유지하도록 함
+ - 3. FIFO에 비해 강력하지 못할때, 자동적으로 recalibrate하여 nice level을 조정한다.
+
+----------------
+ * sched-rt-group.txt
+- period : 수행되야 하는 주기
+- runtime : 수행 주기동안 차지하는 cpu time
+/proc/sys/kernel/sched_rt_period_us: 1000000 (전체 cpu bandwidth)
+/proc/sys/kernel/sched_rt_runtime_us: 950000 (최대 rt가 사용할수 있는 시간)
+
+CONFIG_RT_GROUP_SCHED, cgroup으로 group scheduling 사용
+현재의 문제점. sibling 끼리의 starvation.
+나중에 SCHED_EDF(Earliest Deadline First scheduling)가 나오면 해결되겠지만, 힘들어 보인다.
 
