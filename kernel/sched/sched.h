@@ -97,7 +97,7 @@ static inline int task_has_rt_policy(struct task_struct *p)
  */
 struct rt_prio_array {
 	DECLARE_BITMAP(bitmap, MAX_RT_PRIO+1); /* include 1 bit for delimiter */
-	struct list_head queue[MAX_RT_PRIO];
+	struct list_head queue[MAX_RT_PRIO]; //@@ 100개
 };
 
 struct rt_bandwidth {

@@ -6463,15 +6463,21 @@ void __init sched_init(void)
 	for_each_possible_cpu(i) {
 		struct rq *rq; //@@ [2014.11.22] rq struct 분석 중 종료.
 
+    //@@ [2015.01.03] 시작
 		rq = cpu_rq(i);
 		raw_spin_lock_init(&rq->lock);
-		rq->nr_running = 0;
+		rq->nr_running = 0; //@@ nr_running: rq 내에 실행 가능한 프로세스 수
 		rq->calc_load_active = 0;
 		rq->calc_load_update = jiffies + LOAD_FREQ;
+    //@@ cfs rq 와 rt rq 의 field 들을 초기화한다.
 		init_cfs_rq(&rq->cfs);
 		init_rt_rq(&rq->rt, rq);
 #ifdef CONFIG_FAIR_GROUP_SCHED
+    //@@ root_task_group 은 default task group 으로, 부팅 하는 동안 모든 프로세스들이 root_task_group 에 속한다.
 		root_task_group.shares = ROOT_TASK_GROUP_LOAD;
+    //@@ struct rq 의 leaf_cfs_rq_list 는 CONFIG_FAIR_GROUP_SCHED 에서만 선언되고,
+    //@@ rb tree 의 leaf 노드들을 list 로 연결한다.
+    //@@ 어떻게 사용하는지는 아직 모름 TODO
 		INIT_LIST_HEAD(&rq->leaf_cfs_rq_list);
 		/*
 		 * How much cpu bandwidth does root_task_group get?
@@ -6492,7 +6498,14 @@ void __init sched_init(void)
 		 * We achieve this by letting root_task_group's tasks sit
 		 * directly in rq->cfs (i.e root_task_group->se[] = NULL).
 		 */
+    //@@ root_task_group 에게 CPU bandwidth 를 어떻게 나누어줄 것인지
+    //@@ 위에서 설명되고 있댜. 간단하게 group 안의 task 들 사이에서
+    //@@ CPU bandwidth (time) 을 공평하게 나누어준다고 이해하면 될 듯.
 		init_cfs_bandwidth(&root_task_group.cfs_bandwidth);
+    //@@ 1st param: task_group *tg
+    //@@ 2nd param: sched_entity *se -> NULL
+    //@@ 3rd param: int cpu
+    //@@ 4th param: sched_entity *parent -> NULL
 		init_tg_cfs_entry(&root_task_group, &rq->cfs, NULL, i, NULL);
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 
@@ -6502,11 +6515,13 @@ void __init sched_init(void)
 		init_tg_rt_entry(&root_task_group, &rq->rt, NULL, i, NULL);
 #endif
 
+    //@@ CPU_LOAD_IDX_MAX = 5
 		for (j = 0; j < CPU_LOAD_IDX_MAX; j++)
 			rq->cpu_load[j] = 0;
 
 		rq->last_load_update_tick = jiffies;
 
+    //@@ [2015.01.03] 끝
 #ifdef CONFIG_SMP
 		rq->sd = NULL;
 		rq->rd = NULL;

@@ -66,19 +66,22 @@ void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq)
 	struct rt_prio_array *array;
 	int i;
 
+  //@@ rt_prio_array 가 가지고 있는 두 가지 fields
+  //@@ queue (list) 와 bitmap 초기화
 	array = &rt_rq->active;
 	for (i = 0; i < MAX_RT_PRIO; i++) {
 		INIT_LIST_HEAD(array->queue + i);
 		__clear_bit(i, array->bitmap);
 	}
 	/* delimiter for bitsearch: */
-	__set_bit(MAX_RT_PRIO, array->bitmap);
+	__set_bit(MAX_RT_PRIO, array->bitmap); //@@ bitmap의 가장 마지막 bit
 
 #if defined CONFIG_SMP
 	rt_rq->highest_prio.curr = MAX_RT_PRIO;
 	rt_rq->highest_prio.next = MAX_RT_PRIO;
 	rt_rq->rt_nr_migratory = 0;
-	rt_rq->overloaded = 0;
+	rt_rq->overloaded = :e
+    0;
 	plist_head_init(&rt_rq->pushable_tasks);
 #endif
 

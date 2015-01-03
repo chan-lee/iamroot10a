@@ -2682,10 +2682,14 @@ static enum hrtimer_restart sched_cfs_period_timer(struct hrtimer *timer)
 void init_cfs_bandwidth(struct cfs_bandwidth *cfs_b)
 {
 	raw_spin_lock_init(&cfs_b->lock);
+  //@@ cfs bandwidth 기본 fields (period, quota) 초기화
 	cfs_b->runtime = 0;
-	cfs_b->quota = RUNTIME_INF;
+	cfs_b->quota = RUNTIME_INF; //@@ (u64)~0ULL
 	cfs_b->period = ns_to_ktime(default_cfs_period());
 
+  //@@ cfs bandwidth 관리하기 위한 period 및 quota(slack) timer 초기화
+  //@@ bandwidth 관련 시간들도 slice 로 관리됨.
+  //@@ slack 은 아마 unused runtime 을 위한 것일 듯 하다. (history.txt 참조)
 	INIT_LIST_HEAD(&cfs_b->throttled_cfs_rq);
 	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	cfs_b->period_timer.function = sched_cfs_period_timer;
@@ -5943,7 +5947,7 @@ static void set_curr_task_fair(struct rq *rq)
 
 void init_cfs_rq(struct cfs_rq *cfs_rq)
 {
-	cfs_rq->tasks_timeline = RB_ROOT;
+	cfs_rq->tasks_timeline = RB_ROOT; //@@ struct rb_root tasks_timeline 초기화
 	cfs_rq->min_vruntime = (u64)(-(1LL << 20));
 #ifndef CONFIG_64BIT
 	cfs_rq->min_vruntime_copy = cfs_rq->min_vruntime;
