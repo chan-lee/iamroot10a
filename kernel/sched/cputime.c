@@ -755,7 +755,7 @@ void vtime_init_idle(struct task_struct *t, int cpu)
 	unsigned long flags;
 
 	write_seqlock_irqsave(&t->vtime_seqlock, flags);
-	t->vtime_snap_whence = VTIME_SYS;
+	t->vtime_snap_whence = VTIME_SYS; //@@ enumeration
 	t->vtime_snap = sched_clock_cpu(cpu);
 	write_sequnlock_irqrestore(&t->vtime_seqlock, flags);
 }

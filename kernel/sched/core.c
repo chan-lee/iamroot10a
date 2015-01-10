@@ -122,7 +122,7 @@ void update_rq_clock(struct rq *rq)
 		return;
 
 	delta = sched_clock_cpu(cpu_of(rq)) - rq->clock;
-	rq->clock += delta;
+	rq->clock += delta; //@@ clock update
 	update_rq_clock_task(rq, delta);
 }
 
@@ -390,6 +390,8 @@ static enum hrtimer_restart hrtick(struct hrtimer *timer)
 
 	raw_spin_lock(&rq->lock);
 	update_rq_clock(rq);
+  //@@ task_tick: time tick 마다 task_tick 를 호출
+  //@@ CFS 인지 RT 인지에 따라서 다른 함수가 결국엔 호출됨
 	rq->curr->sched_class->task_tick(rq, rq->curr, 1);
 	raw_spin_unlock(&rq->lock);
 
@@ -757,9 +759,12 @@ static void set_load_weight(struct task_struct *p)
 	if (p->policy == SCHED_IDLE) {
 		load->weight = scale_load(WEIGHT_IDLEPRIO);
 		load->inv_weight = WMULT_IDLEPRIO;
+    //@@ inv_weight: weight 의 역수
 		return;
 	}
 
+  //@@ vruntime 에서 사용되는 weight 를 조정 (로드밸런싱)
+  //@@ 여기에서는 이미 정의된 값들 (40개) 사용함
 	load->weight = scale_load(prio_to_weight[prio]);
 	load->inv_weight = prio_to_wmult[prio];
 }
@@ -4203,7 +4208,7 @@ void init_idle(struct task_struct *idle, int cpu)
 
 	raw_spin_lock_irqsave(&rq->lock, flags);
 
-	__sched_fork(idle);
+	__sched_fork(idle); //@@ parameter의 task_struct를 setup 해준다
 	idle->state = TASK_RUNNING;
 	idle->se.exec_start = sched_clock();
 
@@ -4992,6 +4997,7 @@ static void rq_attach_root(struct rq *rq, struct root_domain *rd)
 
 	raw_spin_lock_irqsave(&rq->lock, flags);
 
+  //@@ 이미 rq->rd 필드가 어떤 root domain 을 가리키고 있을 때
 	if (rq->rd) {
 		old_rd = rq->rd;
 
@@ -6522,21 +6528,24 @@ void __init sched_init(void)
 		rq->last_load_update_tick = jiffies;
 
     //@@ [2015.01.03] 끝
+    //@@ [2015.01.10] 시작
 #ifdef CONFIG_SMP
-		rq->sd = NULL;
-		rq->rd = NULL;
-		rq->cpu_power = SCHED_POWER_SCALE;
-		rq->post_schedule = 0;
-		rq->active_balance = 0;
-		rq->next_balance = jiffies;
-		rq->push_cpu = 0;
-		rq->cpu = i;
-		rq->online = 0;
-		rq->idle_stamp = 0;
-		rq->avg_idle = 2*sysctl_sched_migration_cost;
+		rq->sd = NULL; //@@ sched_domain
+		rq->rd = NULL; //@@ root_domain
+		rq->cpu_power = SCHED_POWER_SCALE; //@@ unsigned long
+		rq->post_schedule = 0;      //@@ int (for active balancing)
+		rq->active_balance = 0;     //@@ int
+		rq->next_balance = jiffies; //@@ 
+		rq->push_cpu = 0;           //@@ int
+		rq->cpu = i;                //@@ int (cpu for this runqueue)
+		rq->online = 0;             //@@ int
+		rq->idle_stamp = 0;         //@@ u64
+		rq->avg_idle = 2*sysctl_sched_migration_cost; //u64
 
 		INIT_LIST_HEAD(&rq->cfs_tasks);
 
+    //@@ def_root_domain: a single root-domain with all cpus as members (mimicking the global state we have today).
+    //@@ rq 의 rd 필드에 (rq->rd) def_root_domain 을 넣어준다 
 		rq_attach_root(rq, &def_root_domain);
 #ifdef CONFIG_NO_HZ_COMMON
 		rq->nohz_flags = 0;
@@ -6545,10 +6554,11 @@ void __init sched_init(void)
 		rq->last_sched_tick = 0;
 #endif
 #endif
-		init_rq_hrtick(rq);
+		init_rq_hrtick(rq); //@@ hrtimer_init(&rq->hrtick_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 		atomic_set(&rq->nr_iowait, 0);
 	}
 
+  //@@ weight 조정해서 로드 밸런싱 수행 (초기화)
 	set_load_weight(&init_task);
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
@@ -6559,6 +6569,7 @@ void __init sched_init(void)
 	plist_head_init(&init_task.pi_waiters);
 #endif
 
+  //@@ TODO: what is lazy MMU switching?
 	/*
 	 * The boot idle thread does lazy MMU switching as well:
 	 */
@@ -6572,6 +6583,7 @@ void __init sched_init(void)
 	 * when this runqueue becomes "idle".
 	 */
 	init_idle(current, smp_processor_id());
+  //@@ [2015.01.10] 끝
 
 	calc_load_update = jiffies + LOAD_FREQ;
 

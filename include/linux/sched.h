@@ -915,7 +915,10 @@ struct mempolicy;
 struct pipe_inode_info;
 struct uts_namespace;
 
+//@@ 로드 밸런싱에 사용되는 자료 구조
 struct load_weight {
+  //@@ weight: 우선순위에 따른 가중치
+  //@@ inv_weight: weight 의 역수
 	unsigned long weight, inv_weight;
 };
 
