@@ -1492,3 +1492,33 @@ statistics 관련 문서 분석은 생략한다.
 2015.01.10
 ----------------
 sched_init() 코드 분석 계속 중
+
+================================================================================
+2015.01.24
+RUC
+https://app.box.com/shared/x5r7ugx6o6
+https://www.efficios.com/pub/rcu/urcu-main.pdf 저널 논문
+
+mutex: 오직 하나의 writer 혹은 reader만 접근 가능(writer, reader의 구분이 의미없음)
+rwlock: write lock과 read lock이 존재하며, write lock이 걸려 있으면 read를 못하고,
+  read lock이 걸려 있으면, write를 못한다. read가 더 빈번하게 일어나므로 write lock을
+  못 걸어서 굶을 확률이 크다. pthread_rwlock...
+RCU: lock free이며, writer(updater)와 reader는 아무 제약 없이 진입하며,
+  reader가 이미 진입하여 자료를 참고 하고 있을때 writer가 진입한다면, reader가 계속
+  그 자료를 이용할 수 있게 변경하고(list, hlist자료구조가 유리),
+  실제 삭제는 해당 자료를 참조하고 있는 reader가 사라질 때
+  삭제한다. 한마디로 자료 갱신 부분에서 동기화를 맞춘다고 보면 된다.
+user level에서 사용하기 어려운 이유:
+http://bartoszmilewski.com/2013/11/13/functional-data-structures-in-c-lists/
+
+hlist 잠깐
+사용 이유.
+head에서 tail을 사용하지 않고,
+hnode에서 **prev를 사용함으로서 갱신시 head의 정보를 넘길 필요 없고,
+if check가 없어짐
+http://stackoverflow.com/questions/3058592/use-of-double-pointer-in-linux-kernel-hash-list-implementation
+
+**prev는 자신의 앞 노드의 링크를 가리키는 것이 아니라
+자신의 앞앞 노드의 넥스트를 가리킨다.
+
+
