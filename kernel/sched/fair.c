@@ -2666,13 +2666,16 @@ static enum hrtimer_restart sched_cfs_period_timer(struct hrtimer *timer)
 	int overrun;
 	int idle = 0;
 
-	for (;;) {
-		now = hrtimer_cb_get_time(timer);
+	for (;;) { //@@ 처리하는 동안에도 overrun이 발생하면 그것까지 처리하려는 의지!!!
+		now = hrtimer_cb_get_time(timer); // @@ hr timer나 없을 경우 softirq_time을 사용한다.
+    //@@ 다음 period를 설정한다.
+    //@@ 혹시 expiration time이 지나서 밀린 것들이 있다면 overrun을 계산해서 돌려준다.
 		overrun = hrtimer_forward(timer, now, cfs_b->period);
 
 		if (!overrun)
 			break;
 
+    //@@ pass
 		idle = do_sched_cfs_period_timer(cfs_b, overrun);
 	}
 

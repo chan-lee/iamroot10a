@@ -44,7 +44,7 @@
  * config switch CONFIG_KTIME_SCALAR.
  */
 union ktime {
-	s64	tv64;
+	s64	tv64; //@@ 292년. pow(2,63) / (1000000000 * 60 *60 * 24 *365)
 #if BITS_PER_LONG != 64 && !defined(CONFIG_KTIME_SCALAR)
 	struct {
 # ifdef __BIG_ENDIAN

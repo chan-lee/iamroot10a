@@ -1518,7 +1518,52 @@ hnode에서 **prev를 사용함으로서 갱신시 head의 정보를 넘길 필�
 if check가 없어짐
 http://stackoverflow.com/questions/3058592/use-of-double-pointer-in-linux-kernel-hash-list-implementation
 
-**prev는 자신의 앞 노드의 링크를 가리키는 것이 아니라
-자신의 앞앞 노드의 넥스트를 가리킨다.
+**prev는 자신의 앞 노드를 바로 가리키는 것이 아니라
+자신의 앞 노드의 주소를 가리킨다.
 
+================================================================================
+2015.01.31
+scheduling entry point
+  - rt(init_rt_bandwidth 안에...)
+    sched_rt_period_timer : monotonic
+  - cfs(init_cfs_bandwidth) - CONFIG_FAIR_GROUP_SCHED가 define되어 있을 경우
+    sched_cfs_period_timer : monotonic
+    sched_cfs_slack_timer : monotinic
+
+  - 공통 (init_rq_hrtick)
+    hrtick : monotonic
+
+hr timer의 clock base는 4개가 미리 만들어져 있다 . kernel/hrtimer.c
+HRTIMER_BASE_MONOTONIC, HRTIMER_BASE_REALTIME, HRTIMER_BASE_BOOTTIME, HRTIMER_BASE_TAI
+time값을 얻어 오는 함수는 다음과 같다.
+ktime_get, ktime_get_real, ktime_get_boottime, ktime_get_clocktai
+MONOTONIC과 BOOTTIME의 차이는 둘다 시스템 시작후의 시간을 가리키는데,
+BOOTTIME은 suspend된 시간까지 포함한다. kernel/time/timekeeping.c
+
+TAI : International Atomic Time
+
+kernel/sched/fair.c - sched_cfs_period_timer
+
+GTOD - generic time of day
+
+===============================================================================
+Documentation/timers/highres.txt
+
+- The paper "hrtimers and beyond"
+www.kernel.org/doc/ols/2006/ols2006v1-pages-333-346.pdf
+
+- The paper "We Are Not Getting Any Younger: A New Approach to Time and Timers"
+www.kernel.org/doc/ols/2005/ols2005v1-pages-227-240.pdf
+
+생략(다음주 정리)
+
+clock event device가 해야 하는일
+ - 다음 event interrupt 스케줄하기
+ - notification service
+ - suspend & resume
+
+kernel 설정에 세개 추가
+high resolution timers
+dynamic tick
+idle routine?
 

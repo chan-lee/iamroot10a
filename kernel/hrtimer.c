@@ -855,7 +855,7 @@ u64 hrtimer_forward(struct hrtimer *timer, ktime_t now, ktime_t interval)
 		s64 incr = ktime_to_ns(interval);
 
 		orun = ktime_divns(delta, incr);
-		hrtimer_add_expires_ns(timer, incr * orun);
+		hrtimer_add_expires_ns(timer, incr * orun); //@@ 다음 expire 시간을 설정
 		if (hrtimer_get_expires_tv64(timer) > now.tv64)
 			return orun;
 		/*
@@ -1187,7 +1187,8 @@ static void __hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 
 	if (clock_id == CLOCK_REALTIME && mode != HRTIMER_MODE_ABS)
 		clock_id = CLOCK_MONOTONIC;
-
+  //@@ clock id에 맞는 hrtimer base 네가지 중에 하나를 찾는다.
+  //@@ 없다면 monotonic base timer가 될 것이다.
 	base = hrtimer_clockid_to_base(clock_id);
 	timer->base = &cpu_base->clock_base[base];
 	timerqueue_init(&timer->node);  //@@ rb_node에 대한  RB_CLEAR_NODE 실행

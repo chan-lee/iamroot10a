@@ -86,7 +86,7 @@ __read_mostly int sched_clock_stable;
 
 struct sched_clock_data {
 	u64			tick_raw;
-	u64			tick_gtod;
+	u64			tick_gtod; //@@ generic time of day
 	u64			clock;
 };
 
@@ -143,6 +143,7 @@ static u64 sched_clock_local(struct sched_clock_data *scd)
 	u64 now, clock, old_clock, min_clock, max_clock;
 	s64 delta;
 
+  //@@ 2015.01.31 end
 again:
 	now = sched_clock();
 	delta = now - scd->tick_raw;
