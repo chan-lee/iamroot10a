@@ -1555,15 +1555,100 @@ www.kernel.org/doc/ols/2006/ols2006v1-pages-333-346.pdf
 - The paper "We Are Not Getting Any Younger: A New Approach to Time and Timers"
 www.kernel.org/doc/ols/2005/ols2005v1-pages-227-240.pdf
 
-생략(다음주 정리)
+clock
+ - clock source: 단조롭게 증가하는 시간 정보를 읽어옴
+ - clock event device: 다음 이벤트 인터럽트 스케줄에 사용(paper에서는 clock evnt source)
 
-clock event device가 해야 하는일
- - 다음 event interrupt 스케줄하기
- - notification service
- - suspend & resume
+1) hrtimer base infrastructure
+timer wheel과 달라진점은 rb-tree를 이용한 정렬된 큐잉과 tick과 독립적으로 됨
 
-kernel 설정에 세개 추가
+2) timeofday and clock source management
+"We Are Not Getting Any Younger: A New Approch to Time and Timers"에서
+John Stultz의 GTOD(Generic Time Of Day) framework로 기존의 TOD가 architecture specific한
+부분에서 바깥으로 나오게됨("hrtimers and beyound" fig.3) 2.6.18에 적용
+
+3) clock event management
+현재까지는 다음 이벤트에 대한 정의는 주기적으로 정의 되어 있으며,
+이는 컴파일 타임에 정의 되고 이는 아키텍쳐에에 의존적인 코드로 되어 있다.
+중복된 코드로 인해 설정을 바꾸는 것이 아주 어려웠다. 그리고 hrtimer를 지원하기 위해서는
+모든 곳을 손봐야 했다.
+이를 해결하기 위해 clock event sybsystem이 나오게 되었고, 아키텍쳐 의존적인
+코드를 최소화하고 새로운 clock event 장치를 쉽게 추가 활용할수 있도록 목표를 잡고있다.
+
+per-system global event device : linux periodic tick(jiffies update)을 위해 사용
+per-CPU event devices : 각 cpu의 process accounting, profiling, high resolution timers에서 사용
+
+clock event device의 management layer가 해야 하는일
+  - system global periodic tick (jiffies update)
+  - cpu local update_process_times
+  - cpu local profiling
+  - cpu local next event interrupt (non periodic mode)
+
+clock event device의 clock event layer에서 할수 있는일
+  - 다음 event interrupt 스케줄하기
+  - notification service
+  - suspend & resume
+
+이 변경으로 인해 기능상의 충격은 없었으며, high resolutin timer와
+dynamic tick을 이용할수 있게 되었다.
+이는 아래의 kernel 설정을 enable함으로서 사용할 수 있다.
 high resolution timers
 dynamic tick
-idle routine?
+dynamic tick에서 idle routine 호출
+
+Fig #4 참조
+
+================================================================================
+2015.02.07
+Cont.
+4) high resolution timer functionality
+부팅 도중에 high resolution timer기능을 사용하는 것은 불가능하고, 유용하지 않다.
+clock event device framework 와 GTOD와 hrtimers는 스스로 초기화되며,
+그전에 clock soruces와 clock event devices 또한 등록 되어있어야 한다.
+hrtimer가 초기화되기 전까지 lor resolution periodic mode로 동작하며, 새 하드웨에 대해
+hrtimer가 사용가능해지면 notification을 해준다. hrtimer는 high resolution mode로
+동작하는지 검증해 보고, 제대로 지원되지 않는다면 그냥 low resolution mode로 동작한다.
+
+global clock event device만 지원되는 SMP에 대한 high resolution 지원 코드는 없다.
+그것은 IPI call과 관련이 있는데, overhead가 너무 커서이다
+i386 SMP에서는 C3 power state에 있는 APIC을 멈추게 하기에 high resolution과
+dynamic tick을 멈출수 없다.
+timer가 추가될 때 event deivce가 재프로그램되는 것을 결정할수 있다.
+한군데서만 사용되는듯하다. (이해 안가서 생략)
+timer interrupt 가 발생하면 rb tree로 부터 linked list로 옮기고, softirq handler를
+호출한다. hard interrupt context에서는 이것이 제한되어 있는데, 여기서는
+context switching을 피하기 위해서 사용한다. wakeup function에서 사용한다.
+high resolutin mode가 되면 periodic tick이 꺼진다. 이것은 system global periodic clock을
+사용못하게 한다.(위의 i386 SMP와 관계 있는듯 한데 잘 모르겠다.)
+per-cpu hrtimer로 periodic tick 기능을 운용한다.
+이하 생략
+
+5) dynamic ticks
+- hrtimer_stop_sched_tick
+- hrtimer_restart_sched_tick
+- hrtimer_update_jiffies
+
+full tickless를 위해 남은 구현 사항
+(일단 생략)
+===============================================================================
+Documentation/timers/hrtimers.txt
+(조금 생략)
+timer wheel 구조
+http://www.ibm.com/developerworks/aix/library/au-lowertime/
+
+cascading 방식
+http://lwn.net/Articles/152436/
+tv자료구조를 계속 만들면서 추가한다.
+
+high resolution timer를 새로만든 이유 4가지
+1) jiffies값과 너무 엮여 있고, 32bits로 가정하고 만들었기에 확장하기 힘들다
+2) tier wheel의 cascading 방식은 delay를 예측할수가 없다
+3) settimeofday나 NTP에서 이미 사용하고 자료구조는 너무 경직되어있다.
+4) timer wheel 은 I/O 에러 상태를 검사하는 timeouts에 최적화되어 있는데
+이는 대부분 expire되지 못하고 그전에 제거된다. 게다가 사용자들은 granularity와
+정확성의 trade off를 받아들일수 있다.(덜 정확해도 문제없었다)
+(granularity가 증가할수록 정확도가 올라가지만 성능이 떨어짐) 
+그리고 오버헤드가 거의 없을것으로 예측했다.(?)
+정확한 timing은 중요목표가 아니었다. - 사실 timeout value는 대강 설정했었다.
+이것은 비용이 적게들고 간섭덜받아야하는 실제 정확한 timeout 완료 프로세싱을 보장하는데 필요악이었다.
 
