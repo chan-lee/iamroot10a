@@ -1652,3 +1652,45 @@ high resolution timer를 새로만든 이유 4가지
 정확한 timing은 중요목표가 아니었다. - 사실 timeout value는 대강 설정했었다.
 이것은 비용이 적게들고 간섭덜받아야하는 실제 정확한 timeout 완료 프로세싱을 보장하는데 필요악이었다.
 
+================================================================================
+2015.02.28
+Documentation/timers/hrtimers.txt 계속
+timeout과 precise timer subsystem의 분리는 많은 이점이 있다.
+ex) 저해상도 timer에서도 정밀한 부분이 요구되면 hrtimer코드로 migrate시킬 수 있다.
+
+hrtimer subsystem 구현 상세
+- 간단하게...
+- jiffies와 granularity에 의존하지 않고, 64 bits nanoseconds로 동작하게.
+- 이미 존재하는 커널 코드와 단일화
+
+즉각적인 큐에 넣기와 ordering을 위해 rbtree를 선택했다.
+예전의 low-resolution CLOCK_REALTIME은 시간 변경이 발생하면
+모든 timer를 하나씩 deque, enque하면서 처리해야 했다.
+
+ktime_t: union 으로 되어 있으며 32bits system에서는 struct 두개로 구성되어 있다.
+include/linux/ktime.h 참조. ktime_t -> timeval 등의 변환 함수, 매크로가 있다.
+
+hrtimer에 영향을 받는 커널 기능
+ - nanosleep
+ - itimers
+ - posix-timers
+
+===============================================================================
+Documentation/timers/hpet.txt
+intel과 ms가 만들었다.
+이하 생략
+
+Process Scheduling in Linux (PDF)
+http://criticalblue.com/news/wp-content/uploads/2013/12/linux_scheduler_notes_final.pdf
+Linux Process Scheduling (PDF)
+http://criticalblue.com/news/wp-content/uploads/2013/12/linux_scheduler.pdf
+
+Process Scheduling in Linux (PDF) 의 5 Scheduler Skeleton chapter를 보기 시작
+
+- kernel/sched/core.c -> __sched()  함수 분석
+preemt_disable로 만들고, rq lock을 걸고, next task를 찾고
+context_switch()를 실제로 실행하는 함수
+
+다음 시간에는 위의 pdf를 마저 보거나, __sched함수를 더 자세히 분석하거나,
+context_switch() 함수를 더 자세히 분석하자.
+

@@ -107,7 +107,7 @@ enum hrtimer_restart {
  */
 struct hrtimer {
 	struct timerqueue_node		node;
-	ktime_t				_softexpires;
+	ktime_t				_softexpires; //@@ 가장 이른 시간
 	enum hrtimer_restart		(*function)(struct hrtimer *);
 	struct hrtimer_clock_base	*base;
 	unsigned long			state;

@@ -123,7 +123,7 @@ void update_rq_clock(struct rq *rq)
 
 	delta = sched_clock_cpu(cpu_of(rq)) - rq->clock;
 	rq->clock += delta; //@@ clock update
-	update_rq_clock_task(rq, delta);
+	update_rq_clock_task(rq, delta); //@@ irq_delta로 좀 더 보정한다.
 }
 
 /*
@@ -492,6 +492,7 @@ static void init_rq_hrtick(struct rq *rq)
 #endif
 
 	hrtimer_init(&rq->hrtick_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+  //@@ 2015.02.27 start
 	rq->hrtick_timer.function = hrtick;
 }
 #else	/* CONFIG_SCHED_HRTICK */
@@ -2442,13 +2443,14 @@ need_resched:
 		switch_count = &prev->nvcsw;
 	}
 
-	pre_schedule(rq, prev);
+	pre_schedule(rq, prev); //@@ 자세히 보지는 않았지만,
+  //@@run queue에 running가능한 task를 넣는 것으로 추측
 
 	if (unlikely(!rq->nr_running))
-		idle_balance(cpu, rq);
+		idle_balance(cpu, rq); //@@ fair sched. 다른 cpu로부터 일거리를 가져옴
 
 	put_prev_task(rq, prev);
-	next = pick_next_task(rq);
+	next = pick_next_task(rq); //@@ 성능 향상을 위해 fair에서 찾아보고 없으면 나머지 class에서도 찾아본다.
 	clear_tsk_need_resched(prev);
 	rq->skip_clock_update = 0;
 
@@ -2469,6 +2471,7 @@ need_resched:
 	} else
 		raw_spin_unlock_irq(&rq->lock);
 
+  //@@ 2015.02.27 end
 	post_schedule(rq);
 
 	sched_preempt_enable_no_resched();
