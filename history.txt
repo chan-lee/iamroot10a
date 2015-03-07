@@ -1685,7 +1685,8 @@ http://criticalblue.com/news/wp-content/uploads/2013/12/linux_scheduler_notes_fi
 Linux Process Scheduling (PDF)
 http://criticalblue.com/news/wp-content/uploads/2013/12/linux_scheduler.pdf
 
-Process Scheduling in Linux (PDF) 의 5 Scheduler Skeleton chapter를 보기 시작
+Process Scheduling in Linux (PDF) 의
+5. Scheduler Skeleton chapter를 보기 시작
 
 - kernel/sched/core.c -> __sched()  함수 분석
 preemt_disable로 만들고, rq lock을 걸고, next task를 찾고
@@ -1694,3 +1695,39 @@ context_switch()를 실제로 실행하는 함수
 다음 시간에는 위의 pdf를 마저 보거나, __sched함수를 더 자세히 분석하거나,
 context_switch() 함수를 더 자세히 분석하자.
 
+================================================================================
+2015.03.07
+Process Scheduling in Linux (PDF) 계속
+
+5.2 Calling the Scheduler (schedule()을 호출하는 경우 3가지)
+- 1. scheduler_tick() 에서 task_tick()에서 호출
+- 2. sleep 상태로 갈때 - wait_queue에 넣고 schedule() 함수를 호출하여 잠들어 버림.
+  signal 받으면 loop를 빠져나옴
+- 3. wake_up - ttwu_queue()의 activate_task()에서 queue를 옮기고 check_preempt_curr() 에서 resched()
+
+6. Short Scheduling Algorithm History
+- kernel 1.2 : Circular Runqueue RR
+- kernel 2.2 : scheduling class (rt-tasks, non-preemptible, non-rt tasks), SMP
+- kernel 2.4 : O(N) scheduler
+- kernel 2.6 : O(1)
+- kernel 2.6.23 : CFS
+
+7. CFS
+- 앞부분 요약 생략
+- Text Editor와 Video Encoder의 예. CFS를 사용하면 I/O bound와 CPU bound task 모두 조화롭게 사용할수 있다.
+7.4 Spawning a new Task
+- 새로운 task가 생성되면 vruntime_min 같을 가져올 것으로 추정
+7.5/ 7.6 요약 생략
+
+8 CFS Implementation Details
+8.1 Data Structures
+  struct sched_entity{}, task->se로 존재
+  struct cfs_rq{}, rq->cfs_rq로 존재
+8.2 Time Accounting
+  - kernel/sched/core.c: scheduler_tick() -> task_tick() -> fair/ task_tick_fair()
+  - cfs_rq의 se(sched_entity)를 돌면서 entity_tick()을 호출
+    - entity_tick() : update_curr()을 통해 current task의 runtime 갱신
+    - check_preempt_tick(): resched check - current task가 left most보다 크고, latency runtime보다 클 때
+  
+다음 시간은 8.3 Modifying the Red-Black-Tree 서부터 할 차례
+자세한 코드 분석은 문서를 모두 읽고 난 후에 하기로 함
