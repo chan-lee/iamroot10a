@@ -1731,3 +1731,23 @@ Process Scheduling in Linux (PDF) 계속
   
 다음 시간은 8.3 Modifying the Red-Black-Tree 서부터 할 차례
 자세한 코드 분석은 문서를 모두 읽고 난 후에 하기로 함
+================================================================================
+2015.03.21
+Top Half/ Bottom Half(SoftIrq, Tasklet)
+http://www.makelinux.net/books/lkd2/ch07lev1sec2 
+
+schedule_tick() 후출 하는 path 2가지.
+1) init/main.c - start_kernel()
+    -> kernel/timer.c - init_timers() : open_softirq - run_timer_softirq 등록
+    --------------------------------------------------------------------------
+      ->  kernel/timer.c - run_timer_softirq()
+        ->       "        -  hrtimer_run_pending()
+          ->        "       - hrtimer_switch_to_hres()
+            ->  kerne/time/tick-sched.c - tick_check_oneshot_change()
+              ->    "           - tick_nohz_switch_to_nohz()
+	              -> 어딘가에서 hires oneshot 혹은 nohz timer 호출(아마 clock source 드라이버)
+
+                -> tick_sched_handle(struct tick_sched *ts, struct pt_regs *regs)
+                  -> update_process_times(user_mode(regs));
+                    -> scheduler_tick();
+
