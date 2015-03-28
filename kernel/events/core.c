@@ -2820,14 +2820,15 @@ bool perf_event_can_stop_tick(void)
 
 void perf_event_task_tick(void)
 {
-	struct list_head *head = &__get_cpu_var(rotation_list);
+	struct list_head *head = &__get_cpu_var(rotation_list); //@@ rotation_list (percpu type list)
 	struct perf_cpu_context *cpuctx, *tmp;
 	struct perf_event_context *ctx;
 	int throttled;
 
 	WARN_ON(!irqs_disabled());
 
-	__this_cpu_inc(perf_throttled_seq);
+  // @@ [2015.03.28] 여기 까지 분석.
+	__this_cpu_inc(perf_throttled_seq); //@@ perf_throttled_seq++ (percpu type)
 	throttled = __this_cpu_xchg(perf_throttled_count, 0);
 
 	list_for_each_entry_safe(cpuctx, tmp, head, rotation_list) {

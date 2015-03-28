@@ -392,6 +392,8 @@ static enum hrtimer_restart hrtick(struct hrtimer *timer)
 	update_rq_clock(rq);
   //@@ task_tick: time tick 마다 task_tick 를 호출
   //@@ CFS 인지 RT 인지에 따라서 다른 함수가 결국엔 호출됨
+  //@@ hrtick 에서 queued (3번째  param) 가 1로 세팅되어
+  //@@ task_tick 에서 바로 reschedule 한다.
 	rq->curr->sched_class->task_tick(rq, rq->curr, 1);
 	raw_spin_unlock(&rq->lock);
 
@@ -692,7 +694,7 @@ void sched_avg_update(struct rq *rq)
 		 */
 		asm("" : "+rm" (rq->age_stamp));
 		rq->age_stamp += period;
-		rq->rt_avg /= 2;
+		rq->rt_avg /= 2; //@@ 나머지는 구하지 않는다. 
 	}
 }
 
@@ -2178,15 +2180,24 @@ void scheduler_tick(void)
 	struct rq *rq = cpu_rq(cpu);
 	struct task_struct *curr = rq->curr;
 
+  // @@ sched_clock_data 정보 업데이트
+  // @@ 시간 정보
 	sched_clock_tick();
 
 	raw_spin_lock(&rq->lock);
+  // @@ runqueue  마다 있는  clock  업데이트 
 	update_rq_clock(rq);
+  // @@ scheduler tick  마다  task_tick  호출
+  // @@ 내부에서 schedule()
+  // @@ cfs_rq 의 se  돌면서  entity_tick (+runtime  갱신) 
+  // @@ 3 번째 parameter (int queued) = 0
+  // @@ ----> reschedule (inter-CPU scheduling?)  안함 (나중에 다른 곳에서 호출되어 할 듯)
 	curr->sched_class->task_tick(rq, curr, 0);
+  // @@ 런큐마다 cpu load 를 다시 계산 (자세한 방법은 아직 모름)
 	update_cpu_load_active(rq);
 	raw_spin_unlock(&rq->lock);
 
-	perf_event_task_tick();
+	perf_event_task_tick(); //@@ [2015.03.28] 분석 중
 
 #ifdef CONFIG_SMP
 	rq->idle_balance = idle_cpu(cpu);

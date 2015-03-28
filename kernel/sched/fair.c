@@ -2025,7 +2025,7 @@ entity_tick(struct cfs_rq *cfs_rq, struct sched_entity *curr, int queued)
 	/*
 	 * Update run-time statistics of the 'current'.
 	 */
-	update_curr(cfs_rq);
+	update_curr(cfs_rq); //@@ runtime 갱신
 
 	/*
 	 * Ensure that runnable average is periodically updated.
@@ -2040,6 +2040,7 @@ entity_tick(struct cfs_rq *cfs_rq, struct sched_entity *curr, int queued)
 	 * validating it and just reschedule.
 	 */
 	if (queued) {
+    // @@ inter-CPU scheduling 같다고 추측 중.
 		resched_task(rq_of(cfs_rq)->curr);
 		return;
 	}

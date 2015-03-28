@@ -68,7 +68,7 @@ static void tick_periodic(int cpu)
 		/* Keep track of the next tick event */
 		tick_next_period = ktime_add(tick_next_period, tick_period);
 
-		do_timer(1);
+		do_timer(1); //@@ periodic 마다 jiffies 값 1 증가
 		write_sequnlock(&jiffies_lock);
 	}
 

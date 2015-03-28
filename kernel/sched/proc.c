@@ -504,6 +504,8 @@ static void __update_cpu_load(struct rq *this_rq, unsigned long this_load,
 #ifdef CONFIG_SMP
 static inline unsigned long get_rq_runnable_load(struct rq *rq)
 {
+  // @@ tracked CFS load
+  // @@ (엔티티마다 로드가 추적되고 합쳐진다.
 	return rq->cfs.runnable_load_avg;
 }
 #else
@@ -585,6 +587,7 @@ void update_cpu_load_active(struct rq *this_rq)
 	 * See the mess around update_idle_cpu_load() / update_cpu_load_nohz().
 	 */
 	this_rq->last_load_update_tick = jiffies;
+  //@@ runqueue 의 계층 (5개) 마다 적절히 load 를 업데이트 해준다 
 	__update_cpu_load(this_rq, load, 1);
 
 	calc_load_account_active(this_rq);

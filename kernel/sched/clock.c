@@ -173,7 +173,7 @@ again:
    * @@ else {
    * @@   return scd->clock;
    * @@ }
-  */
+   */
   // @@ 2015.03.21. end (tick_raw, tick_gtod, clock 의 차이는?)
 	if (cmpxchg64(&scd->clock, old_clock, clock) != old_clock)
 		goto again;

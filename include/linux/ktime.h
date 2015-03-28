@@ -184,6 +184,7 @@ static inline ktime_t ktime_add(const ktime_t add1, const ktime_t add2)
 	 *   tv.nsec -= NSEC_PER_SEC
 	 *   tv.sec ++;
 	 */
+  //@@ NSEC_PER_SEC = 1000000000L
 	if (res.tv.nsec >= NSEC_PER_SEC)
 		res.tv64 += (u32)-NSEC_PER_SEC;
 
