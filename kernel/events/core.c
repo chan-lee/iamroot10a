@@ -2687,9 +2687,9 @@ static void perf_adjust_period(struct perf_event *event, u64 nsec, u64 count, bo
 static void perf_adjust_freq_unthr_context(struct perf_event_context *ctx,
 					   int needs_unthr)
 {
-	struct perf_event *event;
-	struct hw_perf_event *hwc;
-	u64 now, period = TICK_NSEC;
+	struct perf_event *event;  //@@ performance event kernel representation
+	struct hw_perf_event *hwc; //@@ performance event hardware details
+	u64 now, period = TICK_NSEC; //@@ #define TICK_NSEC ((NSEC_PER_SEC+HZ/2)/HZ)
 	s64 delta;
 
 	/*
@@ -2697,11 +2697,14 @@ static void perf_adjust_freq_unthr_context(struct perf_event_context *ctx,
 	 * - context have events in frequency mode (needs freq adjust)
 	 * - there are events to unthrottle on this cpu
 	 */
+  //@@ nr_freq: # of events in frequency mode
+  //@@ needs_unthr: there are events to Unthrottle on this cpu
+  //@@ 둘다 없으면 unthrottle 하지 않는다.
 	if (!(ctx->nr_freq || needs_unthr))
 		return;
 
 	raw_spin_lock(&ctx->lock);
-	perf_pmu_disable(ctx->pmu);
+	perf_pmu_disable(ctx->pmu); //@@ architecture specific: armpmu_disable() (arch/arm/kernel/perf_event.c)
 
 	list_for_each_entry_rcu(event, &ctx->event_list, event_entry) {
 		if (event->state != PERF_EVENT_STATE_ACTIVE)
@@ -2715,6 +2718,8 @@ static void perf_adjust_freq_unthr_context(struct perf_event_context *ctx,
 		if (needs_unthr && hwc->interrupts == MAX_INTERRUPTS) {
 			hwc->interrupts = 0;
 			perf_log_throttle(event, 1);
+      //@@ 1st param: event 종류
+      //@@ 2nd param: flag
 			event->pmu->start(event, 0);
 		}
 
@@ -2737,6 +2742,7 @@ static void perf_adjust_freq_unthr_context(struct perf_event_context *ctx,
 		 * to perf_adjust_period() to avoid stopping it
 		 * twice.
 		 */
+    //@@ delta 가 있다면 새로운 sampling 주기를 계산해서 설정한다.
 		if (delta > 0)
 			perf_adjust_period(event, period, delta, false);
 
@@ -2828,11 +2834,20 @@ void perf_event_task_tick(void)
 	WARN_ON(!irqs_disabled());
 
   // @@ [2015.03.28] 여기 까지 분석.
-	__this_cpu_inc(perf_throttled_seq); //@@ perf_throttled_seq++ (percpu type)
+	__this_cpu_inc(perf_throttled_seq); //@@ perf_throttled_seq++ (percpu type and u64 data type)
+  //@@ perf_throttled_count (percpu type and int data type)
+  //@@ perf_throttled_count 의 값을 0 으로 세팅하고 기존의 값을 리턴할 것 같다 (추측)
 	throttled = __this_cpu_xchg(perf_throttled_count, 0);
 
+  //@@ 1st param(pos):	the type * to use as a loop cursor.
+  //@@ 2nd param(n):		another type * to use as temporary storage
+  //@@ 3rd param(head):	the head for your list.
+  //@@ 4th paran(member):	the name of the list_struct within the struct.
+  //@@ head <- rotation_list 의 head
+  //@@ rotation_list 는 perf_cpu_context 의 리스트
 	list_for_each_entry_safe(cpuctx, tmp, head, rotation_list) {
-		ctx = &cpuctx->ctx;
+		ctx = &cpuctx->ctx; //@@ perf_cpu_context 의 perf_event_context 필드 &(cpuctx->ctx)
+    // @@ throttled <- need unthr (or not)
 		perf_adjust_freq_unthr_context(ctx, throttled);
 
 		ctx = cpuctx->task_ctx;

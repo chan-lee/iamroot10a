@@ -5763,6 +5763,8 @@ static inline int on_null_domain(int cpu)
 void trigger_load_balance(struct rq *rq, int cpu)
 {
 	/* Don't need to rebalance while attached to NULL domain */
+  //@@ 다음 balance 할 시간이 지났으면 소프트웨어 인터럽트를 통해 balancing 하도록 해준다.
+  //@@ 즉시 처리하기에 시간이 들기 때문에 소프트 인터럽트를 사용하도록 한다.
 	if (time_after_eq(jiffies, rq->next_balance) &&
 	    likely(!on_null_domain(cpu)))
 		raise_softirq(SCHED_SOFTIRQ);

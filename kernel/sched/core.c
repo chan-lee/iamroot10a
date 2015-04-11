@@ -2197,13 +2197,16 @@ void scheduler_tick(void)
 	update_cpu_load_active(rq);
 	raw_spin_unlock(&rq->lock);
 
-	perf_event_task_tick(); //@@ [2015.03.28] 분석 중
+  //@@ [2015.03.28] perf_event_task_tick() 분석 중 종료
+  //@@ [2015.04.11] 분석 시작
+	perf_event_task_tick();
 
 #ifdef CONFIG_SMP
-	rq->idle_balance = idle_cpu(cpu);
+	rq->idle_balance = idle_cpu(cpu); //@@ 수행중인 태스크가 없고 idle 상태이면 1
+  //@@ load balancer 를 trigger (즉시 처리하지 않고 softirq 등록)
 	trigger_load_balance(rq, cpu);
 #endif
-	rq_last_tick_reset(rq);
+	rq_last_tick_reset(rq); //@@ 마지막으로 스케쥴된 tick 변수에 현재 시간 (jiffies) 등록
 }
 
 #ifdef CONFIG_NO_HZ_FULL

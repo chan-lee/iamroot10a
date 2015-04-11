@@ -1197,7 +1197,7 @@ static inline int fastpath_timer_check(struct task_struct *tsk)
 void run_posix_cpu_timers(struct task_struct *tsk)
 {
 	LIST_HEAD(firing);
-	struct k_itimer *timer, *next;
+	struct k_itimer *timer, *next; //@@ POSIX 표준 타이머
 	unsigned long flags;
 
 	BUG_ON(!irqs_disabled());

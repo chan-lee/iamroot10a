@@ -1771,3 +1771,22 @@ tick_periodic()
 elf file format (and DWARF)
 : http://egloos.zum.com/recipes/v/5011946
 
+================================================================================
+2015.04.11
+
+[scheduler_tick() 분석]
+
+kernel/event/core.c
+perf_event_task_tick()
+1. perf_throttled_seq (percpu 변수) 와 perf_throttled_count (percpu 변수) 값 재설정
+2. rotation_list (percpu list) 를 돌면서 perf_adjust_freq_unthr_context() 수행
+    perf_adjust_freq_unthr_context(): untrottled 되야 하는 이벤트가 있거나,
+    frequency mode 인 이벤트가 있다면 해당 이벤트들의 샘플링 주기를 다시 계산해준다.
+
+rq->idle_balance = idle_cpu(cpu);
+trigger_load_balance(rq, cpu);
+rq_last_tick_reset(rq);
+로드 밸런싱을 trigger 하고, tick 변수 세팅.
+
+[run_posix_cpu_timers(struct task_struct* tsk) 분석]
+POSIX 표준을 위한 타이머 값 갱신
