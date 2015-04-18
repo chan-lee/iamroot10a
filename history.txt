@@ -1764,7 +1764,6 @@ tick_periodic()
            2. update_rq_clock();
            3. task_tick(,,);
            4. update_cpu_load_active();
-           5. perf_event_task_tick(); (분석 중 종료)
            // perf 관련: http://egloos.zum.com/studyfoss/v/5634580
 5. run_posix_cpu_timers(task_struct *tsk)
 
@@ -1790,3 +1789,8 @@ rq_last_tick_reset(rq);
 
 [run_posix_cpu_timers(struct task_struct* tsk) 분석]
 POSIX 표준을 위한 타이머 값 갱신
+
+================================================================================
+2015.04.18
+
+[run_posix_cpu_timers(struct task_struct*tsk)] 분석 중.

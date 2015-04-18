@@ -226,6 +226,7 @@ void thread_group_cputimer(struct task_struct *tsk, struct task_cputime *times)
 		cputimer->running = 1;
 		update_gt_cputime(&cputimer->cputime, &sum);
 	} else
+    //@@ task group 의 경우: group 의 timer (cputimer) 의 cputime 가져온다
 		raw_spin_lock_irqsave(&cputimer->lock, flags);
 	*times = cputimer->cputime;
 	raw_spin_unlock_irqrestore(&cputimer->lock, flags);
@@ -866,6 +867,11 @@ static unsigned long long
 check_timers_list(struct list_head *timers,
 		  struct list_head *firing,
 		  unsigned long long curr)
+  //@@ curr = task 의 utime+stime
+  //@@ timer 의 list (3가지 리스트 종류에 따라 curr 계산 결과가 다르게 들어온다)
+  //@@ curr <- prof_ticks() <- utime+stime
+  //@@ curr <- virt_tick() <- utime
+  //@@ curr <- tsk->se.sum_exec_runtime
 {
 	int maxfire = 20;
 
@@ -898,18 +904,24 @@ static void check_thread_timers(struct task_struct *tsk,
 	unsigned long long expires;
 	unsigned long soft;
 
+  //@@ timers = struct list_head cpu_timers[0]
 	expires = check_timers_list(timers, firing, prof_ticks(tsk));
 	tsk_expires->prof_exp = expires_to_cputime(expires);
 
+  //@@ timers = struct list_head cpu_timers[0]
 	expires = check_timers_list(++timers, firing, virt_ticks(tsk));
 	tsk_expires->virt_exp = expires_to_cputime(expires);
 
+  //@@ timers = struct list_head cpu_timers[0]
 	tsk_expires->sched_exp = check_timers_list(++timers, firing,
 						   tsk->se.sum_exec_runtime);
 
 	/*
 	 * Check for the special case thread timers.
 	 */
+  //@@ RT scheduling 하는 프로세스들의 경우
+  //@@ hard -> SIGKILL (죽는다)
+  //@@ soft -> signal (SIGXCPU)
 	soft = ACCESS_ONCE(sig->rlim[RLIMIT_RTTIME].rlim_cur);
 	if (soft != RLIM_INFINITY) {
 		unsigned long hard =
@@ -1012,17 +1024,18 @@ static void check_process_timers(struct task_struct *tsk,
 	/*
 	 * Check for the special case process timers.
 	 */
+  //@@ struct cpu_itimer itimer (POSIX timer)
 	check_cpu_itimer(tsk, &sig->it[CPUCLOCK_PROF], &prof_expires, ptime,
 			 SIGPROF);
 	check_cpu_itimer(tsk, &sig->it[CPUCLOCK_VIRT], &virt_expires, utime,
 			 SIGVTALRM);
 	soft = ACCESS_ONCE(sig->rlim[RLIMIT_CPU].rlim_cur);
-	if (soft != RLIM_INFINITY) {
+	if (soft != RLIM_INFINITY) { //@@ RLIM_INFINITY : -1
 		unsigned long psecs = cputime_to_secs(ptime);
 		unsigned long hard =
 			ACCESS_ONCE(sig->rlim[RLIMIT_CPU].rlim_max);
 		cputime_t x;
-		if (psecs >= hard) {
+		if (psecs >= hard) { //@@ hard <- resource limit
 			/*
 			 * At the hard limit, we just die.
 			 * No need to calculate anything else now.
@@ -1030,7 +1043,7 @@ static void check_process_timers(struct task_struct *tsk,
 			__group_send_sig_info(SIGKILL, SEND_SIG_PRIV, tsk);
 			return;
 		}
-		if (psecs >= soft) {
+		if (psecs >= soft) { //@@ soft limit 보다 초과될 때는 SIGXCPU 를 보냄.
 			/*
 			 * At the soft limit, send a SIGXCPU every second.
 			 */
@@ -1041,16 +1054,19 @@ static void check_process_timers(struct task_struct *tsk,
 			}
 		}
 		x = secs_to_cputime(soft);
+    //@@ soft limit 이 profiled expire 시간보다 작다면
+    //@@ profiled expires 시간을 soft limit 으로 저장한다.
 		if (!prof_expires || x < prof_expires) {
 			prof_expires = x;
 		}
 	}
 
+  //@@ expire 들을 모두 다시 cputime 구조체 형식으로 바꾸어줌.
 	sig->cputime_expires.prof_exp = expires_to_cputime(prof_expires);
 	sig->cputime_expires.virt_exp = expires_to_cputime(virt_expires);
 	sig->cputime_expires.sched_exp = sched_expires;
 	if (task_cputime_zero(&sig->cputime_expires))
-		stop_process_timers(sig);
+		stop_process_timers(sig); //@@ cputime->running 을 0 으로 세팅
 }
 
 /*
@@ -1161,9 +1177,15 @@ static inline int fastpath_timer_check(struct task_struct *tsk)
 	struct signal_struct *sig;
 	cputime_t utime, stime;
 
+  //@@ task_struct 의 cputime_t utime, stime 을 받아옴.
+  //@@ cputime_t utime (user-mode time: user-mode 에서 소비하는 시간)
+  //@@ cputime_t stime (system time: kernel-mode 에서 소비하는 시간)
+  //@@ utime - user mode time
 	task_cputime(tsk, &utime, &stime);
 
 	if (!task_cputime_zero(&tsk->cputime_expires)) {
+    //@@ utime, stime, sum_exec_runtime 중에 0 이 아닌 경우가 하나라도 있는 경우 
+    //@@ ->  시간 값이 있는 경우 
 		struct task_cputime task_sample = {
 			.utime = utime,
 			.stime = stime,
@@ -1171,6 +1193,9 @@ static inline int fastpath_timer_check(struct task_struct *tsk)
 		};
 
 		if (task_cputime_expired(&task_sample, &tsk->cputime_expires))
+      //@@ sample 의 utime, stime, sum_exec_runtime 중에 하나라도
+      //@@ expire 의 값보다 큰 경우
+      //@@ 해당 task 의 cputime 이 만료된 것임 -> return
 			return 1;
 	}
 
@@ -1179,10 +1204,12 @@ static inline int fastpath_timer_check(struct task_struct *tsk)
 		struct task_cputime group_sample;
 
 		raw_spin_lock(&sig->cputimer.lock);
+    //@@ struct thread_group_cputimer cputimer (in struct signal_struct: tsk->signal)
 		group_sample = sig->cputimer.cputime;
 		raw_spin_unlock(&sig->cputimer.lock);
 
 		if (task_cputime_expired(&group_sample, &sig->cputime_expires))
+      //@@ task_group 의 timer 가 만료되었음
 			return 1;
 	}
 
@@ -1206,9 +1233,12 @@ void run_posix_cpu_timers(struct task_struct *tsk)
 	 * The fast path checks that there are no expired thread or thread
 	 * group timers.  If that's so, just return.
 	 */
+  //@@ 해당 task (tsk) 또는 해당 task 의 taskgroup 의 cputime 이 만료되었는지 검사.
+  //@@ 만료되지 않았다면 그냥 return
 	if (!fastpath_timer_check(tsk))
 		return;
 
+  //@@ hold a lock for all signal handlers
 	if (!lock_task_sighand(tsk, &flags))
 		return;
 	/*
@@ -1222,6 +1252,7 @@ void run_posix_cpu_timers(struct task_struct *tsk)
 	 * RLIMIT_CPU) cputimer must be running.
 	 */
 	if (tsk->signal->cputimer.running)
+    //@@ task_group 이 있는 경우
 		check_process_timers(tsk, &firing);
 
 	/*
@@ -1232,8 +1263,10 @@ void run_posix_cpu_timers(struct task_struct *tsk)
 	 * that gets the timer lock before we do will give it up and
 	 * spin until we've taken care of that timer below.
 	 */
+  //@@ 앞에서 holding 했던 lock 을 다시 unlock 함 (설명-above)
 	unlock_task_sighand(tsk, &flags);
 
+  //@@ [2015.04.18] 분석 중 종료
 	/*
 	 * Now that all the timers on our list have the firing flag,
 	 * no one will touch their list entries but us.  We'll take
