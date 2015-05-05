@@ -1261,6 +1261,8 @@ out:
 static inline
 int select_task_rq(struct task_struct *p, int sd_flags, int wake_flags)
 {
+  //@@ 태스크가 running 할 cpu 를 선택한다
+  //@@ 사용 가능한 cpu (mask) 들 중에 가장 idle 한 cpu 를 선택.
 	int cpu = p->sched_class->select_task_rq(p, sd_flags, wake_flags);
 
 	/*
@@ -1297,12 +1299,12 @@ ttwu_stat(struct task_struct *p, int cpu, int wake_flags)
 	int this_cpu = smp_processor_id();
 
 	if (cpu == this_cpu) {
-		schedstat_inc(rq, ttwu_local);
-		schedstat_inc(p, se.statistics.nr_wakeups_local);
+		schedstat_inc(rq, ttwu_local); //@@ rq->ttwu_local++;
+		schedstat_inc(p, se.statistics.nr_wakeups_local); //@@ p->se.statistics.nr_wakeups_local++;
 	} else {
 		struct sched_domain *sd;
 
-		schedstat_inc(p, se.statistics.nr_wakeups_remote);
+		schedstat_inc(p, se.statistics.nr_wakeups_remote); //@@ p->se.statistics.nr_wakeups_remote++;
 		rcu_read_lock();
 		for_each_domain(this_cpu, sd) {
 			if (cpumask_test_cpu(cpu, sched_domain_span(sd))) {
@@ -1313,6 +1315,7 @@ ttwu_stat(struct task_struct *p, int cpu, int wake_flags)
 		rcu_read_unlock();
 	}
 
+  //@@ 마이그레이션 한 경우
 	if (wake_flags & WF_MIGRATED)
 		schedstat_inc(p, se.statistics.nr_wakeups_migrate);
 
@@ -1372,7 +1375,13 @@ ttwu_do_activate(struct rq *rq, struct task_struct *p, int wake_flags)
 		rq->nr_uninterruptible--;
 #endif
 
+  //@@ 태스크 activation 한다.
+  //@@ 1. runqueue 에 삽입
+  //@@ 2. on_rq 플래그 turn on
+  //@@ 3. worker queue 에 삽입
 	ttwu_activate(rq, p, ENQUEUE_WAKEUP | ENQUEUE_WAKING);
+  //@@ 태스크 상태를 TASK_RUNNING 으로 바꾸고
+  //@@ 기타 field 세팅
 	ttwu_do_wakeup(rq, p, wake_flags);
 }
 
@@ -1391,6 +1400,7 @@ static int ttwu_remote(struct task_struct *p, int wake_flags)
 	if (p->on_rq) {
 		/* check_preempt_curr() may use rq clock */
 		update_rq_clock(rq);
+    //@@ task 를 깨우고 상태를 TASK_RUNNING 으로 바꿈.
 		ttwu_do_wakeup(rq, p, wake_flags);
 		ret = 1;
 	}
@@ -1476,7 +1486,7 @@ static void ttwu_queue(struct task_struct *p, int cpu)
 #endif
 
 	raw_spin_lock(&rq->lock);
-	ttwu_do_activate(rq, p, 0);
+	ttwu_do_activate(rq, p, 0); //@@ task activation 및 상태 세팅
 	raw_spin_unlock(&rq->lock);
 }
 
@@ -1515,9 +1525,11 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	success = 1; /* we're going to change ->state */
 	cpu = task_cpu(p);
 
+  //@@ task (p) 가 on_rq 에 있다면 stat 으로 가게 됨.
 	if (p->on_rq && ttwu_remote(p, wake_flags))
 		goto stat;
 
+  //@@ task (p) 가 on_rq 가 아닌 경우
 #ifdef CONFIG_SMP
 	/*
 	 * If the owning (remote) cpu is still in the middle of schedule() with
@@ -1531,11 +1543,13 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	smp_rmb();
 
 	p->sched_contributes_to_load = !!task_contributes_to_load(p);
-	p->state = TASK_WAKING;
+	p->state = TASK_WAKING; //@@ TASK_RUNNING 은 아니고 WAKEUP 중인 상태
 
 	if (p->sched_class->task_waking)
 		p->sched_class->task_waking(p);
 
+  //@@ 가능한 cpu 들 중에 RUNNING 할 cpu 를 선택한다.
+  //@@ cpu 가 변경되었으면 마이그레이션 플래그를 켜준다.
 	cpu = select_task_rq(p, SD_BALANCE_WAKE, wake_flags);
 	if (task_cpu(p) != cpu) {
 		wake_flags |= WF_MIGRATED;
@@ -1543,6 +1557,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	}
 #endif /* CONFIG_SMP */
 
+  //@@ 태스크 activation (runqueue 및 worker queue 삽입 및 세팅)
+  //@@ 하고 기타 상태 (TASK_RUNNING 등) 세팅
 	ttwu_queue(p, cpu);
 stat:
 	ttwu_stat(p, cpu, wake_flags);
@@ -1603,6 +1619,7 @@ out:
 int wake_up_process(struct task_struct *p)
 {
 	WARN_ON(task_is_stopped_or_traced(p));
+  //@@ TASK_NORMAL		(TASK_INTERRUPTIBLE | TASK_UNINTERRUPTIBLE)
 	return try_to_wake_up(p, TASK_NORMAL, 0);
 }
 EXPORT_SYMBOL(wake_up_process);

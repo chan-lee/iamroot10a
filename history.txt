@@ -1794,3 +1794,17 @@ POSIX 표준을 위한 타이머 값 갱신
 2015.04.18
 
 [run_posix_cpu_timers(struct task_struct*tsk)] 분석 중.
+
+================================================================================
+2015.04.25
+
+[run_posix_cpu_timers(struct task_struct*tsk)] 분석 중.
+
+================================================================================
+2015.05.05
+
+[run_posix_cpu_timers(struct task_struct*tsk)] 분석 중.
+cpu_timer_fire(): firing list 의 있는 task 들을 처리
+4 가지 case 에 대해서,
+2 번째 case: nanosleep 을 사용하는 task 일 경우
+-- wake_up_process() 분석 완료.

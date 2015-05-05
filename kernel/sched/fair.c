@@ -3445,6 +3445,8 @@ select_task_rq_fair(struct task_struct *p, int sd_flag, int wake_flags)
 			continue;
 		}
 
+    //@@ running 가능한 cpu 들 중에 (mask를 통해 확인) 가장 idle한 cpu 를 선택.
+    //@@ average load 를 통해 선택.
 		new_cpu = find_idlest_cpu(group, p, cpu);
 		if (new_cpu == -1 || new_cpu == cpu) {
 			/* Now try balancing at a lower domain level of cpu */

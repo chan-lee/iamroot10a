@@ -550,6 +550,7 @@ static void cpu_timer_fire(struct k_itimer *timer)
 		 * not a normal timer from sys_timer_create.
 		 */
 		wake_up_process(timer->it_process);
+    //@@ [2015.05.05] 분석 완료.
 		timer->it.cpu.expires = 0;
 	} else if (timer->it.cpu.incr == 0) {
 		/*
@@ -1267,6 +1268,8 @@ void run_posix_cpu_timers(struct task_struct *tsk)
 	unlock_task_sighand(tsk, &flags);
 
   //@@ [2015.04.18] 분석 중 종료
+  //@@ [2015.04.25] 분석 시작
+  //@@ [2015.05.05] 분석 시작
 	/*
 	 * Now that all the timers on our list have the firing flag,
 	 * no one will touch their list entries but us.  We'll take
