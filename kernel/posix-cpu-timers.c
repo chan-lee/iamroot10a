@@ -125,8 +125,11 @@ static inline int task_cputime_zero(const struct task_cputime *cputime)
 
 static inline unsigned long long prof_ticks(struct task_struct *p)
 {
+  //@@ utime : user code time spent
+  //@@ stime : system code time spent
 	cputime_t utime, stime;
 
+	//@@	t->vtime_snap_whence에 따라 utime과 stime을 갱신한다.
 	task_cputime(p, &utime, &stime);
 
 	return cputime_to_expires(utime + stime);
@@ -184,7 +187,7 @@ static int cpu_clock_sample(const clockid_t which_clock, struct task_struct *p,
 	default:
 		return -EINVAL;
 	case CPUCLOCK_PROF:
-		*sample = prof_ticks(p);
+		*sample = prof_ticks(p); //@@ utime + stime
 		break;
 	case CPUCLOCK_VIRT:
 		*sample = virt_ticks(p);
@@ -551,6 +554,7 @@ static void cpu_timer_fire(struct k_itimer *timer)
 		 */
 		wake_up_process(timer->it_process);
     //@@ [2015.05.05] 분석 완료.
+    //@@ [2015.05.23] 분석 시작.
 		timer->it.cpu.expires = 0;
 	} else if (timer->it.cpu.incr == 0) {
 		/*
@@ -559,6 +563,7 @@ static void cpu_timer_fire(struct k_itimer *timer)
 		posix_timer_event(timer, 0);
 		timer->it.cpu.expires = 0;
 	} else if (posix_timer_event(timer, ++timer->it_requeue_pending)) {
+    //@@ 처리되지 못하고 다음 시간으로 연기시킨다.
 		/*
 		 * The signal did not get queued because the signal
 		 * was ignored, so we won't get any callback to

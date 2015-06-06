@@ -1595,7 +1595,7 @@ int send_sigqueue(struct sigqueue *q, struct task_struct *t, int group)
 
 	ret = 1; /* the signal is ignored */
 	result = TRACE_SIGNAL_IGNORED;
-	if (!prepare_signal(sig, t, false))
+	if (!prepare_signal(sig, t, false)) //@@ pass
 		goto out;
 
 	ret = 0;
@@ -1613,9 +1613,10 @@ int send_sigqueue(struct sigqueue *q, struct task_struct *t, int group)
 
 	signalfd_notify(t, sig);
 	pending = group ? &t->signal->shared_pending : &t->pending;
+  //@@ 비어있는 q-list를 pending에 넣는것이 이상함.
 	list_add_tail(&q->list, &pending->list);
 	sigaddset(&pending->signal, sig);
-	complete_signal(sig, t, group);
+	complete_signal(sig, t, group); //@@ pass
 	result = TRACE_SIGNAL_DELIVERED;
 out:
 	trace_signal_generate(sig, &q->info, t, group, result);
