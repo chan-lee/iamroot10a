@@ -3244,6 +3244,7 @@ void __init rcu_init(void)
 	int cpu;
 
 	rcu_bootup_announce();
+  //@@ 2015.06.06 끝
 	rcu_init_geometry();
 	rcu_init_one(&rcu_sched_state, &rcu_sched_data);
 	rcu_init_one(&rcu_bh_state, &rcu_bh_data);

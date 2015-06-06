@@ -589,9 +589,11 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	 * Disable preemption - early bootup scheduling is extremely
 	 * fragile until we cpu_idle() for the first time.
 	 */
+  //@@ 2015.06.06 update_process_times 쪽 보다가 다시 시작.
 	preempt_disable();
 	if (WARN(!irqs_disabled(), "Interrupts were enabled *very* early, fixing it\n"))
 		local_irq_disable();
+  //@@ id - pointer를 관리하는 radix tree 구조를 초기화(8bits씩 끊어서 관리)
 	idr_init_cache();
 	rcu_init();
 	tick_nohz_init();

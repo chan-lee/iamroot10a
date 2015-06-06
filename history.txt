@@ -1497,7 +1497,7 @@ sched_init() 코드 분석 계속 중
 2015.01.24
 RUC
 https://app.box.com/shared/x5r7ugx6o6
-https://www.efficios.com/pub/rcu/urcu-main.pdf 저널 논문
+https://www.efficios.com/pub/rcu/urcu-main.pdf 저널 논문 (이 자료가 젤 좋음)
 
 mutex: 오직 하나의 writer 혹은 reader만 접근 가능(writer, reader의 구분이 의미없음)
 rwlock: write lock과 read lock이 존재하며, write lock이 걸려 있으면 read를 못하고,
@@ -1510,6 +1510,7 @@ RCU: lock free이며, writer(updater)와 reader는 아무 제약 없이 진입�
   삭제한다. 한마디로 자료 갱신 부분에서 동기화를 맞춘다고 보면 된다.
 user level에서 사용하기 어려운 이유:
 http://bartoszmilewski.com/2013/11/13/functional-data-structures-in-c-lists/
+http://summerlight.tistory.com/entry/동기화-기법-Read-Copy-Update
 
 hlist 잠깐
 사용 이유.
@@ -1808,3 +1809,14 @@ cpu_timer_fire(): firing list 의 있는 task 들을 처리
 4 가지 case 에 대해서,
 2 번째 case: nanosleep 을 사용하는 task 일 경우
 -- wake_up_process() 분석 완료.
+
+================================================================================
+2015.06.06
+- init/main.c/star_kernel/idr_init_cace()
+  IDR : Id(정수)와 pointer 관리
+  http://egloos.zum.com/studyfoss/v/5187192
+  IDR_BITS 8 => 8 bits씩 끊어서 하나의 layer로 관리한다.
+  32 bits 에서는 4 depths 가 만들어진다.
+  Java의 SparseArray와 비슷한 느낌이다.
+- RCU 다시 시작 (rcu_init())
+  다음 시간 부터 Documentdation/RCU 보기로 함.
