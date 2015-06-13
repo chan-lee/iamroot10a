@@ -1735,6 +1735,7 @@ Process Scheduling in Linux (PDF) 계속
 ================================================================================
 2015.03.21
 Top Half/ Bottom Half(SoftIrq, Tasklet)
+http://www.makelinux.net/books/lkd2/ch07lev1sec1
 http://www.makelinux.net/books/lkd2/ch07lev1sec2 
 
 schedule_tick() 호출 하는 path 2가지.
@@ -1820,3 +1821,17 @@ cpu_timer_fire(): firing list 의 있는 task 들을 처리
   Java의 SparseArray와 비슷한 느낌이다.
 - RCU 다시 시작 (rcu_init())
   다음 시간 부터 Documentdation/RCU 보기로 함.
+
+================================================================================
+2015.06.13
+- Doucument/RCU/wahtisRCU.txt
+  1. RCU Overview
+  2. RCU's Core API
+     a. rcu_read_lock() : read를 시작할때 사용하는 lock
+     b. rcu_read_unlock() : read 완료
+     c. synchronize_rcu() : read가 완료 되면 reclimation 수행(cal_rcu callback 함수를 이용할 수 도 있음) 
+     d. rcu_assign_pointer() : 기존 global 포인터에 새로운 포인터 설정.
+     e. rcu_dreference() : 새로 갱신된 read 값을 읽어 옮.
+
+  3. CORE RCU API Example 분석 중 끝.
+  

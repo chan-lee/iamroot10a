@@ -377,13 +377,14 @@ uses of RCU may be found in listRCU.txt, arrayRCU.txt, and NMI-RCU.txt.
 	 * have references to the old structure complete before freeing
 	 * the old structure.
 	 */
+        //@@ RCU write 할때 사용
 	void foo_update_a(int new_a)
 	{
 		struct foo *new_fp;
 		struct foo *old_fp;
 
 		new_fp = kmalloc(sizeof(*new_fp), GFP_KERNEL);
-		spin_lock(&foo_mutex);
+		spin_lock(&foo_mutex); //@@ 두개의 RCU write 접근을 보호하기 위해 사용
 		old_fp = gbl_foo;
 		*new_fp = *old_fp;
 		new_fp->a = new_a;
