@@ -1824,6 +1824,37 @@ cpu_timer_fire(): firing list 의 있는 task 들을 처리
 
 ================================================================================
 2015.06.13
+
+- Bottom Halves 구현 종류 (http://www.makelinux.net/books/lkd2/ch07lev1sec1)
+  - BH 2.5에서 제거
+  - Task queues 2.5에서 제거
+  - Softirq 2.3 추가
+  - Tasklet 2.3 추가
+  - Work queue 2.5 추가
+
+http://kenshin579.tistory.com/entry/interrupt-exception-trap의-차이점
+- hardware interrupt(CPU제외) 
+- software interrupt(실제 하드웨어 line이 아닌 code에 의해 발생)
+  - exception (cpu에서 발생)
+    - trap 복귀후 다음 명령 실행
+    - fault 복귀후 원래 명령 다시 실행
+    - abor 복귀하지 않고 종료
+
+lock의 차이
+1. lock 획득후 context switch 당하지 않는가? (preempt disable)
+  - mutex: 당함
+  - spinlock: 안당함
+  - rcu_read_lock: 안당함
+2. lock 획득후 intrrupt 당하지 않는가?
+  - mutex: 조사할것
+  - spinlock: 조사할것
+  - rcu_read_lock: 조사할것
+3. lock을 획득 못한 경우 어떻게 행동하는가?
+  - mutex: context switch(maybe sleep)
+  - spinlock: busy waiting
+  - rcu_read_lock: 이럴 경우 없음
+4. 계속 조사할것
+
 - Doucument/RCU/wahtisRCU.txt
   1. RCU Overview
   2. RCU's Core API
@@ -1834,4 +1865,4 @@ cpu_timer_fire(): firing list 의 있는 task 들을 처리
      e. rcu_dreference() : 새로 갱신된 read 값을 읽어 옮.
 
   3. CORE RCU API Example 분석 중 끝.
-  
+
