@@ -609,7 +609,7 @@ synchronize_rcu() would have been able to write-acquire the lock
 otherwise.
 
 It is possible to nest rcu_read_lock(), since reader-writer locks may
-be recursively acquired.  Note also that rcu_read_lock() is immune
+be recursively acquired.  Note also that rcu_read_lock() is immune //@@ immune: 영향을 받지 않는, 면역이 된
 from deadlock (an important property of RCU).  The reason for this is
 that the only thing that can block rcu_read_lock() is a synchronize_rcu().
 But synchronize_rcu() does not acquire any locks while holding rcu_gp_mutex,

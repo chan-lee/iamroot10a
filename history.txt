@@ -1874,3 +1874,30 @@ cpu_timer_fire(): firing list 의 있는 task 들을 처리
 
   3. CORE RCU API Example 분석 중 끝.
 
+================================================================================
+2015.06.20
+
+* RCU 개념 복습
+
+* Documentation/RCU/whatisRCU.txt: line 405 부터 시작
+rcu_assign_pointer 가 atomic 하게 되어 있을 것인가?
+
+#4. 
+synchronize_rcu() - synchronous 하게 rc 자료 구조를 업데이트 한다.
+다른 high-priority 한 작업들을 처리해야 할 필요가 있을때는 call_rcu() 를 통해 비동기적으로 업데이트 할 수 있다.
+비동기적으로 rcu 자료 구조에  접근하기 위해서  rcu 자료 구조의 포인터를 함 packing 한다.
+콜백 함수를 통해서 처리를 하는데, 실제로 kfree 만 수행하면 되는 경우ㅇ는 kfree_rcu 만 호출하는 방식을 통해 콜백 함수를 작성하지 않아도 된다.
+
+#5. What are some simple implementations of RCU?
+production-quality 관점에서 2 가지 괜찮은 초기 구현이 있었음.
+여러 가지 구현 방법들이 발표되었었고, 현재 2004년에 나온 구현 방법이 쓰이고 있다.
+
+#5.A. TOY impl. LOCKING
+-- RWLOCK(mutex) 을 통해 RCU 를 구현. 가장 간단하다.
+
+#5.B. Toy impl. 2: CLASSIC RCU
+-- rcu_read_lock() rcu_read_unlock() --> do nothing
+-- synchronize_rcu(void) ---> 모든 cpu 를 돌면서 (grace period 를 허용하는) synchronization 을 수행한다.
+-- run_on(cpu) <- 모든 cpu 에서 한번씩 실행되도록 한다. (즉 새로 고치기 전에 값을 읽고 있던 read-side critical sections 는 모두 rcu_read_unlock() 을 수행했다는 것을 의미함) --> 비선점형 커널에서 
+---- for each cpu 에 대해서 run_on(cpu) 를 수행하는 중간에서 run_on 을 이미 수행한 cpu 에서 새로 발생한 read-side critical sections 는 grace period 로 허용됨.
+
