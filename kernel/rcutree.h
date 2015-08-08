@@ -37,6 +37,8 @@
  * Of course, your mileage may vary.
  */
 #define MAX_RCU_LVLS 4
+/* @@ 현재 CONFIG_RCU_FANOUT_LEAF = 16 */
+/* @@ 현재 CONFIG_RCU_FANOUT = 32 */
 #define RCU_FANOUT_1	      (CONFIG_RCU_FANOUT_LEAF)
 #define RCU_FANOUT_2	      (RCU_FANOUT_1 * CONFIG_RCU_FANOUT)
 #define RCU_FANOUT_3	      (RCU_FANOUT_2 * CONFIG_RCU_FANOUT)
@@ -88,7 +90,7 @@ struct rcu_dynticks {
 				    /* Process level is worth LLONG_MAX/2. */
 	int dynticks_nmi_nesting;   /* Track NMI nesting level. */
 	atomic_t dynticks;	    /* Even value for idle, else odd. */
-#ifdef CONFIG_RCU_FAST_NO_HZ
+#ifdef CONFIG_RCU_FAST_NO_HZ /* @@ GP를 빨리 끝내기 위한 option. */
 	bool all_lazy;		    /* Are all CPU's CBs lazy? */
 	unsigned long nonlazy_posted;
 				    /* # times non-lazy CBs posted to CPU. */
@@ -447,8 +449,8 @@ struct rcu_state {
 						/*  jiffies. */
 	char *name;				/* Name of structure. */
 	char abbr;				/* Abbreviated name. */
-	struct list_head flavors;		/* List of RCU flavors. */
-	struct irq_work wakeup_work;		/* Postponed wakeups */
+	struct list_head flavors;		/* List of RCU flavors. */ //@@ sched, bh, preemt 3가지?
+	struct irq_work wakeup_work;		/* Postponed wakeups */ //@@ irq wake_up할때 호출될 함수와 list
 };
 
 /* Values for rcu_state structure's gp_flags field. */

@@ -19,7 +19,7 @@
 
 struct irq_work {
 	unsigned long flags;
-	struct llist_node llnode;
+	struct llist_node llnode; //@@ lock-less null terminated single linked list. irq들을 보관하는듯하다.
 	void (*func)(struct irq_work *);
 };
 

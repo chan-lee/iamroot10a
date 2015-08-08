@@ -2209,7 +2209,7 @@ static void rcu_process_callbacks(struct softirq_action *unused)
 	if (cpu_is_offline(smp_processor_id()))
 		return;
 	trace_rcu_utilization("Start RCU core");
-	for_each_rcu_flavor(rsp)
+	for_each_rcu_flavor(rsp) //@@ sched, bh, preempt
 		__rcu_process_callbacks(rsp);
 	trace_rcu_utilization("End RCU core");
 }
@@ -3119,10 +3119,10 @@ static void __init rcu_init_one(struct rcu_state *rsp,
 
 	for (i = rcu_num_lvls - 1; i >= 0; i--) {
 		cpustride *= rsp->levelspread[i];
-		rnp = rsp->level[i];
+		rnp = rsp->level[i]; /* @@ rnp : rcu_node point */
 		for (j = 0; j < rsp->levelcnt[i]; j++, rnp++) {
 			raw_spin_lock_init(&rnp->lock);
-			lockdep_set_class_and_name(&rnp->lock,
+			lockdep_set_class_and_name(&rnp->lock, //@@ spinlock 추적용 매크로
 						   &rcu_node_class[i], buf[i]);
 			raw_spin_lock_init(&rnp->fqslock);
 			lockdep_set_class_and_name(&rnp->fqslock,
@@ -3152,14 +3152,14 @@ static void __init rcu_init_one(struct rcu_state *rsp,
 	}
 
 	rsp->rda = rda;
-	init_waitqueue_head(&rsp->gp_wq);
-	init_irq_work(&rsp->wakeup_work, rsp_wakeup);
+	init_waitqueue_head(&rsp->gp_wq); //@@ spinlock이 들어있는 list를 초기화
+	init_irq_work(&rsp->wakeup_work, rsp_wakeup); //@@ rsp->gp_wq를 wake_up함.
 	rnp = rsp->level[rcu_num_lvls - 1];
 	for_each_possible_cpu(i) {
 		while (i > rnp->grphi)
 			rnp++;
 		per_cpu_ptr(rsp->rda, i)->mynode = rnp;
-		rcu_boot_init_percpu_data(i, rsp);
+		rcu_boot_init_percpu_data(i, rsp); //@@ struct rcu_data 초기화
 	}
 	list_add(&rsp->flavors, &rcu_struct_flavors);
 }
@@ -3245,18 +3245,21 @@ void __init rcu_init(void)
 
 	rcu_bootup_announce();
   //@@ 2015.06.06 끝
-	rcu_init_geometry();
-	rcu_init_one(&rcu_sched_state, &rcu_sched_data);
-	rcu_init_one(&rcu_bh_state, &rcu_bh_data);
-	__rcu_init_preempt();
-	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks);
+	rcu_init_geometry(); /* rcu_state, rcu_node를 만들기 위한 상수값을 계산 */
+  //@@ 실제적으로는 sched_state와 bh_state와의 차이점은 callback부분인데.
+  //@@ 이 또한 __call_rcu()를 모두 호출하므로 차이점을 못 찾겠다.
+	rcu_init_one(&rcu_sched_state, &rcu_sched_data); //@@ rcu_sched_data는 per_cpu data
+	rcu_init_one(&rcu_bh_state, &rcu_bh_data); //@@ rcu_bh_data는 per_cpu data
+	__rcu_init_preempt(); //@@ CONFIG에 따라 있을수도 있는 rcu_preempt_state를 초기화함.
+	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks); //@@ softirq 등록.
 
 	/*
 	 * We don't need protection against CPU-hotplug here because
 	 * this is called early in boot, before either interrupts
 	 * or the scheduler are operational.
 	 */
-	cpu_notifier(rcu_cpu_notify, 0);
+	cpu_notifier(rcu_cpu_notify, 0); //@@ notifier 등록
+  //@@ rcu_data를 준비시킴. preemptible rcu를 위한 kernel thread도 준비 시킴.
 	for_each_online_cpu(cpu)
 		rcu_cpu_notify(NULL, CPU_UP_PREPARE, (void *)(long)cpu);
 }
