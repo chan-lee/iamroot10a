@@ -1983,7 +1983,7 @@ Quiz 4:
 
 
 ================================================================================
-2015.08.08
+2015.08.08 , 2015.09.12
 Kernel Config 검색, 비교
 http://kernel.xc.net/
 
@@ -2000,12 +2000,15 @@ rcu_init() 다시 시작
 call_rcu -> __call_rcu -> __call_rcu_core -> invoke_rcu_core -> raise_softirq ->
 wakeup_softirqd() -> daemon이... -> rcu_process_callbacks ->
 
-struct notifier_block; - cpu의 online, offline evnet를 위함
+struct notifier_block; - cpu의 online, offline event를 위함
 // @@ notifier 4종류.
-* Atomic notifier chains :
-* Blocking notifier chains :
-* Raw notifier chains :
-* SRCU notifier chains :
+* Atomic notifier chains : Atomic Notifier Chain Type은 Chain Callback 함수들이 Interrupt나 Atomic Context에서 동작하고 Callback 함수가 Block되는 것을 허용하지 않음.
+* Blocking notifier chains : Blocking Notifier Chain Type은 Callback 함수들이 프로세스 컨텍스트에서 수행되며, Callback 함수가 Block되는 것을 허용
+* Raw notifier chains : Raw Notifier Chain Type은 callback, registration, unregistration에 대한 제약이 전혀 없으며, 호출자 (Caller)에 의해서 모든 locking 및 protection이 제공되어야 함.
+* SRCU notifier chains : SRCU Notifier Chain Type은 Blocking Notifier Chain의 변종으로 동일한 제약을 가짐. srcu_notifier_call_chain() 함수는 SRCU (Sleepable Read-Copy Update)를 사용하며 SRCU는 rw-semaphore 보다 chain link들에 대한 보호에서 작은 오버헤드를 가짐 (no cache bounce & no memory barrier). 이에 대한 대가로 srcu_notifier_chain_unregister()는 조금의 오버헤드가 있음. SRCU Notifier Chain들은 Chain이 빈번하게 호출되지만 Notifier Block에서 거의 제거되지 않은 경우에 사용되어야 하며,
+* 사용하기 위해서는 Runtime Initialization이 필요함.
+
+chain을 등록 (register)할 때, atomic_notifier_chain_register(), blocking_notifier_chain_register(), srcu_notifier_chain_register()를 이용하며, atomic_notifier_chain_register()는 atomic 컨텍스트에서 호출되지만, 나머지 두개는 process 컨텍스트에서 호출되어야 함. chain을 해제 (unregister) 할 때는 call chain에서 unregister 함수가 호출되면 안됨.
 
 다음 시간은 cpu_notifier(rcu_cpu_notify + early_initcall ) 마저 보고, rcu_process_callbacks 볼 차례
 
