@@ -25,7 +25,9 @@ static struct lock_class_key irq_desc_lock_class;
 #if defined(CONFIG_SMP)
 static void __init init_irq_default_affinity(void)
 {
+  //@@ irq_default_affinity (global var.) 에 메모리 할당
 	alloc_cpumask_var(&irq_default_affinity, GFP_NOWAIT);
+  //@@ irq_default_affinity 비트 세팅 (# nr_cpu_ids - 1)
 	cpumask_setall(irq_default_affinity);
 }
 #else
@@ -253,6 +255,7 @@ int __init early_irq_init(void)
 	int count, i, node = first_online_node;
 	struct irq_desc *desc;
 
+  //@@ irq_default_affinity 세팅
 	init_irq_default_affinity();
 
 	printk(KERN_INFO "NR_IRQS:%d\n", NR_IRQS);
@@ -261,12 +264,16 @@ int __init early_irq_init(void)
 	count = ARRAY_SIZE(irq_desc);
 
 	for (i = 0; i < count; i++) {
+    //@@ irq_desc: interrupt descriptors
+    //@@ 인터럽트 디스크립터들을 하나씩 돌면서 값 초기화
 		desc[i].kstat_irqs = alloc_percpu(unsigned int);
 		alloc_masks(&desc[i], GFP_KERNEL, node);
 		raw_spin_lock_init(&desc[i].lock);
 		lockdep_set_class(&desc[i].lock, &irq_desc_lock_class);
 		desc_set_defaults(i, &desc[i], node, NULL);
 	}
+  //@@ architecture-specific initialization:
+  //@@ ARM 에서는 아무 것도 안함
 	return arch_early_irq_init();
 }
 

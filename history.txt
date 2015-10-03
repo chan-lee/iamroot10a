@@ -2012,3 +2012,18 @@ chain을 등록 (register)할 때, atomic_notifier_chain_register(), blocking_no
 
 다음 시간은 cpu_notifier(rcu_cpu_notify + early_initcall ) 마저 보고, rcu_process_callbacks 볼 차례
 
+================================================================================
+2015.09.26
+
+rcu_init() 분석 완료
+tick_nohz_init() 분석 완료
+
+================================================================================
+2015.10.03
+
+radix_tree_init() 분석 완료
+early_irq_init() 분석 완료
+-- non-sparse irq init
+-- architecture independent 한 irq_desc fields 를 초기화
+init_IRQ() 분석중 (arch/arm/kernel/irq.c)
+-- irqchip_init() (drivers/irqchip/irqchip.c) 분석중
