@@ -342,6 +342,9 @@ static int tick_nohz_init_all(void)
 	return err;
 }
 
+//@@ CPU 0번을 제외한 모든 CPU의 dynticks mask(nohz_full_mask)를 1로 설정함
+//@@ cpu_notifier에 tick_nohz_cpu_down_callback를 등록함
+//@@ refer: http://cateee.net/lkddb/web-lkddb/NO_HZ_FULL_ALL.html
 void __init tick_nohz_init(void)
 {
 	if (!have_nohz_full_mask) {

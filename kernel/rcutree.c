@@ -2986,7 +2986,15 @@ static int rcu_cpu_notify(struct notifier_block *self,
 	switch (action) {
 	case CPU_UP_PREPARE:
 	case CPU_UP_PREPARE_FROZEN:
+		//@@ 2015.9.26 start
+		//@@ per-CPU에 있는 RCU Data값을 초기화한다.
+		//@@ RCU State -> RCU Node -> RCU Data
+		//@@ RCU Data structure 의 각 변수 의미는 commant를 참조.
 		rcu_prepare_cpu(cpu);
+
+		//@@ RCU boost thread를 띄운다.
+		//@@ rcu_boost_kthread는 RCU node에 boost_tasks 또는 exp_tasks에 task가 할당이 되면 기동을 한다. 
+		//@@ 할당된 task의 우선순위를 높여주여준다.(rt_mutext_lock에서 우선순위를 높여준다)
 		rcu_prepare_kthreads(cpu);
 		break;
 	case CPU_ONLINE:

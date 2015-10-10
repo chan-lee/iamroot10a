@@ -1416,6 +1416,20 @@ static __init unsigned long __maxindex(unsigned int height)
 	return ~0UL >> shift;
 }
 
+//@@ 처리결과 height_to_maxindex는 다음과 같은 값을 갖게된다.
+//@@ height_to_maxindex[00] = 0x00000000
+//@@ height_to_maxindex[01] = 0x00000007
+//@@ height_to_maxindex[02] = 0x0000003F
+//@@ height_to_maxindex[03] = 0x000001FF
+//@@ height_to_maxindex[04] = 0x00000FFF
+//@@ height_to_maxindex[05] = 0x00007FFF
+//@@ height_to_maxindex[06] = 0x0003FFFF
+//@@ height_to_maxindex[07] = 0x001FFFFF
+//@@ height_to_maxindex[08] = 0x00FFFFFF
+//@@ height_to_maxindex[09] = 0x07FFFFFF
+//@@ height_to_maxindex[10] = 0x3FFFFFFF
+//@@ height_to_maxindex[11] = 0xFFFFFFFF
+//@@ index 11 ~ 64 는 0xFFFFFFFF 값을 가진다.
 static __init void radix_tree_init_maxindex(void)
 {
 	unsigned int i;
