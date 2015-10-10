@@ -219,6 +219,7 @@ struct serio_device_id {
 
 /*
  * Struct used for matching a device
+ * @@ of => Open Firmware
  */
 struct of_device_id
 {

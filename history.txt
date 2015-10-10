@@ -2040,3 +2040,19 @@ early_irq_init() 분석 완료
 -- architecture independent 한 irq_desc fields 를 초기화
 init_IRQ() 분석중 (arch/arm/kernel/irq.c)
 -- irqchip_init() (drivers/irqchip/irqchip.c) 분석중
+
+2015.10.10
+OpenFirmware
+of_irq_init()
+ex) DT : arch/arm/boot/dts/exynos5.dtsi 의 interrupt-controller 항목을 찾는다.
+    combiner : drivers/irqchip/exynos-combiner.c
+      IRQCHIP_DECLARE 에서 data(controller) function pointer를 설정해주고
+      of_irq_init()에서 초기화 함.
+APIC : Advanced Programmable Interrupt Controller
+ACPI : Advanced Configuration and Power Interface
+
+* tick broadcast framework
+https://lwn.net/Articles/574962/
+  - C-State : CPU Operating(Sleeping) State
+=> 읽다가 멈춤
+

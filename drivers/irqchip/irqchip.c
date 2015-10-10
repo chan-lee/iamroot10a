@@ -19,12 +19,13 @@
  * the end of the array by the linker, thanks to being part of a
  * special section.
  */
-static const struct of_device_id
+static const struct of_device_id // @@ of -> open firmware
 irqchip_of_match_end __used __section(__irqchip_of_end);
 
 extern struct of_device_id __irqchip_begin[];
 
 void __init irqchip_init(void)
 {
+  // @@ list를 만들고 of_device_id의 data를 호출.
 	of_irq_init(__irqchip_begin);
 }

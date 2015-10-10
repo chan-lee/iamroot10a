@@ -599,8 +599,8 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	tick_nohz_init();
 	radix_tree_init();
 	/* init some links before init_ISA_irqs() */
-	early_irq_init();
-	init_IRQ();
+	early_irq_init(); //@@ 공통적인 irq.
+	init_IRQ(); //@@ chip specific.
 	tick_init();
 	init_timers();
 	hrtimers_init();
