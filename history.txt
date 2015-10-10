@@ -2015,13 +2015,26 @@ chain을 등록 (register)할 때, atomic_notifier_chain_register(), blocking_no
 ================================================================================
 2015.09.26
 
+Notifier 참고사이트: http://opensourceforu.efytimes.com/2009/01/the-crux-of-linux-notifier-chains/
+
 rcu_init() 분석 완료
+rcu_init --> rcu_cpu_notify(CPU_UP_PREPARE)
+  - RCU State -> RCU Node -> RCU Data : per-CPU에 있는 RCU Data값을 초기화한다.
+  - RCU boost thread를 띄운다.
+ 
 tick_nohz_init() 분석 완료
+  - CPU 0번을 제외한 모든 CPU의 dynticks mask(nohz_full_mask)를 1로 설정함
+  - cpu_notifier에 tick_nohz_cpu_down_callback를 등록함. CPU Down시 처리 루틴.
+  - 참고사이트: http://cateee.net/lkddb/web-lkddb/NO_HZ_FULL_ALL.html
 
 ================================================================================
 2015.10.03
 
 radix_tree_init() 분석 완료
+  - radix_tree_node_cachep 에 kmem_cache를 생성함.
+  - height_to_maxindex 배열을 초기화한다. height_to_maxindex은 깊이에 대한 최대 인덱스값을 설정한다.
+  - cpu_notifier에 radix_tree_callback을 등록함. 
+  - radix_tree_callback는 CPU Dead시 radix_tree_node_cachep에 할당된 kmem_cache를 free해준다.
 early_irq_init() 분석 완료
 -- non-sparse irq init
 -- architecture independent 한 irq_desc fields 를 초기화
