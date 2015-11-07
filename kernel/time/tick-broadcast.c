@@ -29,9 +29,9 @@
  */
 
 static struct tick_device tick_broadcast_device;
-static cpumask_var_t tick_broadcast_mask;
+static cpumask_var_t tick_broadcast_mask; ///< C3 state에 있는 cpu.
 static cpumask_var_t tick_broadcast_on;
-static cpumask_var_t tmpmask;
+static cpumask_var_t tmpmask; ///< 깨어날(?) cpu.
 static DEFINE_RAW_SPINLOCK(tick_broadcast_lock);
 static int tick_broadcast_force;
 

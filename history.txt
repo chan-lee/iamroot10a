@@ -2054,5 +2054,18 @@ ACPI : Advanced Configuration and Power Interface
 * tick broadcast framework
 https://lwn.net/Articles/574962/
   - C-State : CPU Operating(Sleeping) State
-=> 읽다가 멈춤
+  - 각cpu마다 tick_device가 존재하고 이 cpu가 deep C-State에 진입하였을 경우
+    이를 깨워주는 broadcast_tick_device가 있다.(보통 외부 timter-hpet(x86))
 
+* __alignof__ (struct 내부의 정렬 크기 -> 가장 큰 객체의 크기. 2^n)
+struct { char a; char b; } sizeof => 2, alignof => 1
+struct { char a; int b; } sizeof => 8, alignof => 4
+struct { char a; char a2; int b; } sizeof => 8, aligneof => 4
+struct { char a; int b; char a2; } sizeof => 12, aligneof => 4
+
+(__alignof__(tvec_base) & mask) 의 의미는?
+include/linux/timer.h
+struct timer_list {
+    struct tvec_base *base; ///< @@ 주소가 4의 배수가 될 것이다.
+    // @@ align과 메모리 할당자의 return값과의 상관 관계는 아직 찾지 못했다.
+}

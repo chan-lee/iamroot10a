@@ -58,6 +58,8 @@ EXPORT_SYMBOL(jiffies_64);
 
 /*
  * per-CPU timer vector definitions:
+ * @@ TVR - timer vector root
+ * @@ TVN - timer vector node
  */
 #define TVN_BITS (CONFIG_BASE_SMALL ? 4 : 6)
 #define TVR_BITS (CONFIG_BASE_SMALL ? 6 : 8)
@@ -1549,13 +1551,13 @@ static int init_timers_cpu(int cpu)
 	}
 
 
-	for (j = 0; j < TVN_SIZE; j++) {
+	for (j = 0; j < TVN_SIZE; j++) { // @@ timer vector node.
 		INIT_LIST_HEAD(base->tv5.vec + j);
 		INIT_LIST_HEAD(base->tv4.vec + j);
 		INIT_LIST_HEAD(base->tv3.vec + j);
 		INIT_LIST_HEAD(base->tv2.vec + j);
 	}
-	for (j = 0; j < TVR_SIZE; j++)
+	for (j = 0; j < TVR_SIZE; j++) // @@ timer vector root.
 		INIT_LIST_HEAD(base->tv1.vec + j);
 
 	base->timer_jiffies = jiffies;
@@ -1585,8 +1587,8 @@ static void migrate_timers(int cpu)
 	int i;
 
 	BUG_ON(cpu_online(cpu));
-	old_base = per_cpu(tvec_bases, cpu);
-	new_base = get_cpu_var(tvec_bases);
+	old_base = per_cpu(tvec_bases, cpu); //@@ dead cpu.
+	new_base = get_cpu_var(tvec_bases); //@@ this cpu.
 	/*
 	 * The caller is globally serialized and nobody else
 	 * takes two locks at once, deadlock is not possible.
@@ -1620,7 +1622,7 @@ static int timer_cpu_notify(struct notifier_block *self,
 	switch(action) {
 	case CPU_UP_PREPARE:
 	case CPU_UP_PREPARE_FROZEN:
-		err = init_timers_cpu(cpu);
+		err = init_timers_cpu(cpu); // @@ timer vector base 에 메모리 할당.
 		if (err < 0)
 			return notifier_from_errno(err);
 		break;
@@ -1646,10 +1648,14 @@ void __init init_timers(void)
 	int err;
 
 	/* ensure there are enough low bits for flags in timer->base pointer */
+  // @@ tvec_base의 alignof가 4이상이어야 compile error가 안남.
+  // @@ timer_list->base(tvec_base) 가 4의 배수의 주소를 가리키게 하기 위해서인것 같은데,
+  // @@ algin과 memory 할당 반환 주소와의 관계는 아직 파악하지 못하였다.
+  // @@ TIMER_FLAG_MASK 의 선언 위쪽에 보면 설명이 존재.
 	BUILD_BUG_ON(__alignof__(struct tvec_base) & TIMER_FLAG_MASK);
 
 	err = timer_cpu_notify(&timers_nb, (unsigned long)CPU_UP_PREPARE,
-			       (void *)(long)smp_processor_id());
+			       (void *)(long)smp_processor_id()); //@@ end 2015.11.07
 	init_timer_stats();
 
 	BUG_ON(err != NOTIFY_OK);

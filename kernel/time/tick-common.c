@@ -385,5 +385,5 @@ void __init tick_init(void)
 {
   // tick broadcast framework
   // @@ https://lwn.net/Articles/574962/
-	tick_broadcast_init();
+	tick_broadcast_init(); // @@ 2015.11.07 시작
 }
