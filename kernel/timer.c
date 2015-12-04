@@ -1370,9 +1370,10 @@ void update_process_times(int user_tick)
  */
 static void run_timer_softirq(struct softirq_action *h)
 {
+	//@@ timer vector base를 얻음 	
 	struct tvec_base *base = __this_cpu_read(tvec_bases);
 
-  //@@ hrtimer fallback용.
+	//@@ hrtimer fallback용.
 	hrtimer_run_pending();
 
 	if (time_after_eq(jiffies, base->timer_jiffies))
@@ -1627,6 +1628,7 @@ static int timer_cpu_notify(struct notifier_block *self,
 			return notifier_from_errno(err);
 		break;
 #ifdef CONFIG_HOTPLUG_CPU
+	//@@ 중단되는 CPU에 속한 timer를 살아있는 CPU로 이동한다.(migrate_timer)
 	case CPU_DEAD:
 	case CPU_DEAD_FROZEN:
 		migrate_timers(cpu);
@@ -1656,10 +1658,17 @@ void __init init_timers(void)
 
 	err = timer_cpu_notify(&timers_nb, (unsigned long)CPU_UP_PREPARE,
 			       (void *)(long)smp_processor_id()); //@@ end 2015.11.07
+
+	//@@ start 2015.11.28
+	//@@ fast hash lookup을 위한 loopup spinlock을 초기화함.
 	init_timer_stats();
 
 	BUG_ON(err != NOTIFY_OK);
+	//@@ CPU event(CPU_DEAD와 CPU_DEAD_FROZEN)에 대한 처리를 위해 
+	//@@ timer_cpu_notify를 cpu notifier에 등록한다.
 	register_cpu_notifier(&timers_nb);
+
+	//@@ SoftIRQ interrupt vector table에 run_timer_softirq를 등록한다.
 	open_softirq(TIMER_SOFTIRQ, run_timer_softirq);
 }
 

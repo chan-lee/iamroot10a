@@ -983,6 +983,8 @@ static void tick_nohz_switch_to_nohz(void)
 		return;
 
 	local_irq_disable();
+	//@@ Low resolution timer + NOHZ mode 설정
+	//@@ end 2015.11.28
 	if (tick_switch_to_oneshot(tick_nohz_handler)) {
 		local_irq_enable();
 		return;
@@ -1208,7 +1210,7 @@ int tick_check_oneshot_change(int allow_nohz)
 		return 0;
 
 	if (!allow_nohz)
-		return 1;
+		return 1;  //@@ high resolution timer
 
 	tick_nohz_switch_to_nohz();
 	return 0;
