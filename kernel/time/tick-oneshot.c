@@ -82,7 +82,7 @@ int tick_switch_to_oneshot(void (*handler)(struct clock_event_device *))
 	td->mode = TICKDEV_MODE_ONESHOT;
 	dev->event_handler = handler;
 	clockevents_set_mode(dev, CLOCK_EVT_MODE_ONESHOT);
-	tick_broadcast_switch_to_oneshot();
+	tick_broadcast_switch_to_oneshot(); //@@ tick_broadcast_device에 oneshot용 handler를 설치한다.
 	return 0;
 }
 

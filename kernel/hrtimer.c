@@ -1470,6 +1470,7 @@ void hrtimer_run_pending(void)
 	 * check bit in the tick_oneshot code, otherwise we might
 	 * deadlock vs. xtime_lock.
 	 */
+  //@@ !hrtimer_is_hres_enabled()가 왜 allow_nohz인지 의문
 	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled()))
 		hrtimer_switch_to_hres();
 }

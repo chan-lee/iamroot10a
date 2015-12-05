@@ -1361,6 +1361,7 @@ static inline void old_vsyscall_fixup(struct timekeeper *tk)
  */
 static void update_wall_time(void)
 {
+  //@@ 2015.12.05 end
 	struct clocksource *clock;
 	struct timekeeper *real_tk = &timekeeper;
 	struct timekeeper *tk = &shadow_timekeeper;

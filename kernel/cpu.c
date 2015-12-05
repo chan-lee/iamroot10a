@@ -164,7 +164,7 @@ int __ref register_cpu_notifier(struct notifier_block *nb)
 {
 	int ret;
 	cpu_maps_update_begin();
-	ret = raw_notifier_chain_register(&cpu_chain, nb);  //@@ cpu_chin에 nb를 등록.
+	ret = raw_notifier_chain_register(&cpu_chain, nb);  //@@ cpu_chain에 nb를 등록.
 	cpu_maps_update_done();
 	return ret;
 }

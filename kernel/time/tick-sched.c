@@ -983,7 +983,9 @@ static void tick_nohz_switch_to_nohz(void)
 		return;
 
 	local_irq_disable();
-	if (tick_switch_to_oneshot(tick_nohz_handler)) {
+  //@@ 현재 cpu의 clock_event_device에 tick_nohz_hanlder를 설정하고, 
+  //@@ tick_broadcast_device에도 설정되어 있지 않다면 oneshot용 handler를 설정한다.
+	if (tick_switch_to_oneshot(tick_nohz_handler)) { //@@ tick_sched 에서 매 tick당 해줘야 하는일을 emulation.
 		local_irq_enable();
 		return;
 	}
@@ -1210,6 +1212,7 @@ int tick_check_oneshot_change(int allow_nohz)
 	if (!allow_nohz)
 		return 1;
 
+  //@@ tick_nohz 모듈에 switch_to_nohz()를 요청. tick_nohz.switch_to_nohz() /c++ style
 	tick_nohz_switch_to_nohz();
 	return 0;
 }

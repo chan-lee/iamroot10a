@@ -2053,9 +2053,10 @@ ACPI : Advanced Configuration and Power Interface
 
 * tick broadcast framework
 https://lwn.net/Articles/574962/
+http://everylwn.blogspot.kr/2015/11/the-tick-broadcast-framework.html (한글판)
   - C-State : CPU Operating(Sleeping) State
   - 각cpu마다 tick_device가 존재하고 이 cpu가 deep C-State에 진입하였을 경우
-    이를 깨워주는 broadcast_tick_device가 있다.(보통 외부 timter-hpet(x86))
+    이를 깨워주는 broadcast_tick_device가 있다.(보통 외부 timer-hpet(x86))
 
 * __alignof__ (struct 내부의 정렬 크기 -> 가장 큰 객체의 크기. 2^n)
 struct { char a; char b; } sizeof => 2, alignof => 1
@@ -2069,3 +2070,34 @@ struct timer_list {
     struct tvec_base *base; ///< @@ 주소가 4의 배수가 될 것이다.
     // @@ align과 메모리 할당자의 return값과의 상관 관계는 아직 찾지 못했다.
 }
+
+
+================================================================================
+2015.11.28
+다양한 posix time 함수들
+http://blog.yongil.net/tag/struct%20timespec
+
+================================================================================
+2015.12.05
+kernel 2.6의 timer 함수들(한글)
+http://xenostudy.tistory.com/306
+
+void __init init_timers(void) - kernel/timer.c
+  static void run_timer_softirq(struct softirq_action *h)
+    void hrtimer_run_pending(void) - kernel/hrtimer.c
+      int tick_check_oneshot_change(int allow_nohz) - kernel/time/tick-sched.c
+        static void tick_nohz_switch_to_nohz(void)
+          static void tick_nohz_handler(struct clock_event_device *dev)
+            static void tick_sched_do_timer(ktime_t now)
+              static void tick_do_update_jiffies64(ktime_t now)
+                void do_timer(unsigned long ticks) - kernel/time/timekeeping.c
+                  static void update_wall_time(void)  <= 여기하고 있음
+
+다음 시간 TODO
+Documentation/timers/NO_HZ.txt
+- CONFIG_NO_HZ =no/ CONFIG_HZ_PERIODIC=y => periodic Scheduling clock interrupt (Timer interrupt?) 
+- CONFIG_NO_HZ =yes/ CONFIG_NO_HZ_IDLE=y 
+- CONFIG_NO_HZ_FULL
+아래 timekeeping은 우리 kernel 버전에는 없음
+https://www.kernel.org/doc/Documentation/timers/timekeeping.txt
+

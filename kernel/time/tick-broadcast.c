@@ -28,7 +28,7 @@
  * timer stops in C3 state.
  */
 
-static struct tick_device tick_broadcast_device;
+static struct tick_device tick_broadcast_device; ///< CPU 외부에 있는 clock-device, x86) hpet
 static cpumask_var_t tick_broadcast_mask; ///< C3 state에 있는 cpu.
 static cpumask_var_t tick_broadcast_on;
 static cpumask_var_t tmpmask; ///< 깨어날(?) cpu.
@@ -781,7 +781,7 @@ void tick_broadcast_setup_oneshot(struct clock_event_device *bc)
 	if (bc->event_handler != tick_handle_oneshot_broadcast) {
 		int was_periodic = bc->mode == CLOCK_EVT_MODE_PERIODIC;
 
-		bc->event_handler = tick_handle_oneshot_broadcast;
+		bc->event_handler = tick_handle_oneshot_broadcast; //@@ tick_do_broadcast를 수행하는 함수
 
 		/*
 		 * We must be careful here. There might be other CPUs
