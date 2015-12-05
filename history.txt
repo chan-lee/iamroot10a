@@ -2071,9 +2071,17 @@ struct timer_list {
     // @@ align과 메모리 할당자의 return값과의 상관 관계는 아직 찾지 못했다.
 }
 
-
 ================================================================================
 2015.11.28
+start_kernel->init_timers->init_timer_stats
+  - fast hash lookup을 위한 lookup spinlock 을 초기화함
+start_kernel->init_timers->register_cpu_notifier
+  - CPU DEAD 처리를 위한 notifier handler 등록
+  - notifier handler는 DEAD된 CPU의 timer vertor를 다른 CPU로 migration 한다.
+start_kernel->init_timers->open_softirq
+  - timer softirq처리를 위한 run_timer_softirq 를 등록한다.
+start_kernel->init_timers->run_timer_softirq 분석중
+
 다양한 posix time 함수들
 http://blog.yongil.net/tag/struct%20timespec
 

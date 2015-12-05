@@ -1459,6 +1459,7 @@ static inline void __hrtimer_peek_ahead_timers(void) { }
  */
 void hrtimer_run_pending(void)
 {
+	//@@ high resolution timer가 이미 동작 중인지 검사
 	if (hrtimer_hres_active())
 		return;
 
@@ -1471,6 +1472,8 @@ void hrtimer_run_pending(void)
 	 * deadlock vs. xtime_lock.
 	 */
   //@@ !hrtimer_is_hres_enabled()가 왜 allow_nohz인지 의문
+	//@@ softirq context 중에 high resolution  또는 low resolution 인지 결정
+	//@@ hrtimer이든 아니든 NOHZ mode(tickless) 설정함
 	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled()))
 		hrtimer_switch_to_hres();
 }
