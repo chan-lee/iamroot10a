@@ -1195,6 +1195,7 @@ http://xucxo.blogspot.kr/2011/03/linux-programming-thread-rw-lock.html
 단점: writer가 굶을 수 있다.
 
 - seq lock
+writer가 sequence number를 기록하며서 이것이 변하는지 reader에서 체크
 장점: reader가 lock이 필요없다. writer가 굶지 않는다.
 단점: reader가 틀린 값을 가지고 있을 수 있도고 가정
 
@@ -2106,6 +2107,77 @@ Documentation/timers/NO_HZ.txt
 - CONFIG_NO_HZ =no/ CONFIG_HZ_PERIODIC=y => periodic Scheduling clock interrupt (Timer interrupt?) 
 - CONFIG_NO_HZ =yes/ CONFIG_NO_HZ_IDLE=y 
 - CONFIG_NO_HZ_FULL
-아래 timekeeping은 우리 kernel 버전에는 없음
+아래 timekeeping 문서는 우리 kernel 버전에는 없음
 https://www.kernel.org/doc/Documentation/timers/timekeeping.txt
+
+================================================================================
+2015.12.12
+Documentation/timers/NO_HZ.txt
+- CONFIG_NO_HZ =no/ CONFIG_HZ_PERIODIC=y => periodic Scheduling clock interrupt (Timer interrupt?) 
+  scheduling-clock ticks를 절대 빼먹지 않음
+  오래된 방식임에도 불구하고 짧지만 많은 cpu사용량을 가진 task가 많고 자주 짧은 idle 상태(10~100ms)가
+  발생하는 경우에는 여전히 유효한 방식 -> idle 상태에서 interrupt를 빽먹을 경우
+  user-kernel 간의 context switch overhead가 더 발생
+
+- CONFIG_NO_HZ =yes/ CONFIG_NO_HZ_IDLE=y 
+  idle cpu상태일 때 빼먹음 => dynamic tick
+  dynamic tick의 비용
+    1) idle loop의 실행해야 하는 instruction이 증가함
+    2) 많은 architecture에서 clock-reprogramming 수행을 증가시킴
+  => idle 상태로 부터 변환하는 반응속도가 느려짐
+  dyntick-idle = in dyntick-idle mode = in nohz mode = running tickless
+
+- CONFIG_NO_HZ_FULL
+  idle cpus 상태거나 1개의 task만 실행될때 빼먹음 . HPC(high-performance computing에서 사용)
+  => adaptive-ticks
+  cpu별로 adaptive-tick을 선택할 수 있음. 그러나 boot cpu(0번)은 adaptive-tick을 사용못함.
+  다른 adaptive-tick cpu에 반응해줘야 함
+  adapticve-tick의 비용
+    1) dynamic tick은 기본으로 사용해야 하므로 이에 대한 비용
+    2) user/kernel 변환에서 subsystem에 알려야 하므로 좀 더 비용이 발생(ex. RCU)
+    3) POSIX CPU timer가 adaptive-tick 모드로 못 들어 가게함
+    4) 지연된 성능측정 이벤트(perf event)가 adaptive-tick 모드로 못들어 가게함(?) 
+    5) scheduler 통계가 다르게 나타남.
+    6) LB_BIAS scheduler 사용 못함
+
+- RCU IMPLICATIONS
+  RCU callback 남아 있을때 dyntick-idle이나 adaptive-tick mode로 못 들어감
+  CONFIG_RCU_FAST_NO_HZ=y 일 경우 들어갈 수 있음 => 매 4 jiffies마다 callback이 완료되었는지 깨어나서 검사함.
+  CONFIG_RCU_NOCB_CPU=y callback을 rcuo thread로 떠 넘김.
+  1. 3가지 옵션이 있음
+    a. CONFIG_RCU_NOCB_CPU_NONE=y => 어떤 cpu도 떠넘기지 못함
+    b. CONFIG_RCU_NOCB_CPU_ZERO=y => cpu 0만 offloaded 가능
+    c. CONFIG_RCU_NOCB_CPU_ALL=y => 모든 cpu가 offloaded 가능
+  2. rcu_nocbs=cpu_num => 특정 cpu만 offloaded가능
+  offloaded cpu는 절대 RCU callback을 queue하지 않음. => 그러므로 dyntick-idle, adaptive-tick mode로 들어갈수 있음
+  => userspace에서 rcuo kthread들을 어떤 cpu에 할당하느냐에 따라 달려있음.
+
+- Known Issue
+  생략
+
+* TimeKeeping - https://www.kernel.org/doc/Documentation/timers/timekeeping.txt
+  clock source: basic timeline을 제공
+  clock event: timeline의 특정 시점에 interrupt를 쏨
+  sched_clock: scheduling & timestamping
+  delay timer: hardware counter를 이용하여 정확한 delay source 제공
+
+* clock source
+  timeline 중에 내가 어디 있는지 알려줌
+  monotonic: 0부터 계속 증가하는 시간
+  정확도를 높이기 위해 RTC나 NTP등으로 보강하는 layer가 있음
+  mult, shift: clock source는 단순한 counter이므로 nano 단위로 만들기 위해서는
+  나누거나 곱해야 한다. nano이하의 counter라면 shift, milli 이상이라면 mult 할것이다.
+* clock event
+  clock source와 반대되는 개념
+* sched_clock()
+  아키텍쳐에서 제공할수도 안할수도 있음. 제공안해줄 경우 1/Hz로 jiffie를 이용하게됨
+  clock source가 정확성을 추구하는데 반해 sched_clock은 속도가 우선
+  arm의 경우 16/32 bit counter로 64 bit nanosecond를 구현
+  smp 시스템의 경우 CONFIG_HAVE_UNSTABLE_SCHED_CLOCK을 설정하면 cpu마다 따로 따로 실행할수 있음
+* delay timer (특정 아키텍쳐만 가능)
+  일반적인 delay() 함수는 jiffy 만큼의 loop를 돌게 조정되어 있음
+  max frequency로 돌고 있다면 그 절반정도의 frequency => delay() 함수는 2배 정도 길게 실행
+  delay timer의 경우 hard code된 loop대신 시간으로 delay계산함
+  OpenRISC와 ARM
+
 

@@ -1422,7 +1422,8 @@ static void update_wall_time(void)
 	 */
 	action = accumulate_nsecs_to_secs(tk);
 
-	write_seqcount_begin(&timekeeper_seq);
+  //@@ 2015.12.12 end
+	write_seqcount_begin(&timekeeper_seq); //@@ seqlock.
 	/* Update clock->cycle_last with the new value */
 	clock->cycle_last = tk->cycle_last;
 	/*
