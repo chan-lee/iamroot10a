@@ -2180,4 +2180,6 @@ Documentation/timers/NO_HZ.txt
   delay timer의 경우 hard code된 loop대신 시간으로 delay계산함
   OpenRISC와 ARM
 
+================================================================================
+2015.12.19
 

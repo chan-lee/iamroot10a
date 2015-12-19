@@ -1408,7 +1408,7 @@ static void update_wall_time(void)
 	}
 
 	/* correct the clock when NTP error is too big */
-	timekeeping_adjust(tk, offset);
+	timekeeping_adjust(tk, offset); // @@ pass.
 
 	/*
 	 * XXX This can be killed once everyone converts
@@ -1420,10 +1420,10 @@ static void update_wall_time(void)
 	 * Finally, make sure that after the rounding
 	 * xtime_nsec isn't larger than NSEC_PER_SEC
 	 */
-	action = accumulate_nsecs_to_secs(tk);
+	action = accumulate_nsecs_to_secs(tk); //@@ 1 초를 넘는 nano 초를 초로 바꿔줌
 
   //@@ 2015.12.12 end
-	write_seqcount_begin(&timekeeper_seq); //@@ seqlock.
+	write_seqcount_begin(&timekeeper_seq); //@@ seqlock. <----- wmb
 	/* Update clock->cycle_last with the new value */
 	clock->cycle_last = tk->cycle_last;
 	/*
@@ -1438,7 +1438,7 @@ static void update_wall_time(void)
 	 */
 	memcpy(real_tk, tk, sizeof(*tk));
 	timekeeping_update(real_tk, action);
-	write_seqcount_end(&timekeeper_seq);
+	write_seqcount_end(&timekeeper_seq); //@@ <------ wmb
 out:
 	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 }
