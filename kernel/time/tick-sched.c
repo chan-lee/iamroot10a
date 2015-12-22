@@ -80,6 +80,7 @@ static void tick_do_update_jiffies64(ktime_t now)
 							   incr * ticks);
 		}
 		do_timer(++ticks);
+		//@@ 2015.12.19 end 
 
 		/* Keep the tick_next_period variable up to date */
 		tick_next_period = ktime_add(last_jiffies_update, tick_period);

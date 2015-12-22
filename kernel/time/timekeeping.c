@@ -1436,7 +1436,9 @@ static void update_wall_time(void)
 	 * memcpy under the timekeeper_seq against one before we start
 	 * updating.
 	 */
+	//@@ showdow_timekeeper와 timekeeper가 갱신된다.
 	memcpy(real_tk, tk, sizeof(*tk));
+	//@@ vsyscall을 위한 time과 GTOD(Generic Time Of Day)를 갱신한다.
 	timekeeping_update(real_tk, action);
 	write_seqcount_end(&timekeeper_seq); //@@ <------ wmb
 out:
@@ -1585,7 +1587,10 @@ struct timespec get_monotonic_coarse(void)
 void do_timer(unsigned long ticks)
 {
 	jiffies_64 += ticks;
+	//@@ clock source를 이용해서 wall time(timekeeper)를 갱신한다.
+	//@@ NTP와 차이가 많을 경우, 보정함.
 	update_wall_time();
+	//@@ 최소 10 ticks 에 한번, CPU 부하를 계산한다.
 	calc_global_load(ticks);
 }
 

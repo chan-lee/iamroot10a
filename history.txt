@@ -2182,4 +2182,9 @@ Documentation/timers/NO_HZ.txt
 
 ================================================================================
 2015.12.19
+update_wall_time 
+  clock source를 이용해서 wall time(timekeeper)를 갱신한다.
+  NTP와 차이가 많을 경우, 보정함.
+calc_global_load
+  최소 10 ticks 에 한번, CPU 부하를 계산한다. 
 
