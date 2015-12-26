@@ -468,7 +468,9 @@ void account_process_tick(struct task_struct *p, int user_tick)
 		return;
 	}
 
-	if (steal_account_process_tick())
+  //@@ steal tick
+  //@@ http://blog.scoutapp.com/articles/2013/07/25/understanding-cpu-steal-time-when-should-you-be-worried
+	if (steal_account_process_tick()) //@@ 반가상화의 경우.
 		return;
 
 	if (user_tick)

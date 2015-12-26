@@ -1354,8 +1354,8 @@ void update_process_times(int user_tick)
 	int cpu = smp_processor_id();
 
 	/* Note: this timer irq context must be accounted for as well. */
-	account_process_tick(p, user_tick);
-	run_local_timers();
+	account_process_tick(p, user_tick); // @@ tick을 기반으로 프로세스에 각 cpu time을 계산한다.
+	run_local_timers(); //@@ timer를 실행하고 softirq 발생시킴 
 	rcu_check_callbacks(cpu, user_tick);
 #ifdef CONFIG_IRQ_WORK
 	if (in_irq())
@@ -1386,7 +1386,7 @@ static void run_timer_softirq(struct softirq_action *h)
 void run_local_timers(void)
 {
 	hrtimer_run_queues();
-	raise_softirq(TIMER_SOFTIRQ);
+	raise_softirq(TIMER_SOFTIRQ); //@@ softirq를 발생하고 daemon이 idle이면 깨운다.
 }
 
 #ifdef __ARCH_WANT_SYS_ALARM

@@ -1644,7 +1644,7 @@ tv자료구조를 계속 만들면서 추가한다.
 
 high resolution timer를 새로만든 이유 4가지
 1) jiffies값과 너무 엮여 있고, 32bits로 가정하고 만들었기에 확장하기 힘들다
-2) tier wheel의 cascading 방식은 delay를 예측할수가 없다
+2) timer wheel의 cascading 방식은 delay를 예측할수가 없다
 3) settimeofday나 NTP에서 이미 사용하고 자료구조는 너무 경직되어있다.
 4) timer wheel 은 I/O 에러 상태를 검사하는 timeouts에 최적화되어 있는데
 이는 대부분 expire되지 못하고 그전에 제거된다. 게다가 사용자들은 granularity와
@@ -2188,3 +2188,14 @@ update_wall_time
 calc_global_load
   최소 10 ticks 에 한번, CPU 부하를 계산한다. 
 
+================================================================================
+2015.12.26
+tick_sched_handle 시작
+
+steal tick : 반가상화에서 다른 가상화 머신에 빼았긴 시간?
+http://blog.scoutapp.com/articles/2013/07/25/understanding-cpu-steal-time-when-should-you-be-worried
+
+timers in linux
+http://www.joinc.co.kr/modules/moniwiki/wiki.php/article/Timesr_in_Linux
+
+rcu_check_callbacks 하다가 끝

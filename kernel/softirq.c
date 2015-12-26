@@ -393,7 +393,7 @@ void raise_softirq(unsigned int nr)
 	unsigned long flags;
 
 	local_irq_save(flags);
-	raise_softirq_irqoff(nr);
+	raise_softirq_irqoff(nr); //@@ 왜 함수 이름이 irqoff인지 모르겠음
 	local_irq_restore(flags);
 }
 

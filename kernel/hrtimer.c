@@ -1488,7 +1488,7 @@ void hrtimer_run_queues(void)
 	struct hrtimer_clock_base *base;
 	int index, gettime = 1;
 
-	if (hrtimer_hres_active())
+	if (hrtimer_hres_active()) //@@ tickless 일 경우로 추정
 		return;
 
 	for (index = 0; index < HRTIMER_MAX_CLOCK_BASES; index++) {
@@ -1497,7 +1497,7 @@ void hrtimer_run_queues(void)
 			continue;
 
 		if (gettime) {
-			hrtimer_get_softirq_time(cpu_base);
+			hrtimer_get_softirq_time(cpu_base); //@@ softirq를 발생시켜 만료된 timer실행시키기 위해
 			gettime = 0;
 		}
 
@@ -1511,7 +1511,7 @@ void hrtimer_run_queues(void)
 					hrtimer_get_expires_tv64(timer))
 				break;
 
-			__run_hrtimer(timer, &base->softirq_time);
+			__run_hrtimer(timer, &base->softirq_time); //@@ 지우고, 실행하고, 필요하면 다시 넣는다.
 		}
 		raw_spin_unlock(&cpu_base->lock);
 	}

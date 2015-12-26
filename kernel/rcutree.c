@@ -2060,7 +2060,7 @@ void rcu_check_callbacks(int cpu, int user)
 		 * at least not while the corresponding CPU is online.
 		 */
 
-		rcu_sched_qs(cpu);
+		rcu_sched_qs(cpu); //@@ 1 tick이 지났으므로 qs로 만들어줌
 		rcu_bh_qs(cpu);
 
 	} else if (!in_softirq()) {
@@ -2072,6 +2072,8 @@ void rcu_check_callbacks(int cpu, int user)
 		 * critical section, so note it.
 		 */
 
+    // @@ 2015.12.26 끝
+		// @@ rcu_sched_qs()는 왜 안하는지 살펴볼 차례
 		rcu_bh_qs(cpu);
 	}
 	rcu_preempt_check_callbacks(cpu);

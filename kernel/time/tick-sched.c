@@ -83,6 +83,7 @@ static void tick_do_update_jiffies64(ktime_t now)
 		//@@ 2015.12.19 end 
 
 		/* Keep the tick_next_period variable up to date */
+    //@@ 다음에 발생할 기간을 계산
 		tick_next_period = ktime_add(last_jiffies_update, tick_period);
 	}
 	write_sequnlock(&jiffies_lock);
@@ -964,7 +965,7 @@ static void tick_nohz_handler(struct clock_event_device *dev)
 	dev->next_event.tv64 = KTIME_MAX;
 
 	tick_sched_do_timer(now);
-	tick_sched_handle(ts, regs);
+	tick_sched_handle(ts, regs); //@@ 2015.12.26 시작
 
 	while (tick_nohz_reprogram(ts, now)) {
 		now = ktime_get();
