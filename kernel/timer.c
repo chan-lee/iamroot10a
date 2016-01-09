@@ -1356,12 +1356,14 @@ void update_process_times(int user_tick)
 	/* Note: this timer irq context must be accounted for as well. */
 	account_process_tick(p, user_tick); // @@ tick을 기반으로 프로세스에 각 cpu time을 계산한다.
 	run_local_timers(); //@@ timer를 실행하고 softirq 발생시킴 
-	rcu_check_callbacks(cpu, user_tick);
+	rcu_check_callbacks(cpu, user_tick); //@@ pending되어 있는 rcu가 있으면 raise rcu softirq
 #ifdef CONFIG_IRQ_WORK
-	if (in_irq())
-		irq_work_run();
+	if (in_irq()) //@@ hardware ISR 호출 도중에 호출 중이면.
+		irq_work_run(); //@@ irq_work(disable 상태에서 pending된 irq가 아닐까 추측)를 실행한다.
+    //@@ 혹은 hardirq에서 처리해야 하는 전형적인 list를 모아 놓은것이 아닐까 추측
 #endif
-	scheduler_tick();
+  //@@ 2015.01.09 end
+	scheduler_tick(); //@@ history 1743 참조
 	run_posix_cpu_timers(p);
 }
 

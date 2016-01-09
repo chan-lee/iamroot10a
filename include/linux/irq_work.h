@@ -17,6 +17,8 @@
 #define IRQ_WORK_FLAGS		3UL
 #define IRQ_WORK_LAZY		4UL /* Doesn't want IPI, wait for tick */
 
+//@@ disable 상태에서 pending된 irq가 아닐까 추측
+//@@ 혹은 hardirq에서 처리해야 하는 전형적인 list를 모아 놓은것이 아닐까 추측
 struct irq_work {
 	unsigned long flags;
 	struct llist_node llnode; //@@ lock-less null terminated single linked list. irq들을 보관하는듯하다.

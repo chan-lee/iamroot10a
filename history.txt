@@ -2091,6 +2091,8 @@ http://blog.yongil.net/tag/struct%20timespec
 kernel 2.6의 timer 함수들(한글)
 http://xenostudy.tistory.com/306
 
+1743 line도 참조 scheduler_tick()
+
 void __init init_timers(void) - kernel/timer.c
   static void run_timer_softirq(struct softirq_action *h)
     void hrtimer_run_pending(void) - kernel/hrtimer.c
@@ -2199,3 +2201,30 @@ timers in linux
 http://www.joinc.co.kr/modules/moniwiki/wiki.php/article/Timesr_in_Linux
 
 rcu_check_callbacks 하다가 끝
+
+================================================================================
+2016.01.09
+rcu_sched vs rcu_bh
+http://www.slideshare.net/vh21/yet-another-introduction-of-linux-rcu
+
+softirq
+http://hooneyo.tistory.com/entry/softirq-%EA%B5%AC%ED%98%84-%ED%95%B8%EB%93%A4%EB%9F%AC-%EC%8B%A4%ED%96%89
+
+hardirq => hardirq handler(top half) => raise_softirq 세팅 후 리턴 
+  => 리턴 후 do_softirq() => 0번 softirq부터 pending되어 있는것을 차례로 실행 
+  => softirq handler(bottom half)
+
+system call (software interrupt) 와 softirq의 차이
+http://www.hanbit.co.kr/network/view.html?bi_id=1058
+system call -> kernel mode 진입 -> device에 요청 -> 자신은 wait queue(yield) -> scheduling()
+  -> running 되는 타이밍을 기약할수 없음?
+system call은 kernel mode로 진입하기에 비용이 올라가는 것이 아니라
+자신이 wait queue에 들어가기 때문에 비용이 올라감
+softirq는 software interrupt가 아니며 단순히 hardware interrupt에 의한 bottom half이다.
+
+system call(software interrupt) -> kernel mode -> device 요청 -> wait queue(yield)
+device에 자료가 준비되면
+system call return <- wakeup <- bottom half (softirq, tasklet, workqueue) <- hard irq (top half) <- device (hardware interrupt)
+
+1743 line 참조 - schedulerTick()
+

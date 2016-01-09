@@ -73,6 +73,7 @@
 #error PREEMPT_ACTIVE is too low!
 #endif
 
+//@@ 현재 thread에서 interrupt가 걸린 depth
 #define hardirq_count()	(preempt_count() & HARDIRQ_MASK)
 #define softirq_count()	(preempt_count() & SOFTIRQ_MASK)
 #define irq_count()	(preempt_count() & (HARDIRQ_MASK | SOFTIRQ_MASK \
