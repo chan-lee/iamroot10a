@@ -2197,30 +2197,30 @@ void scheduler_tick(void)
 	struct rq *rq = cpu_rq(cpu);
 	struct task_struct *curr = rq->curr;
 
-  // @@ sched_clock_data 정보 업데이트
-  // @@ 시간 정보
+	// @@ sched_clock_data 정보 업데이트
+	// @@ 시간 정보
 	sched_clock_tick();
 
 	raw_spin_lock(&rq->lock);
-  // @@ runqueue  마다 있는  clock  업데이트 
+	// @@ runqueue  마다 있는  clock  업데이트 
 	update_rq_clock(rq);
-  // @@ scheduler tick  마다  task_tick  호출
-  // @@ 내부에서 schedule()
-  // @@ cfs_rq 의 se  돌면서  entity_tick (+runtime  갱신) 
-  // @@ 3 번째 parameter (int queued) = 0
-  // @@ ----> reschedule (inter-CPU scheduling?)  안함 (나중에 다른 곳에서 호출되어 할 듯)
+	// @@ scheduler tick  마다  task_tick  호출
+	// @@ 내부에서 schedule()
+	// @@ cfs_rq 의 se  돌면서  entity_tick (+runtime  갱신) 
+	// @@ 3 번째 parameter (int queued) = 0
+	// @@ ----> reschedule (inter-CPU scheduling?)  안함 (나중에 다른 곳에서 호출되어 할 듯)
 	curr->sched_class->task_tick(rq, curr, 0);
-  // @@ 런큐마다 cpu load 를 다시 계산 (자세한 방법은 아직 모름)
+	// @@ 런큐마다 cpu load 를 다시 계산 (자세한 방법은 아직 모름)
 	update_cpu_load_active(rq);
 	raw_spin_unlock(&rq->lock);
 
-  //@@ [2015.03.28] perf_event_task_tick() 분석 중 종료
-  //@@ [2015.04.11] 분석 시작
+	//@@ [2015.03.28] perf_event_task_tick() 분석 중 종료
+	//@@ [2015.04.11] 분석 시작
 	perf_event_task_tick();
 
 #ifdef CONFIG_SMP
 	rq->idle_balance = idle_cpu(cpu); //@@ 수행중인 태스크가 없고 idle 상태이면 1
-  //@@ load balancer 를 trigger (즉시 처리하지 않고 softirq 등록)
+	//@@ load balancer 를 trigger (즉시 처리하지 않고 softirq 등록)
 	trigger_load_balance(rq, cpu);
 #endif
 	rq_last_tick_reset(rq); //@@ 마지막으로 스케쥴된 tick 변수에 현재 시간 (jiffies) 등록

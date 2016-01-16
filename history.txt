@@ -2228,3 +2228,19 @@ system call return <- wakeup <- bottom half (softirq, tasklet, workqueue) <- har
 
 1743 line 참조 - schedulerTick()
 
+================================================================================
+2016.01.16
+tick_nohz_handler()
+    tick_sched_handle()
+        ..
+        update_process_times()
+            .../scheduler_tick()/run_posix_cpu_timers()
+        profile_tick() // 1월 16일 시작
+    tick_nohz_reprogram() // TODO: 다음 시간(1월 23일)부터 분석
+
+profile_tick(): kernel/profile.c
+부트 파라미터를 통해 프로파일링 수행 옵션 (프로파일링 수행 여부 및 shift 크기(pc들의 chunk 크기)) 을 지정해서 프로파일링을 할 수 있다.
+연속적인 명령어들 (pc 들) 을 (아마도 shift 크기를 통해) 그룹화함.
+프로파일링은 tick 마다 실행되는데,
+현재 pc 값을 통해 현재 pc 가 속해 있는 그룹들이 얼마나 많이 hit (얼마나 많은 tick 이 수행되었는지) 되었는지 저장함.
+(프로파일링 관련 참고 자료: Understanding the Linux Kernel 3rd Edition: Profiling the Kernel Code p242~p243)

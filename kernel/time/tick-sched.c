@@ -146,7 +146,7 @@ static void tick_sched_handle(struct tick_sched *ts, struct pt_regs *regs)
 	}
 #endif
 	update_process_times(user_mode(regs));
-	profile_tick(CPU_PROFILING);
+	profile_tick(CPU_PROFILING); //@@ 2016.01.16 분석했음.
 }
 
 #ifdef CONFIG_NO_HZ_FULL
@@ -965,7 +965,7 @@ static void tick_nohz_handler(struct clock_event_device *dev)
 	dev->next_event.tv64 = KTIME_MAX;
 
 	tick_sched_do_timer(now);
-	tick_sched_handle(ts, regs); //@@ 2015.12.26 시작
+	tick_sched_handle(ts, regs); //@@ 2015.12.26 시작 //@@ 2016.01.16 완료
 
 	while (tick_nohz_reprogram(ts, now)) {
 		now = ktime_get();

@@ -37,6 +37,12 @@ struct profile_hit {
 #define NR_PROFILE_HIT		(PAGE_SIZE/sizeof(struct profile_hit))
 #define NR_PROFILE_GRP		(NR_PROFILE_HIT/PROFILE_GRPSZ)
 
+//@@ ARM target architecture
+//@@ PROFILE_GRPSHIFT 3
+//@@ PROFILE_GRPSZ    8
+//@@ NR_PROFILE_HIT   4096/8 = 512
+//@@ NR_PROFILE_GRP   512/8  = 64
+
 static atomic_t *prof_buffer;
 static unsigned long prof_len, prof_shift;
 
@@ -97,6 +103,7 @@ int profile_setup(char *str)
 	}
 	return 1;
 }
+//@@ Kernel parameters 에 따라서 command_line[] 배열을 채워주는 매크로
 __setup("profile=", profile_setup);
 
 
@@ -288,7 +295,14 @@ static void do_profile_hits(int type, void *__pc, unsigned int nr_hits)
 	int i, j, cpu;
 	struct profile_hit *hits;
 
+	//@@ pc = program counter / _stext = start address of text area / prof_len 은 _etext 를 통해 계산됨.
+	//@@ pc 는 다음에 시작될 명령어 주소 (아마 항상 text 영역의 주소를 가리킬 것임)
+	//@@ prof_shift 값은 부트 파라미터에 따라 결정됨.
+	//@@ 프로파일링 옵션은 부트 파라미터로 수행 여부가 결정되는데, 일반적인 경우에 사용하지 않는 것 같다.
 	pc = min((pc - (unsigned long)_stext) >> prof_shift, prof_len - 1);
+	//@@ 아래 내용은 확실하지 않음.
+	//@@ pc 들을 그룹화 해서 hits (얼마나 많은 tick 이 지났는지) 를 더해준다.
+	//@@ 그룹당 hits 정보는 profile_hit 구조체를 통해 관리됨.
 	i = primary = (pc & (NR_PROFILE_GRP - 1)) << PROFILE_GRPSHIFT;
 	secondary = (~(pc << 1) & (NR_PROFILE_GRP - 1)) << PROFILE_GRPSHIFT;
 	cpu = get_cpu();
@@ -412,10 +426,13 @@ EXPORT_SYMBOL_GPL(profile_hits);
 
 void profile_tick(int type)
 {
+	//@@ 현재 CPU의 irq registers 읽음 (percpu data type임)
 	struct pt_regs *regs = get_irq_regs();
 
 	if (!user_mode(regs) && prof_cpu_mask != NULL &&
 	    cpumask_test_cpu(smp_processor_id(), prof_cpu_mask))
+		//@@ unlikely 조건문을 통한 뒤, profile_hits 호출
+		//@@ profile_hits(type, (void*)profile_pc(regs), 1)
 		profile_hit(type, (void *)profile_pc(regs));
 }
 
