@@ -1281,7 +1281,7 @@ shched_init() 시작
 				.hpet(high precision event timer)
 				.TSC(time stamp counter) : cpu 안에 들어있는 HW counter
 			timerqueue_init(&timer->node) : rb_node에 대해서 RB_CLEAR_NODE
-		3. hrtimer_forward() : 다음 interval을 위해서 만료 시간을 이 함수가  리턴되기 전에 설정해 둔다. 
+		3. hrtimer_forward() : 다음 interval을 위해서 만료 시간을 이 함수가 리턴되기 전에 설정해 둔다. 
 				그래야 다음 event시에 만료 시간을 알 수 있다. 
 			period 는 interval을 의미.
 
@@ -2244,3 +2244,17 @@ profile_tick(): kernel/profile.c
 프로파일링은 tick 마다 실행되는데,
 현재 pc 값을 통해 현재 pc 가 속해 있는 그룹들이 얼마나 많이 hit (얼마나 많은 tick 이 수행되었는지) 되었는지 저장함.
 (프로파일링 관련 참고 자료: Understanding the Linux Kernel 3rd Edition: Profiling the Kernel Code p242~p243)
+
+================================================================================
+2016.01.23
+tick_nohz_switch_to_nohz()
+    tick_nohz_handler()
+        tick_sched_handle()
+        tick_nohz_reprogram() // 1월 23일 시작
+            hrtimer_forward() : 새로운 만료 시간 설정 (현재 시간이 이미 원래 지정되어 있던
+                                만료 시간보다 지났으면) interval 값을 통해 그 다음 만료 시간으로
+                                지정하고 (forword), overrun 된 개수 (# of intervals) 를 return 함
+                                1284 line (2014/11/08 log) 참고
+            tick_program_event() : with force = 0
+                clockevents_program_event(): clock event driver 를 업데이트(reprogram) 해줌.
+                (clock event driver: Documentation/timers/highres.txt 참고)

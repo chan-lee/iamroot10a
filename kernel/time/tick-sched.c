@@ -949,8 +949,8 @@ EXPORT_SYMBOL_GPL(tick_nohz_idle_exit);
 
 static int tick_nohz_reprogram(struct tick_sched *ts, ktime_t now)
 {
-	hrtimer_forward(&ts->sched_timer, now, tick_period);
-	return tick_program_event(hrtimer_get_expires(&ts->sched_timer), 0);
+	hrtimer_forward(&ts->sched_timer, now, tick_period); //@@ 새로운 타이머 만료 시간 설정
+	return tick_program_event(hrtimer_get_expires(&ts->sched_timer), 0); //@@ clock event driver 를 업데이트 (reprogram) 해줌. force = 0
 }
 
 /*
@@ -967,6 +967,10 @@ static void tick_nohz_handler(struct clock_event_device *dev)
 	tick_sched_do_timer(now);
 	tick_sched_handle(ts, regs); //@@ 2015.12.26 시작 //@@ 2016.01.16 완료
 
+    //@@ 2016.01.23 시작.
+    //@@ 현재 시간을 기준으로 새로운 만료 시간을 계산하고
+    //@@ clock event device 를 reprogram (update) 함
+    //@@ 일반적으로 0 이 return 되는 것 같다.
 	while (tick_nohz_reprogram(ts, now)) {
 		now = ktime_get();
 		tick_do_update_jiffies64(now);
@@ -993,6 +997,8 @@ static void tick_nohz_switch_to_nohz(void)
 		local_irq_enable();
 		return;
 	}
+
+    //@@ 2016.1.23 여기까지 분석
 
 	ts->nohz_mode = NOHZ_MODE_LOWRES;
 

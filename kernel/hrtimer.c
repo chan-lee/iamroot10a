@@ -843,15 +843,15 @@ u64 hrtimer_forward(struct hrtimer *timer, ktime_t now, ktime_t interval)
 	u64 orun = 1;
 	ktime_t delta;
 
-	delta = ktime_sub(now, hrtimer_get_expires(timer)); //@@ 연산 :  now - hrtimer_get~
+	delta = ktime_sub(now, hrtimer_get_expires(timer)); //@@ 연산 :  now - 원래 만료 시간 (hrtimer_get)
 
-	if (delta.tv64 < 0)
+	if (delta.tv64 < 0) //@@ 아직 원래 만료 시간 전일때
 		return 0;
 
 	if (interval.tv64 < timer->base->resolution.tv64)
 		interval.tv64 = timer->base->resolution.tv64;
 
-	if (unlikely(delta.tv64 >= interval.tv64)) {
+	if (unlikely(delta.tv64 >= interval.tv64)) { //@@ overrun 이 2 이상일 때
 		s64 incr = ktime_to_ns(interval);
 
 		orun = ktime_divns(delta, incr);
