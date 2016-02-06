@@ -705,7 +705,10 @@ static int hrtimer_switch_to_hres(void)
 
 	local_irq_save(flags);
 
-	if (tick_init_highres()) {
+	//@@ oneshot handler 를 설정 (성공하면 0 반환)
+	//@@ hrtimer_interrupt(struct clock_event_device *dev)를 핸들러로 등록
+	//@@ 2016.02.06 분석 중 종료
+	if (tick_init_highres()) { //@@ tick_switch_to_oneshot(hrtimer_interrupt)
 		local_irq_restore(flags);
 		printk(KERN_WARNING "Could not switch to high resolution "
 				    "mode on CPU %d\n", cpu);
@@ -1187,8 +1190,8 @@ static void __hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 
 	if (clock_id == CLOCK_REALTIME && mode != HRTIMER_MODE_ABS)
 		clock_id = CLOCK_MONOTONIC;
-  //@@ clock id에 맞는 hrtimer base 네가지 중에 하나를 찾는다.
-  //@@ 없다면 monotonic base timer가 될 것이다.
+	//@@ clock id에 맞는 hrtimer base 네가지 중에 하나를 찾는다.
+	//@@ 없다면 monotonic base timer가 될 것이다.
 	base = hrtimer_clockid_to_base(clock_id);
 	timer->base = &cpu_base->clock_base[base];
 	timerqueue_init(&timer->node);  //@@ rb_node에 대한  RB_CLEAR_NODE 실행
@@ -1471,7 +1474,7 @@ void hrtimer_run_pending(void)
 	 * check bit in the tick_oneshot code, otherwise we might
 	 * deadlock vs. xtime_lock.
 	 */
-  //@@ !hrtimer_is_hres_enabled()가 왜 allow_nohz인지 의문
+	//@@ !hrtimer_is_hres_enabled()가 왜 allow_nohz인지 의문
 	//@@ softirq context 중에 high resolution  또는 low resolution 인지 결정
 	//@@ hrtimer이든 아니든 NOHZ mode(tickless) 설정함
 	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled()))

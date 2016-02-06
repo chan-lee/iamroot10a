@@ -2258,3 +2258,11 @@ tick_nohz_switch_to_nohz()
             tick_program_event() : with force = 0
                 clockevents_program_event(): clock event driver 를 업데이트(reprogram) 해줌.
                 (clock event driver: Documentation/timers/highres.txt 참고)
+
+================================================================================
+2016.02.06
+
+hrtimer_run_pending()
+  tick_check_oneshot_change()
+      tick_nohz_switch_to_nohz() 소스 분석 완료 (코드의 의미를 정확히 이해하지 못하고 넘어감.)
+  hrtimer_switch_to_hres() - high resolution mode 로 전환 (분석 중 종료).

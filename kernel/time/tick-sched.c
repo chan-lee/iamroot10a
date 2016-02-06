@@ -967,10 +967,10 @@ static void tick_nohz_handler(struct clock_event_device *dev)
 	tick_sched_do_timer(now);
 	tick_sched_handle(ts, regs); //@@ 2015.12.26 시작 //@@ 2016.01.16 완료
 
-    //@@ 2016.01.23 시작.
-    //@@ 현재 시간을 기준으로 새로운 만료 시간을 계산하고
-    //@@ clock event device 를 reprogram (update) 함
-    //@@ 일반적으로 0 이 return 되는 것 같다.
+	//@@ 2016.01.23 시작.
+	//@@ 현재 시간을 기준으로 새로운 만료 시간을 계산하고
+	//@@ clock event device 를 reprogram (update) 함
+	//@@ 일반적으로 0 이 return 되는 것 같다.
 	while (tick_nohz_reprogram(ts, now)) {
 		now = ktime_get();
 		tick_do_update_jiffies64(now);
@@ -989,8 +989,8 @@ static void tick_nohz_switch_to_nohz(void)
 		return;
 
 	local_irq_disable();
-  //@@ 현재 cpu의 clock_event_device에 tick_nohz_hanlder를 설정하고, 
-  //@@ tick_broadcast_device에도 설정되어 있지 않다면 oneshot용 handler를 설정한다.
+	//@@ 현재 cpu의 clock_event_device에 tick_nohz_hanlder를 설정하고, 
+	//@@ tick_broadcast_device에도 설정되어 있지 않다면 oneshot용 handler를 설정한다.
 	//@@ Low resolution timer + NOHZ mode 설정
 	//@@ end 2015.11.28
 	if (tick_switch_to_oneshot(tick_nohz_handler)) { //@@ tick_sched 에서 매 tick당 해줘야 하는일을 emulation.
@@ -998,7 +998,7 @@ static void tick_nohz_switch_to_nohz(void)
 		return;
 	}
 
-    //@@ 2016.1.23 여기까지 분석
+	//@@ 2016.1.23 여기까지 분석
 
 	ts->nohz_mode = NOHZ_MODE_LOWRES;
 
@@ -1222,7 +1222,7 @@ int tick_check_oneshot_change(int allow_nohz)
 	if (!allow_nohz)
 		return 1;  //@@ high resolution timer
 
-  //@@ tick_nohz 모듈에 switch_to_nohz()를 요청. tick_nohz.switch_to_nohz() /c++ style
+	//@@ tick_nohz 모듈에 switch_to_nohz()를 요청. tick_nohz.switch_to_nohz() /c++ style
 	tick_nohz_switch_to_nohz();
 	return 0;
 }
