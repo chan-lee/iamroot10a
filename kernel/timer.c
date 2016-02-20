@@ -1378,6 +1378,7 @@ static void run_timer_softirq(struct softirq_action *h)
 	//@@ hrtimer fallback용.
 	hrtimer_run_pending();
 
+	//@@ jiffies 와 base->timer_jiffies 사이의 모든 타이머 (cascading timer) 처리
 	if (time_after_eq(jiffies, base->timer_jiffies))
 		__run_timers(base);
 }

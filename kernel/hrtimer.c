@@ -708,6 +708,7 @@ static int hrtimer_switch_to_hres(void)
 	//@@ oneshot handler 를 설정 (성공하면 0 반환)
 	//@@ hrtimer_interrupt(struct clock_event_device *dev)를 핸들러로 등록
 	//@@ 2016.02.06 분석 중 종료
+	//@@ 2016.02.20 시작
 	if (tick_init_highres()) { //@@ tick_switch_to_oneshot(hrtimer_interrupt)
 		local_irq_restore(flags);
 		printk(KERN_WARNING "Could not switch to high resolution "

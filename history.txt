@@ -2266,3 +2266,19 @@ hrtimer_run_pending()
   tick_check_oneshot_change()
       tick_nohz_switch_to_nohz() 소스 분석 완료 (코드의 의미를 정확히 이해하지 못하고 넘어감.)
   hrtimer_switch_to_hres() - high resolution mode 로 전환 (분석 중 종료).
+
+================================================================================
+2016.02.20
+
+init_timers()
+  run_timer_softirq()
+    hrtimer_run_pending()
+      hrtimer_switch_to_hres() - 자세한 소스 분석은 skip 하기로 함
+    __run_timers() - 현재 jiffies 와 timer vector base 에 저장되어 있는 jiffies 사이의 모든 타이머들의 처리를 수행한다.
+    - jiffies 와 base->timer_jiffies 사이에서 cascade timer (timer wheel) 를 통해 timer list 를 구성한 뒤
+      타이머 function call 을 호출해주어서 타이머를 처리.
+    * Cascading timers (Timer wheel) *
+    - 참고 자료: timer wheel 의 최근 개선: https://lwn.net/Articles/646950/
+    - Timer programming in Linux (경희대 자료): http://mesl.khu.ac.kr/lecture/doc/esl2/closed.pxa255/esl2-14-timer.pdf
+
+hrtimers_init()
