@@ -92,7 +92,7 @@ void clockevents_set_mode(struct clock_event_device *dev,
  */
 void clockevents_shutdown(struct clock_event_device *dev)
 {
-	clockevents_set_mode(dev, CLOCK_EVT_MODE_SHUTDOWN);
+	clockevents_set_mode(dev, CLOCK_EVT_MODE_SHUTDOWN); //@@ clock event device의 모드를 SHUTDOWN으로 설정
 	dev->next_event.tv64 = KTIME_MAX;
 }
 
@@ -451,8 +451,8 @@ void clockevents_exchange_device(struct clock_event_device *old,
 	if (old) {
 		module_put(old->owner);
 		clockevents_set_mode(old, CLOCK_EVT_MODE_UNUSED);
-		list_del(&old->list);
-		list_add(&old->list, &clockevents_released);
+		list_del(&old->list); //@@ list에서 old를 삭제
+		list_add(&old->list, &clockevents_released); //@@ old를 clockevents_released에 추가
 	}
 
 	if (new) {
@@ -511,7 +511,7 @@ void clockevents_notify(unsigned long reason, void *arg)
 		break;
 
 	case CLOCK_EVT_NOTIFY_CPU_DYING:
-		tick_handover_do_timer(arg);
+		tick_handover_do_timer(arg); //@@ 정지할 CPU로부터 do_timer()를 다른 CPU로 옮긴다
 		break;
 
 	case CLOCK_EVT_NOTIFY_SUSPEND:
@@ -524,15 +524,15 @@ void clockevents_notify(unsigned long reason, void *arg)
 		break;
 
 	case CLOCK_EVT_NOTIFY_CPU_DEAD:
-		tick_shutdown_broadcast_oneshot(arg);
-		tick_shutdown_broadcast(arg);
-		tick_shutdown(arg);
+		tick_shutdown_broadcast_oneshot(arg); //@@ clear tick boradcast mask for oneshot, pending and force
+		tick_shutdown_broadcast(arg); //@@ periodic 모드의 clock event device를 shutdown
+		tick_shutdown(arg); //@@ clock event device (per CPU)를 shutdown
 		/*
 		 * Unregister the clock event devices which were
 		 * released from the users in the notify chain.
 		 */
 		list_for_each_entry_safe(dev, tmp, &clockevents_released, list)
-			list_del(&dev->list);
+			list_del(&dev->list); //@@ clockevents_released(list)에서 dev를 삭제
 		/*
 		 * Now check whether the CPU has left unused per cpu devices
 		 */
@@ -541,6 +541,9 @@ void clockevents_notify(unsigned long reason, void *arg)
 			if (cpumask_test_cpu(cpu, dev->cpumask) &&
 			    cpumask_weight(dev->cpumask) == 1 &&
 			    !tick_is_broadcast_device(dev)) {
+				//@@ cpu가 dev->cpumask에 masked 되어있고
+				//@@ clock event devices 중 마지막으로 사용중인 cpu이고
+				//@@ broadcast device가 아니면 삭제
 				BUG_ON(dev->mode != CLOCK_EVT_MODE_UNUSED);
 				list_del(&dev->list);
 			}

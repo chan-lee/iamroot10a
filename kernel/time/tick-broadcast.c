@@ -419,7 +419,7 @@ void tick_shutdown_broadcast(unsigned int *cpup)
 
 	if (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC) {
 		if (bc && cpumask_empty(tick_broadcast_mask))
-			clockevents_shutdown(bc);
+			clockevents_shutdown(bc); //@@ clock event device를 shutdown 시킴
 	}
 
 	raw_spin_unlock_irqrestore(&tick_broadcast_lock, flags);

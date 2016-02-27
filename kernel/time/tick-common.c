@@ -324,6 +324,7 @@ out_bc:
 void tick_handover_do_timer(int *cpup)
 {
 	if (*cpup == tick_do_timer_cpu) {
+		//@@ 온라인 상태의 첫번째 CPU를 찾는다
 		int cpu = cpumask_first(cpu_online_mask);
 
 		tick_do_timer_cpu = (cpu < nr_cpu_ids) ? cpu :
@@ -350,7 +351,7 @@ void tick_shutdown(unsigned int *cpup)
 		 * the set mode function!
 		 */
 		dev->mode = CLOCK_EVT_MODE_UNUSED;
-		clockevents_exchange_device(dev, NULL);
+		clockevents_exchange_device(dev, NULL); //@@ list에서 dev를 삭제
 		dev->event_handler = clockevents_handle_noop;
 		td->evtdev = NULL;
 	}

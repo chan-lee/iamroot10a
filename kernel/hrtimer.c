@@ -918,7 +918,7 @@ static void __remove_hrtimer(struct hrtimer *timer,
 		goto out;
 
 	next_timer = timerqueue_getnext(&base->active);
-	timerqueue_del(&base->active, &timer->node);
+	timerqueue_del(&base->active, &timer->node); //@@ 2016.02.27 END
 	if (&timer->node == next_timer) {
 #ifdef CONFIG_HIGH_RES_TIMERS
 		/* Reprogram the clock event device. if enabled */
@@ -1670,15 +1670,17 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
  */
 static void init_hrtimers_cpu(int cpu)
 {
+	//@@ 현재 cpu의 hrtimer_cpu_base를 가져옴
 	struct hrtimer_cpu_base *cpu_base = &per_cpu(hrtimer_bases, cpu);
 	int i;
 
+	//@@ hrtimer_cpu_base 내 4개의 hrtimer_clock_base를 초기화
 	for (i = 0; i < HRTIMER_MAX_CLOCK_BASES; i++) {
 		cpu_base->clock_base[i].cpu_base = cpu_base;
 		timerqueue_init_head(&cpu_base->clock_base[i].active);
 	}
 
-	hrtimer_init_hres(cpu_base);
+	hrtimer_init_hres(cpu_base); //@@ hrtimer_cpu_base 초기화
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
@@ -1689,8 +1691,8 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 	struct hrtimer *timer;
 	struct timerqueue_node *node;
 
-	while ((node = timerqueue_getnext(&old_base->active))) {
-		timer = container_of(node, struct hrtimer, node);
+	while ((node = timerqueue_getnext(&old_base->active))) { //@@ 가장 빨리 만료되는 node를 리턴
+		timer = container_of(node, struct hrtimer, node); //@@ node에서 timer를 가져옴
 		BUG_ON(hrtimer_callback_running(timer));
 		debug_deactivate(timer);
 
@@ -1699,8 +1701,8 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 		 * timer could be seen as !active and just vanish away
 		 * under us on another CPU
 		 */
-		__remove_hrtimer(timer, old_base, HRTIMER_STATE_MIGRATE, 0);
-		timer->base = new_base;
+		__remove_hrtimer(timer, old_base, HRTIMER_STATE_MIGRATE, 0); //@@ old_base에서 timer를 삭제하고 상태에 MIGRATE 추가
+		timer->base = new_base; //@@ timer의 base를 new_base로 설정
 		/*
 		 * Enqueue the timers on the new cpu. This does not
 		 * reprogram the event device in case the timer
@@ -1709,10 +1711,10 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 		 * sort out already expired timers and reprogram the
 		 * event device.
 		 */
-		enqueue_hrtimer(timer, new_base);
+		enqueue_hrtimer(timer, new_base); //@@ new_base에 timer를 enqueue
 
 		/* Clear the migration state bit */
-		timer->state &= ~HRTIMER_STATE_MIGRATE;
+		timer->state &= ~HRTIMER_STATE_MIGRATE; //@@ timer의 상태에서 MIGRATE를 제거
 	}
 }
 
@@ -1725,8 +1727,8 @@ static void migrate_hrtimers(int scpu)
 	tick_cancel_sched_timer(scpu);
 
 	local_irq_disable();
-	old_base = &per_cpu(hrtimer_bases, scpu);
-	new_base = &__get_cpu_var(hrtimer_bases);
+	old_base = &per_cpu(hrtimer_bases, scpu); //@@ scpu의 hrtimer_cpu_base
+	new_base = &__get_cpu_var(hrtimer_bases); //@@ 현재 cpu의 hrtimer_cpu_base
 	/*
 	 * The caller is globally serialized and nobody else
 	 * takes two locks at once, deadlock is not possible.
@@ -1736,7 +1738,7 @@ static void migrate_hrtimers(int scpu)
 
 	for (i = 0; i < HRTIMER_MAX_CLOCK_BASES; i++) {
 		migrate_hrtimer_list(&old_base->clock_base[i],
-				     &new_base->clock_base[i]);
+				     &new_base->clock_base[i]); //@@ old_base에서 new_base로 이동
 	}
 
 	raw_spin_unlock(&old_base->lock);
@@ -1758,7 +1760,7 @@ static int hrtimer_cpu_notify(struct notifier_block *self,
 
 	case CPU_UP_PREPARE:
 	case CPU_UP_PREPARE_FROZEN:
-		init_hrtimers_cpu(scpu);
+		init_hrtimers_cpu(scpu); //@@ 현재 cpu의 hrtimer_cpu_base와 hrtimer_clock_base 초기화
 		break;
 
 #ifdef CONFIG_HOTPLUG_CPU

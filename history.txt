@@ -1271,7 +1271,7 @@ shched_init() 시작
 				 참고)http://code.google.com/p/linuxkernel-iamroot/source/browse/trunk/kernel/sched_cpupri.c?r=60
 	init_rt_bandwith()
 		1. rt_bandwith의 rt_period, rt_runtime을 초기화
-		2. hrtimer( high resolution timer) 초기화    참고)http://studyfoss.egloos.com/viewer/5268468
+		2. hrtimer( high resolution timer) 초기화    참고) http://studyfoss.egloos.com/viewer/5268468
 			 각 cpu별 hrtimer 및  timequeue 초기화	
 				.CLOCK_REALTIME (0) : 현재 시간을 기준으로 하여 시간을 계산한다. 시스템 시간 변경 시 영향을 받는다.
 				.CLOCK_MONOTONIC (1) : 커널이 동작한 시간을 기준으로 하여 시간을 계산한다. 외부의 영향을 받지 않는다.
