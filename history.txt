@@ -2282,3 +2282,23 @@ init_timers()
     - Timer programming in Linux (경희대 자료): http://mesl.khu.ac.kr/lecture/doc/esl2/closed.pxa255/esl2-14-timer.pdf
 
 hrtimers_init()
+
+================================================================================
+2016.02.27
+include/linux/hrtimer.h
+- hrtimer : 기본 hrtimer 객체
+- hrtimer_clock_base : hrtimer를 담고 있는 rb tree를 담고 있는 container
+- hrtimer_cpu_base: per cpu로 각 cpu마다 4종류의 hrtimer_clock_base를 담고 있다.
+
+include/linux/tick.h
+- tick_device : clock_event_device와 periodic, oneshot mode 중 하나 값을 가진다.
+                per_cpu 갯수 + 외부의 broadcast_device 1개
+- tick_sched : hrtimer를 사용할 경우, 주기적인 tick이 존재하지 않는데, 기존 루틴과의 호환을 위해
+               제공하는 emulation layer로서 hrtimer를 이용하여 HZ만큼 설정
+               (hrtimer를 이용해서 tick 자체를 일반 timer루틴으로 만듬) per_cpu 갯수만큼 존재
+
+include/linux/timer.h
+- timer_list : 기본 timer 객체
+- tvec, tvec_root : timer_list를 담는 container
+- tvec_base : timer wheel을 운용하기 위한 tvec_root와 tvec(보통4개)을 가지고 있는 구조체. per_cpu
+
