@@ -144,7 +144,7 @@ struct hrtimer_sleeper {
  */
 struct hrtimer_clock_base {
 	struct hrtimer_cpu_base	*cpu_base;
-	int			index;
+	int			index; //@@ clock type. cpu migration 시에 사용.
 	clockid_t		clockid;
 	struct timerqueue_head	active;
 	ktime_t			resolution;
@@ -179,7 +179,7 @@ enum  hrtimer_base_type {
  */
 struct hrtimer_cpu_base {
 	raw_spinlock_t			lock;
-	unsigned int			active_bases;
+	unsigned int			active_bases; //@@ active한 clock_base에 대한 mask.
 	unsigned int			clock_was_set;
 #ifdef CONFIG_HIGH_RES_TIMERS
 	ktime_t				expires_next;

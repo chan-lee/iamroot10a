@@ -1543,6 +1543,7 @@ MONOTONIC과 BOOTTIME의 차이는 둘다 시스템 시작후의 시간을 가�
 BOOTTIME은 suspend된 시간까지 포함한다. kernel/time/timekeeping.c
 
 TAI : International Atomic Time
+http://www.timeanddate.com/time/international-atomic-time.html
 
 kernel/sched/fair.c - sched_cfs_period_timer
 
@@ -2285,11 +2286,7 @@ hrtimers_init()
 
 ================================================================================
 2016.02.27
-include/linux/hrtimer.h
-- hrtimer : 기본 hrtimer 객체
-- hrtimer_clock_base : hrtimer를 담고 있는 rb tree를 담고 있는 container
-- hrtimer_cpu_base: per cpu로 각 cpu마다 4종류의 hrtimer_clock_base를 담고 있다.
-
+자료 구조들
 include/linux/tick.h
 - tick_device : clock_event_device와 periodic, oneshot mode 중 하나 값을 가진다.
                 per_cpu 갯수 + 외부의 broadcast_device 1개
@@ -2298,7 +2295,64 @@ include/linux/tick.h
                (hrtimer를 이용해서 tick 자체를 일반 timer루틴으로 만듬) per_cpu 갯수만큼 존재
 
 include/linux/timer.h
-- timer_list : 기본 timer 객체
+- timer_list : timer를 걸수 있는 기본 timer 객체(linked list의 node)
 - tvec, tvec_root : timer_list를 담는 container
 - tvec_base : timer wheel을 운용하기 위한 tvec_root와 tvec(보통4개)을 가지고 있는 구조체. per_cpu
+
+include/linux/hrtimer.h
+- hrtimer : timer를 걸수 있는 기본 hrtimer 객체
+- hrtimer_clock_base : hrtimer를 담고 있는 rb tree를 담고 있는 container
+- hrtimer_cpu_base: per cpu로 각 cpu마다 4종류의 hrtimer_clock_base를 담고 있다. (REALTIME, MONOTONIC, BOOTTIME, TAI)
+
+================================================================================
+2016.03.04
+자료 구조들
+include/linux/clockchips.h
+- clock_event_device : 실제 timer interrupt를 걸수 있는 device 장치
+  * 다음과 같은 function pointer들이 있다.
+    - event_handler
+    - set_next_event: delta 상대 값으로 설정을 할 경우 
+    - set_net_ktime: monotonic ktime 절대값으로 설정을 할 경우
+    - broadcast
+    - set_mode
+    - suspend
+    - resume
+
+include/linux/timekeeper_internal.h
+- timekeeper : 실제 시간을 저장하는 장치
+  기본적으로는 clocksource* 를 가지고 있으며,
+  monotonic, realtime(walltime), boottime, tai를 기록한다.
+  NTP로 얻어온 시간 정보 또한 기록한다.
+  전역 객체로 하나가 존재한다. static struct timekeeper timekeeper;
+  shadow_timekeeper 도 존재한다. static struct timekeeper shadow_timekeeper;
+  차이는 추후 기록 요망
+
+include/linux/clocksource.h
+- cyclecounter : hardware로 부터 cycle 정보를 얻어와 기록하는 구조체
+- timecounter : cyclecounter로 부터 몇 nanosec이 지났는지 기록하는 구조체
+- clocksource : 실제 clock. rtc, tsc, hpet, pit
+
+------------------------------------------------------------
+TAI : International Atomic Time
+http://www.timeanddate.com/time/international-atomic-time.html
+UTC : TAI + UT1 (절대 시간인 원자 시간과 매일 느려지는 지구의 자전을 보정한 값)
+Atomic Time vs Universal Time (윤년)
+http://www.timeanddate.com/time/leapseconds.html
+
+http://www.timeanddate.com/time/earth-rotation.html
+지구는 매일 자전하는 속도가 느려지고 있으며, 이로써 하루는 24시간 0.001x초(UT1)이다.
+매일 이것을 반영할 수 없으니, UTC와 UT1의 차이가 0.9초 정도 날 경우 윤초를 UTC에 더한다.(보통3년)
+1972년 UTC는 TAI 보다 10초 느리게 시작. UTC - TAI = 10초
+2016년 현재까지 26번의 윤초가 있었고, 결과적으로 UTC - TAI = 36초 
+
+한마디로 UTC는 TAI에 매일 늘어나는 UT1 시간을 가끔씩 반영한 결과
+------------------------------------------------------------
+
+hrtimer_init()의 구조
+1. cpu_notify 함수 수동 실행 - CPU_UP_PREPARE로 hrtimer_cpu_base 구조체 초기화
+  CPU_DEAD일 경우도 살펴보았는데, 이때 migrate_hrtimer를 호출하고,
+  migrate 후 hrtimer_interrupt()를 수행
+2. cpu_notify 등록
+3. softirq 등록 -> 결국 hrtimer_interrupt()를 수행
+결국 중요함수는 hrtimer_interrupt()
 

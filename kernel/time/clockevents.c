@@ -220,17 +220,18 @@ int clockevents_program_event(struct clock_event_device *dev, ktime_t expires,
 
 	/* Shortcut for clockevent devices that can deal with ktime. */
 	if (dev->features & CLOCK_EVT_FEAT_KTIME)
-		return dev->set_next_ktime(expires, dev);
+		return dev->set_next_ktime(expires, dev); //@@ ktime을 지원하면 delta 계산할 필요없이 바로 쓴다.
 
-	delta = ktime_to_ns(ktime_sub(expires, ktime_get()));
+	delta = ktime_to_ns(ktime_sub(expires, ktime_get())); //@@ timekeeper로 부터 ktime을 가져옴.
 	if (delta <= 0)
-		return force ? clockevents_program_min_delta(dev) : -ETIME;
+		return force ? clockevents_program_min_delta(dev) : -ETIME; //@@ 시간이 지났다고 버릴수는 없으니 최소 시간으로 설정한다.
 
+  //@@ clamp
 	delta = min(delta, (int64_t) dev->max_delta_ns);
 	delta = max(delta, (int64_t) dev->min_delta_ns);
 
 	clc = ((unsigned long long) delta * dev->mult) >> dev->shift;
-	rc = dev->set_next_event((unsigned long) clc, dev);
+	rc = dev->set_next_event((unsigned long) clc, dev); //@@ 상대 시간값으로 설정
 
 	return (rc && force) ? clockevents_program_min_delta(dev) : rc;
 }
@@ -511,7 +512,8 @@ void clockevents_notify(unsigned long reason, void *arg)
 		break;
 
 	case CLOCK_EVT_NOTIFY_CPU_DYING:
-		tick_handover_do_timer(arg); //@@ 정지할 CPU로부터 do_timer()를 다른 CPU로 옮긴다
+		tick_handover_do_timer(arg); //@@ 정지할 CPU가 do_timer를 맡고 있다면.
+                                 //@@ 그로부터 do_timer()를 다른 CPU로 옮긴다
 		break;
 
 	case CLOCK_EVT_NOTIFY_SUSPEND:

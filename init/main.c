@@ -603,7 +603,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	init_IRQ(); //@@ chip specific.
 	tick_init();
 	init_timers(); //@@ 2015.11 ~ 2016.02.20 분석 완료
-	hrtimers_init();
+	hrtimers_init(); //@@ 2016.03.05 완료
 	softirq_init();
 	timekeeping_init();
 	time_init();

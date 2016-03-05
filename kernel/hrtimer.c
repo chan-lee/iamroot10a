@@ -446,6 +446,7 @@ static inline void debug_hrtimer_init(struct hrtimer *timer)
 
 static inline void debug_hrtimer_activate(struct hrtimer *timer)
 {
+  //@@ void* addr( 여기서는 timer) 을 debug용도로 사용한다.
 	debug_object_activate(timer, &hrtimer_debug_descr);
 }
 
@@ -491,8 +492,8 @@ debug_init(struct hrtimer *timer, clockid_t clockid,
 
 static inline void debug_activate(struct hrtimer *timer)
 {
-	debug_hrtimer_activate(timer);
-	trace_hrtimer_start(timer);
+	debug_hrtimer_activate(timer); //@@ debug 객체로 등록하고.
+	trace_hrtimer_start(timer); //@@ trace 시작.
 }
 
 static inline void debug_deactivate(struct hrtimer *timer)
@@ -579,9 +580,11 @@ hrtimer_force_reprogram(struct hrtimer_cpu_base *cpu_base, int skip_equal)
 	if (skip_equal && expires_next.tv64 == cpu_base->expires_next.tv64)
 		return;
 
+  //@@ 자료 구조를 먼저 변경하고.
 	cpu_base->expires_next.tv64 = expires_next.tv64;
 
 	if (cpu_base->expires_next.tv64 != KTIME_MAX)
+    //@@ 실제 tick_device에 변경된 expire_next를 갱신함.
 		tick_program_event(cpu_base->expires_next, 1);
 }
 
@@ -664,6 +667,8 @@ static inline int hrtimer_enqueue_reprogram(struct hrtimer *timer,
 	return base->cpu_base->hres_active && hrtimer_reprogram(timer, base);
 }
 
+//@@ timekeeper로 부터 monotonic 시간을 얻어오고,
+//@@ 각 clock_base의 real, boot, tai offset도 같이 갱신한다.
 static inline ktime_t hrtimer_update_base(struct hrtimer_cpu_base *base)
 {
 	ktime_t *offs_real = &base->clock_base[HRTIMER_BASE_REALTIME].offset;
@@ -927,12 +932,14 @@ static void __remove_hrtimer(struct hrtimer *timer,
 
 			expires = ktime_sub(hrtimer_get_expires(timer),
 					    base->offset);
+      //@@ 지우려는 timer의 expire가 cpu_base의 expire_next와 같으면.
+      //@@ 새로운 expire_next를 찾아서 설정해야 한다.
 			if (base->cpu_base->expires_next.tv64 == expires.tv64)
 				hrtimer_force_reprogram(base->cpu_base, 1);
 		}
 #endif
 	}
-	if (!timerqueue_getnext(&base->active))
+	if (!timerqueue_getnext(&base->active)) //@@ clock_base가 비었으면, cpu_base에서 더이상 사용하지 않는 clock_base라고 제거한다.
 		base->cpu_base->active_bases &= ~(1 << base->index);
 out:
 	timer->state = newstate;
@@ -1238,6 +1245,8 @@ int hrtimer_get_res(const clockid_t which_clock, struct timespec *tp)
 }
 EXPORT_SYMBOL_GPL(hrtimer_get_res);
 
+//@@ tree에서 지운후 timer의 function을 실행하고, return 값이 restart이면,
+//@@ 다시 추가한다.
 static void __run_hrtimer(struct hrtimer *timer, ktime_t *now)
 {
 	struct hrtimer_clock_base *base = timer->base;
@@ -1295,7 +1304,7 @@ void hrtimer_interrupt(struct clock_event_device *dev)
 	dev->next_event.tv64 = KTIME_MAX;
 
 	raw_spin_lock(&cpu_base->lock);
-	entry_time = now = hrtimer_update_base(cpu_base);
+	entry_time = now = hrtimer_update_base(cpu_base); //@@ 각 clock_base의 monotonic과의 offset 갱신
 retry:
 	expires_next.tv64 = KTIME_MAX;
 	/*
@@ -1336,6 +1345,7 @@ retry:
 			 * timer will have to trigger a wakeup anyway.
 			 */
 
+      //@@ 아직 만료되지 않은 timer를 발견하면 expire_next 를 설정하는 부분으로 넘어간다.
 			if (basenow.tv64 < hrtimer_get_softexpires_tv64(timer)) {
 				ktime_t expires;
 
@@ -1348,6 +1358,8 @@ retry:
 				break;
 			}
 
+      //@@ timer function 실행. timer 객체는 사용했으므로 제거되고, return 값이 restart이면.
+      //@@ 다시 queue에 넣는다.
 			__run_hrtimer(timer, &basenow);
 		}
 	}
@@ -1711,6 +1723,7 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 		 * sort out already expired timers and reprogram the
 		 * event device.
 		 */
+    //@@ 여기서 reprogram 히지 않고 나중에 한꺼번에 함.
 		enqueue_hrtimer(timer, new_base); //@@ new_base에 timer를 enqueue
 
 		/* Clear the migration state bit */
@@ -1736,6 +1749,8 @@ static void migrate_hrtimers(int scpu)
 	raw_spin_lock(&new_base->lock);
 	raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
 
+  //@@ migration시 expire를 reprogram하지는 않고 아래에.
+  //@@ __hrtimer_peek_ahread_timers()에서 함.
 	for (i = 0; i < HRTIMER_MAX_CLOCK_BASES; i++) {
 		migrate_hrtimer_list(&old_base->clock_base[i],
 				     &new_base->clock_base[i]); //@@ old_base에서 new_base로 이동
@@ -1766,13 +1781,13 @@ static int hrtimer_cpu_notify(struct notifier_block *self,
 #ifdef CONFIG_HOTPLUG_CPU
 	case CPU_DYING:
 	case CPU_DYING_FROZEN:
-		clockevents_notify(CLOCK_EVT_NOTIFY_CPU_DYING, &scpu);
+		clockevents_notify(CLOCK_EVT_NOTIFY_CPU_DYING, &scpu); //@@ tick device 제거
 		break;
 	case CPU_DEAD:
 	case CPU_DEAD_FROZEN:
 	{
-		clockevents_notify(CLOCK_EVT_NOTIFY_CPU_DEAD, &scpu);
-		migrate_hrtimers(scpu);
+		clockevents_notify(CLOCK_EVT_NOTIFY_CPU_DEAD, &scpu); //@@ tick device 제거
+		migrate_hrtimers(scpu); //@@ hrtimer를 다른 cpu로 이전하면서, hrtimer_interrupt() 수행(expire timer 수행)
 		break;
 	}
 #endif
@@ -1794,7 +1809,7 @@ void __init hrtimers_init(void)
 			  (void *)(long)smp_processor_id());
 	register_cpu_notifier(&hrtimers_nb);
 #ifdef CONFIG_HIGH_RES_TIMERS
-	open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq);
+	open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq); //@@ hrtimer_interrupt() 수행.
 #endif
 }
 
