@@ -2287,28 +2287,29 @@ hrtimers_init()
 ================================================================================
 2016.02.27
 자료 구조들
-include/linux/tick.h
-- tick_device : clock_event_device와 periodic, oneshot mode 중 하나 값을 가진다.
+#include <linux/tick.h>
+- struct tick_device : clock_event_device와 periodic, oneshot mode 중 하나 값을 가진다.
                 per_cpu 갯수 + 외부의 broadcast_device 1개
-- tick_sched : hrtimer를 사용할 경우, 주기적인 tick이 존재하지 않는데, 기존 루틴과의 호환을 위해
+- struct tick_sched : hrtimer를 사용할 경우, 주기적인 tick이 존재하지 않는데, 기존 루틴과의 호환을 위해
                제공하는 emulation layer로서 hrtimer를 이용하여 HZ만큼 설정
                (hrtimer를 이용해서 tick 자체를 일반 timer루틴으로 만듬) per_cpu 갯수만큼 존재
 
-include/linux/timer.h
-- timer_list : timer를 걸수 있는 기본 timer 객체(linked list의 node)
-- tvec, tvec_root : timer_list를 담는 container
-- tvec_base : timer wheel을 운용하기 위한 tvec_root와 tvec(보통4개)을 가지고 있는 구조체. per_cpu
+#include <linux/timer.h>
+- struct timer_list : timer를 걸수 있는 기본 timer 객체(linked list의 node)
+- struct tvec, struct tvec_root : timer_list를 담는 container
+- struct tvec_base : timer wheel을 운용하기 위한 tvec_root와 tvec(보통4개)을 가지고 있는 구조체. per_cpu
 
-include/linux/hrtimer.h
-- hrtimer : timer를 걸수 있는 기본 hrtimer 객체
-- hrtimer_clock_base : hrtimer를 담고 있는 rb tree를 담고 있는 container
+#include <linux/hrtimer.h>
+- struct hrtimer : timer를 걸수 있는 기본 hrtimer 객체
+- struct hrtimer_clock_base : hrtimer를 담고 있는 rb tree를 담고 있는 container
 - hrtimer_cpu_base: per cpu로 각 cpu마다 4종류의 hrtimer_clock_base를 담고 있다. (REALTIME, MONOTONIC, BOOTTIME, TAI)
 
 ================================================================================
-2016.03.04
+2016.03.05
 자료 구조들
-include/linux/clockchips.h
-- clock_event_device : 실제 timer interrupt를 걸수 있는 device 장치
+#include <linux/clockchips.h>
+- struct clock_event_device : 실제 timer interrupt를 걸수 있는 device 장치
+  * 가장 중요한 함수는 일정 시간 후 interrupt를 걸어 주는 함수
   * 다음과 같은 function pointer들이 있다.
     - event_handler
     - set_next_event: delta 상대 값으로 설정을 할 경우 
@@ -2318,8 +2319,13 @@ include/linux/clockchips.h
     - suspend
     - resume
 
-include/linux/timekeeper_internal.h
-- timekeeper : 실제 시간을 저장하는 장치
+#include <linux/clocksource.h>
+- struct cyclecounter : hardware로 부터 cycle 정보를 얻어와 기록하는 구조체
+- struct timecounter : cyclecounter로 부터 몇 nanosec이 지났는지 기록하는 구조체
+- struct clocksource : 실제 clock. rtc, tsc, hpet, pit
+
+#include <linux/timekeeper_internal.h>
+- struct timekeeper : 실제 시간을 저장하는 장치
   기본적으로는 clocksource* 를 가지고 있으며,
   monotonic, realtime(walltime), boottime, tai를 기록한다.
   NTP로 얻어온 시간 정보 또한 기록한다.
@@ -2327,25 +2333,32 @@ include/linux/timekeeper_internal.h
   shadow_timekeeper 도 존재한다. static struct timekeeper shadow_timekeeper;
   차이는 추후 기록 요망
 
-include/linux/clocksource.h
-- cyclecounter : hardware로 부터 cycle 정보를 얻어와 기록하는 구조체
-- timecounter : cyclecounter로 부터 몇 nanosec이 지났는지 기록하는 구조체
-- clocksource : 실제 clock. rtc, tsc, hpet, pit
-
 ------------------------------------------------------------
 TAI : International Atomic Time
 http://www.timeanddate.com/time/international-atomic-time.html
-UTC : TAI + UT1 (절대 시간인 원자 시간과 매일 느려지는 지구의 자전을 보정한 값)
+UTC = TAI - (UT1 - TAI) % 1초 (절대 시간인 원자 시간과 매일 느려지는 지구의 자전을 보정한 값)
 Atomic Time vs Universal Time (윤년)
 http://www.timeanddate.com/time/leapseconds.html
 
 http://www.timeanddate.com/time/earth-rotation.html
 지구는 매일 자전하는 속도가 느려지고 있으며, 이로써 하루는 24시간 0.001x초(UT1)이다.
-매일 이것을 반영할 수 없으니, UTC와 UT1의 차이가 0.9초 정도 날 경우 윤초를 UTC에 더한다.(보통3년)
-1972년 UTC는 TAI 보다 10초 느리게 시작. UTC - TAI = 10초
-2016년 현재까지 26번의 윤초가 있었고, 결과적으로 UTC - TAI = 36초 
+매일 이것을 반영할 수 없으니, UTC와 UT1의 차이가 0.9초 정도 날 경우 윤초를 보정값에 더한다.(보통3년)
+1972년 UTC는 TAI 보다 10초 느리게 시작.(보정값을 10초로 시작)
+  TAI - leap seconds(10초) = UTC
+2016년 현재까지 26번의 윤초가 있었고, 결과적으로 
+  TAI - leap seconds(36초) = UTC 
 
-한마디로 UTC는 TAI에 매일 늘어나는 UT1 시간을 가끔씩 반영한 결과
+한마디로 UTC는 TAI에 매일 느려지는 UT1 시간을 가끔씩 반영한 결과인 보정값(leap seconds)을 뺀 결과
+
+int leap_seconds = 10;
+int year = 1972;
+while(true) {
+  if (year % 3 == 0) {
+    leap_seconds++;
+  }
+  year++;
+}
+
 ------------------------------------------------------------
 
 hrtimer_init()의 구조
@@ -2356,3 +2369,71 @@ hrtimer_init()의 구조
 3. softirq 등록 -> 결국 hrtimer_interrupt()를 수행
 결국 중요함수는 hrtimer_interrupt()
 
+================================================================================
+2016.03.12
+* softirq_init(), timekeeping_init(), time_init() 본 후 다시 tick_iit()보기로 함
+
+* threaded irq handler : top half에서 처리 하는 부분을 thread로 옮김
+https://lwn.net/Articles/302043/
+
+#include <linux/interrupt.h>
+- struct irqaction : interrupt 발생시 처리해야 할 일들을 기술
+  handler/ thread_fn/ thread 등이 존재
+- struct irq_affinity_notify: irq affinitiy 변경시 통지를 받는 구조체
+  kref - atomic reference counter
+  work_struct work - work queue item. 
+  notify - 변경시 호출될 함수
+  release - relese시 호출될 함수인데, release가 무슨 release인지 모르겠음
+- enum
+  {
+    HI_SOFTIRQ=0,
+    TIMER_SOFTIRQ,
+    NET_TX_SOFTIRQ,
+    NET_RX_SOFTIRQ,
+    BLOCK_SOFTIRQ,
+    BLOCK_IOPOLL_SOFTIRQ,
+    TASKLET_SOFTIRQ,
+    SCHED_SOFTIRQ,
+    HRTIMER_SOFTIRQ,
+    RCU_SOFTIRQ,    /* Preferable RCU should always be the last softirq */
+
+    NR_SOFTIRQS
+  };
+- struct softirq_action : action fp 를 하나 가지고 있다. 그런데
+  인자가 softirq_action* 인 이유가 class흉내인지,
+  action을 action 함수에서 바꾸기 위함인지 잘모르겠다.
+- struct tasklet_struct : BH 대체물로써,
+  softirq와의 차이는 하나의 tasklet은 하나의 cpu에서만 실행됨
+  BH와의 차이는 여러 tasklet은 동시에 여러 cpu에서 실행될수 있음
+  속성: 
+  1. tasklet_schedule() 중에 같은 tasklet이 들어 오면 딱 한번 더 실행
+  2. tasklet 수행전에는 같은 tasklet이 들어와도 무시하고 한번만 실행
+  3. 1번이 다른 cpu에서 진행 중이어도 한번 더 실행
+  4. tasklet은 자기 자신에 대해서는 엄격하게 serialize되고,
+     다른 tasklet에 대해서는 그렇지 않다.
+     한마디로 같은 tasklet은 동시에 실행될수 없고,
+     다른 종류의 tasklet은 상관하지 않는다는 뜻.
+  tasklet의 의의는 동시에 실행되지 않으면서(lock이 필요없으면서),
+  딱 한번만 실행되는 루틴을 보장해 준다고 추측해 봄
+
+- static vs extern
+  C에서는 함수와 변수 모두 extern 이 기본
+  C++에서는 ?, const 가 붙었을 경우는 ?
+- static inline 함수 in header : inline 이 실패할 경우 multiple redefinition 이
+  발생 할 수 있으므로 static 을 붙여야 한다.
+
+- struct tasklet_hrtimer : hrtimer + tasklet.
+  function이 하나더 있는 이유는 모르겠다.
+
+
+
+
+
+
+
+
+
+
+
+
+  

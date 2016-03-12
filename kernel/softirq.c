@@ -371,6 +371,7 @@ void irq_exit(void)
 /*
  * This function must run with irqs disabled!
  */
+//@@ hardware irqoff 인 상태에서 수행하는 함수
 inline void raise_softirq_irqoff(unsigned int nr)
 {
 	__raise_softirq_irqoff(nr);
@@ -393,7 +394,7 @@ void raise_softirq(unsigned int nr)
 	unsigned long flags;
 
 	local_irq_save(flags);
-	raise_softirq_irqoff(nr); //@@ 왜 함수 이름이 irqoff인지 모르겠음
+	raise_softirq_irqoff(nr); //@@ hardware irqoff인 상태에서 실행하는 함수
 	local_irq_restore(flags);
 }
 
@@ -413,8 +414,8 @@ void open_softirq(int nr, void (*action)(struct softirq_action *))
  */
 struct tasklet_head
 {
-	struct tasklet_struct *head;
-	struct tasklet_struct **tail;
+	struct tasklet_struct *head; //@@ hlist next
+	struct tasklet_struct **tail; //@@ hlist prev
 };
 
 static DEFINE_PER_CPU(struct tasklet_head, tasklet_vec);
@@ -719,7 +720,9 @@ static int remote_softirq_cpu_notify(struct notifier_block *self,
 				continue;
 
 			local_head = &__get_cpu_var(softirq_work_list[i]);
-			list_splice_init(head, local_head);
+			list_splice_init(head, local_head); //@@ head => local_head
+      //@@ 죽은 cpu를 현재 cpu로 옮김
+      //@@ 2016.03.12 끝
 			raise_softirq_irqoff(i);
 		}
 		local_irq_enable();

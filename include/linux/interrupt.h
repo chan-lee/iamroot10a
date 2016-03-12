@@ -69,7 +69,7 @@
 #define IRQF_ONESHOT		0x00002000
 #define IRQF_NO_SUSPEND		0x00004000
 #define IRQF_FORCE_RESUME	0x00008000
-#define IRQF_NO_THREAD		0x00010000
+#define IRQF_NO_THREAD		0x00010000 //@@ NO_NTESTED
 #define IRQF_EARLY_RESUME	0x00020000
 
 #define IRQF_TIMER		(__IRQF_TIMER | IRQF_NO_SUSPEND | IRQF_NO_THREAD)
@@ -438,6 +438,8 @@ extern char *softirq_to_name[NR_SOFTIRQS];
 
 struct softirq_action
 {
+  //@@ 인자가 softirq_action* 인 이유가 class흉내인지,
+  //@@ action을 action 함수에서 바꾸기 위함인지 잘모르겠다.
 	void	(*action)(struct softirq_action *);
 };
 
