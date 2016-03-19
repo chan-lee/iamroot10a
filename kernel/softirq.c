@@ -398,6 +398,7 @@ void raise_softirq(unsigned int nr)
 	local_irq_restore(flags);
 }
 
+//@@ hardware irqoff인 상태에서 실행하는 함수라서 irqoff접미사가 불음
 void __raise_softirq_irqoff(unsigned int nr)
 {
 	trace_softirq_raise(nr);
@@ -414,8 +415,9 @@ void open_softirq(int nr, void (*action)(struct softirq_action *))
  */
 struct tasklet_head
 {
-	struct tasklet_struct *head; //@@ hlist next
-	struct tasklet_struct **tail; //@@ hlist prev
+	struct tasklet_struct *head;
+  //@@ head인데 **tail인 이유는? => tasklet_struct의 *next가 단방향 linked list 이므로?
+	struct tasklet_struct **tail;
 };
 
 static DEFINE_PER_CPU(struct tasklet_head, tasklet_vec);
@@ -462,11 +464,12 @@ EXPORT_SYMBOL(__tasklet_hi_schedule_first);
 
 static void tasklet_action(struct softirq_action *a)
 {
-	struct tasklet_struct *list;
+	struct tasklet_struct *list; //@@ 한방향 linked list
 
 	local_irq_disable();
 	list = __this_cpu_read(tasklet_vec.head);
 	__this_cpu_write(tasklet_vec.head, NULL);
+  //@@ tail은 head를 가리키고, head 자체는 현재 NULL
 	__this_cpu_write(tasklet_vec.tail, &__get_cpu_var(tasklet_vec).head);
 	local_irq_enable();
 
@@ -476,7 +479,7 @@ static void tasklet_action(struct softirq_action *a)
 		list = list->next;
 
 		if (tasklet_trylock(t)) {
-			if (!atomic_read(&t->count)) {
+			if (!atomic_read(&t->count)) { //@@ if activate
 				if (!test_and_clear_bit(TASKLET_STATE_SCHED, &t->state))
 					BUG();
 				t->func(t->data);
@@ -488,9 +491,11 @@ static void tasklet_action(struct softirq_action *a)
 
 		local_irq_disable();
 		t->next = NULL;
+    //@@ hardware interrupt에 의해 tasklet이 추가되었을 수도 있으니
+    //@@ 다시 읽어 그 뒤에 처리되지 않은 tasklet을 추가한다.
 		*__this_cpu_read(tasklet_vec.tail) = t;
 		__this_cpu_write(tasklet_vec.tail, &(t->next));
-		__raise_softirq_irqoff(TASKLET_SOFTIRQ);
+		__raise_softirq_irqoff(TASKLET_SOFTIRQ); //@@ 그리고 다시 실행
 		local_irq_enable();
 	}
 }
@@ -721,8 +726,9 @@ static int remote_softirq_cpu_notify(struct notifier_block *self,
 
 			local_head = &__get_cpu_var(softirq_work_list[i]);
 			list_splice_init(head, local_head); //@@ head => local_head
-      //@@ 죽은 cpu를 현재 cpu로 옮김
+      //@@ 죽은 cpu softirq list를 현재 cpu softirq list로 옮김
       //@@ 2016.03.12 끝
+      //@@ cpu dead시 tasklet list는 옮기지 않는데 이유는?
 			raise_softirq_irqoff(i);
 		}
 		local_irq_enable();
@@ -742,6 +748,7 @@ void __init softirq_init(void)
 	for_each_possible_cpu(cpu) {
 		int i;
 
+    //@@ tasklet list와 softirq list를 초기화
 		per_cpu(tasklet_vec, cpu).tail =
 			&per_cpu(tasklet_vec, cpu).head;
 		per_cpu(tasklet_hi_vec, cpu).tail =
@@ -750,6 +757,7 @@ void __init softirq_init(void)
 			INIT_LIST_HEAD(&per_cpu(softirq_work_list[i], cpu));
 	}
 
+   //@@ cpu dead시 tasklet list는 옮기지 않는데 이유는?
 	register_hotcpu_notifier(&remote_softirq_cpu_notifier);
 
 	open_softirq(TASKLET_SOFTIRQ, tasklet_action);

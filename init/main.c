@@ -604,7 +604,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	tick_init();
 	init_timers(); //@@ 2015.11 ~ 2016.02.20 분석 완료
 	hrtimers_init(); //@@ 2016.03.05 완료
-	softirq_init();
+	softirq_init(); //@@ softirq 초기화와 tasklet softirq 초기화
 	timekeeping_init();
 	time_init();
 	sched_clock_postinit();

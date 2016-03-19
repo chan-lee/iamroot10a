@@ -351,7 +351,7 @@ void ntp_clear(void)
 	time_offset	= 0;
 
 	/* Clear PPS state variables */
-	pps_clear();
+	pps_clear(); //@@ pulse per seconds (PPS ex.GPS) device 변수 초기화
 }
 
 

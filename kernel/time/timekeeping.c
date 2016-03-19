@@ -787,9 +787,9 @@ void __init timekeeping_init(void)
 	struct timekeeper *tk = &timekeeper;
 	struct clocksource *clock;
 	unsigned long flags;
-	struct timespec now, boot, tmp;
+	struct timespec now, boot, tmp; //@@ posix 표준 time 구조체. <- driver 호환을 위해서?
 
-	read_persistent_clock(&now);
+	read_persistent_clock(&now); //@@ 등록된 clock_access_fn으로부터 시간을 읽어온다.
 
 	if (!timespec_valid_strict(&now)) {
 		pr_warn("WARNING: Persistent clock returned invalid value!\n"
@@ -809,19 +809,21 @@ void __init timekeeping_init(void)
 
 	raw_spin_lock_irqsave(&timekeeper_lock, flags);
 	write_seqcount_begin(&timekeeper_seq);
-	ntp_init();
+	ntp_init(); //@@ ntp 및 pps 변수 초기화. ntp protocol에 대한 study는 skip
 
+  //@@ 기본 clocksource인 clocksource_jiffies를 얻어옴
 	clock = clocksource_default_clock();
-	if (clock->enable)
+	if (clock->enable) //@@ clocksource_jiffies에는 없음
 		clock->enable(clock);
-	tk_setup_internals(tk, clock);
+	tk_setup_internals(tk, clock); //@@ clocksouce 설정=> tk 반영. 내부는 skip
 
-	tk_set_xtime(tk, &now);
-	tk->raw_time.tv_sec = 0;
+	tk_set_xtime(tk, &now); //@@ now의 walltime을 tk에 적용.
+	tk->raw_time.tv_sec = 0; //@@ nonotomic을 초기화. 이때가 monotonic time 시작?
 	tk->raw_time.tv_nsec = 0;
 	if (boot.tv_sec == 0 && boot.tv_nsec == 0)
 		boot = tk_xtime(tk);
 
+  //@@ 2016.03.19 end
 	set_normalized_timespec(&tmp, -boot.tv_sec, -boot.tv_nsec);
 	tk_set_wall_to_mono(tk, tmp);
 

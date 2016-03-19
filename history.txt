@@ -2167,7 +2167,7 @@ Documentation/timers/NO_HZ.txt
 * clock source
   timeline 중에 내가 어디 있는지 알려줌
   monotonic: 0부터 계속 증가하는 시간
-  정확도를 높이기 위해 RTC나 NTP등으로 보강하는 layer가 있음
+  정확도를 높이기 위해 NTP등으로 보강하는 layer가 있음
   mult, shift: clock source는 단순한 counter이므로 nano 단위로 만들기 위해서는
   나누거나 곱해야 한다. nano이하의 counter라면 shift, milli 이상이라면 mult 할것이다.
 * clock event
@@ -2331,6 +2331,8 @@ hrtimers_init()
   NTP로 얻어온 시간 정보 또한 기록한다.
   전역 객체로 하나가 존재한다. static struct timekeeper timekeeper;
   shadow_timekeeper 도 존재한다. static struct timekeeper shadow_timekeeper;
+  xtime_sec, xtime_nsec 은 wall(real) time 값
+  raw_time 은 monotonic time 값
   차이는 추후 기록 요망
 
 ------------------------------------------------------------
@@ -2386,7 +2388,7 @@ https://lwn.net/Articles/302043/
   release - relese시 호출될 함수인데, release가 무슨 release인지 모르겠음
 - enum
   {
-    HI_SOFTIRQ=0,
+    HI_SOFTIRQ=0, //@@ tasklet hi 용
     TIMER_SOFTIRQ,
     NET_TX_SOFTIRQ,
     NET_RX_SOFTIRQ,
@@ -2415,6 +2417,7 @@ https://lwn.net/Articles/302043/
      다른 종류의 tasklet은 상관하지 않는다는 뜻.
   tasklet의 의의는 동시에 실행되지 않으면서(lock이 필요없으면서),
   딱 한번만 실행되는 루틴을 보장해 준다고 추측해 봄
+  => 반복되는 routine을 tasklet으로 등록하는 것이 아니라, 한번 실행되되고 나면 사라진다?
 
 - static vs extern
   C에서는 함수와 변수 모두 extern 이 기본
@@ -2426,14 +2429,39 @@ https://lwn.net/Articles/302043/
   function이 하나더 있는 이유는 모르겠다.
 
 
+================================================================================
+2016.03.19
+hlist 다시 한번
+1. 일반 linked list는 head와 node가 list_head로 모두 같다.
+2. hlist는 head의 용량을 줄이기 위해 prev 정보가 없는데,
+  이로써 hlist_head와 hlist_node 의 두가지 type으로 나뉘게 된다.
+3. 앞노드의 type이 일반 hlist_node일 수도 있고, hlist_head일 수도
+  있는데, 이를 모두 처리하려면
+  ex. hlist_add_node(hlist_node *prev, hlist_node *new);
+  ex. hlist_add_node_to_head(hlist_head *prev, hlist_node *new);
+  등과 같이 항상 두개의 interface가 존재해야 한다.
+  그러므로 이를 보완하기 위해 hlist_node의 hlist_node *prev를
+  hlist_node **prev로 변경하면 하나의 interface로 다룰수 있게 된다.
+  ex. hlist_add_node(hlist_node **prev, hlist_node *new);
+  (실제로는 hlist_add_head와 hlist_add_after로 나뉘어져 있긴하다.
+   그러므로 delete나 move에서 편하게 사용하기 위함이다.)
 
-
-
-
-
-
-
-
-
-
+tasklet_action : professional linux kernel architecture. p.882 참조
+tasklet은 한번 사용하고 제거하고, 아직 activate되지 않은 것들은
+다시 tasklet list에 넣는다.
   
+#include <uapi/linux/time.h>
+struct timespec : user space api로 기본 시간(tv_sec, tv_nsec)
+  - timeval 보다 더 정교
+struct timeval : user space api로 기본 시간(tv_sec, tv_usec)
+  - unix/linux 시간 관련 구조체 : http://blog.yongil.net/78
+struct timezone : timezone
+
+struct itimerspec : timerspec interval과 value
+  - value는 초기 만료 시간, inteval은 repeat시interval
+struct itimerval : timerval interval과 value
+  - value는 초기 만료 시간, inteval은 repeat시interval
+ 
+* PPS (Pulse Per Second)
+- 외부(serial/paralle port, GPIO)에서 공급되는 시간(초) 동기화 장치
+  ex) GPS receiver
