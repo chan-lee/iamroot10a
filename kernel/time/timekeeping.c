@@ -74,9 +74,9 @@ static void tk_set_wall_to_mono(struct timekeeper *tk, struct timespec wtm)
 	set_normalized_timespec(&tmp, -tk->wall_to_monotonic.tv_sec,
 					-tk->wall_to_monotonic.tv_nsec);
 	WARN_ON_ONCE(tk->offs_real.tv64 != timespec_to_ktime(tmp).tv64);
-	tk->wall_to_monotonic = wtm;
+	tk->wall_to_monotonic = wtm; //@@ 음수
 	set_normalized_timespec(&tmp, -wtm.tv_sec, -wtm.tv_nsec);
-	tk->offs_real = timespec_to_ktime(tmp);
+	tk->offs_real = timespec_to_ktime(tmp); //@@ 양수
 	tk->offs_tai = ktime_sub(tk->offs_real, ktime_set(tk->tai_offset, 0));
 }
 
@@ -818,14 +818,14 @@ void __init timekeeping_init(void)
 	tk_setup_internals(tk, clock); //@@ clocksouce 설정=> tk 반영. 내부는 skip
 
 	tk_set_xtime(tk, &now); //@@ now의 walltime을 tk에 적용.
-	tk->raw_time.tv_sec = 0; //@@ nonotomic을 초기화. 이때가 monotonic time 시작?
+	tk->raw_time.tv_sec = 0; //@@ monotonic을 초기화. 이때가 monotonic time 시작?
 	tk->raw_time.tv_nsec = 0;
 	if (boot.tv_sec == 0 && boot.tv_nsec == 0)
 		boot = tk_xtime(tk);
 
   //@@ 2016.03.19 end
-	set_normalized_timespec(&tmp, -boot.tv_sec, -boot.tv_nsec);
-	tk_set_wall_to_mono(tk, tmp);
+	set_normalized_timespec(&tmp, -boot.tv_sec, -boot.tv_nsec); //@@ nsec 1000000000 이하로 만듬
+	tk_set_wall_to_mono(tk, tmp); //@@ wall_to_monotonic, offs_real, offs_tai 설정
 
 	tmp.tv_sec = 0;
 	tmp.tv_nsec = 0;

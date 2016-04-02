@@ -119,5 +119,5 @@ void __init time_init(void)
 	if (machine_desc->init_time)
 		machine_desc->init_time();
 	else
-		clocksource_of_init();
+		clocksource_of_init(); //@@ 없다면 open firmware로부터 적절한 것을 찾아서 초기화
 }

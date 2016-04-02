@@ -163,6 +163,7 @@ static inline u64 get_jiffies_64(void)
  * Have the 32 bit jiffies value wrap 5 minutes after boot
  * so jiffies wrap bugs show up earlier.
  */
+//@@ 5분후에 jiffies가 overflow를 일으켜 버그가 있는지 쉽게 알기 위하여.
 #define INITIAL_JIFFIES ((unsigned long)(unsigned int) (-300*HZ))
 
 /*

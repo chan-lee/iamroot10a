@@ -12,12 +12,12 @@ struct timespec {
 };
 #endif
 
-struct timeval {
+struct timeval { //@@ 음수도 가능
 	__kernel_time_t		tv_sec;		/* seconds */
 	__kernel_suseconds_t	tv_usec;	/* microseconds */
 };
 
-struct timezone {
+struct timezone { //@@ 음수도 가능
 	int	tz_minuteswest;	/* minutes west of Greenwich */
 	int	tz_dsttime;	/* type of dst correction */
 };

@@ -2296,11 +2296,13 @@ hrtimers_init()
 
 #include <linux/timer.h>
 - struct timer_list : timer를 걸수 있는 기본 timer 객체(linked list의 node)
+                      기본 시간단위는 jiffies
 - struct tvec, struct tvec_root : timer_list를 담는 container
 - struct tvec_base : timer wheel을 운용하기 위한 tvec_root와 tvec(보통4개)을 가지고 있는 구조체. per_cpu
 
 #include <linux/hrtimer.h>
 - struct hrtimer : timer를 걸수 있는 기본 hrtimer 객체
+                   기본 시간단위는 ktime
 - struct hrtimer_clock_base : hrtimer를 담고 있는 rb tree를 담고 있는 container
 - hrtimer_cpu_base: per cpu로 각 cpu마다 4종류의 hrtimer_clock_base를 담고 있다. (REALTIME, MONOTONIC, BOOTTIME, TAI)
 
@@ -2373,7 +2375,7 @@ hrtimer_init()의 구조
 
 ================================================================================
 2016.03.12
-* softirq_init(), timekeeping_init(), time_init() 본 후 다시 tick_iit()보기로 함
+* softirq_init(), timekeeping_init(), time_init() 본 후 다시 tick_init()보기로 함
 
 * threaded irq handler : top half에서 처리 하는 부분을 thread로 옮김
 https://lwn.net/Articles/302043/
@@ -2452,8 +2454,9 @@ tasklet은 한번 사용하고 제거하고, 아직 activate되지 않은 것들
   
 #include <uapi/linux/time.h>
 struct timespec : user space api로 기본 시간(tv_sec, tv_nsec)
-  - timeval 보다 더 정교
+  - timeval 보다 더 정교하며 음수도 가능
 struct timeval : user space api로 기본 시간(tv_sec, tv_usec)
+  - 역시 음수도 가능
   - unix/linux 시간 관련 구조체 : http://blog.yongil.net/78
 struct timezone : timezone
 
@@ -2463,5 +2466,38 @@ struct itimerval : timerval interval과 value
   - value는 초기 만료 시간, inteval은 repeat시interval
  
 * PPS (Pulse Per Second)
+- Documentaion/pps/pps.txt
 - 외부(serial/paralle port, GPIO)에서 공급되는 시간(초) 동기화 장치
   ex) GPS receiver
+- 실제 운용은 ntp 모듈이 담당(초기화 코드는 kernel/time/ntp.c 에 있음)
+
+
+================================================================================
+2016.04.02
+raw_time은 epoch 기준. 나머지 wall(real) time, boot time, utc 는 현재시간기준?
+
+* clock multiplier, divider
+clock관련 구조체를 보면 cycle, mult, shift가 존재
+이는 hardware적인 clock(cycle) 을 clock과 delay clock을 xor 하는 muliplier와
+clock 주파수를 2로 분주하는 divider(shift)를 나타낸것이다.
+(clock multiplier 이미지 검색하면 그림 나옴)
+https://www.kernel.org/doc/Documentation/timers/timekeeping.txt
+에 보면 자세히 나와 있다.
+
+결론은 clock_source 는 cycle과 
+mult, shift(두개는 미리 정의한 변수?)를 가지고 현재 시간을 나타낼수 있다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

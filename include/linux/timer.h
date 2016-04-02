@@ -15,7 +15,7 @@ struct timer_list {
 	 * same cacheline
 	 */
 	struct list_head entry;
-	unsigned long expires;
+	unsigned long expires; //@@ 단위가 jiffies?
 	struct tvec_base *base;
 
 	void (*function)(unsigned long);
