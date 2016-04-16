@@ -1817,6 +1817,7 @@ cpu_timer_fire(): firing list 의 있는 task 들을 처리
 2015.06.06
 - init/main.c/star_kernel/idr_init_cace()
   IDR : Id(정수)와 pointer 관리
+  IDA : IDR에서 pointer관리 부분을 사용하지 않는 id 생성용 allocator
   http://egloos.zum.com/studyfoss/v/5187192
   IDR_BITS 8 => 8 bits씩 끊어서 하나의 layer로 관리한다.
   32 bits 에서는 4 depths 가 만들어진다.
@@ -2486,11 +2487,44 @@ https://www.kernel.org/doc/Documentation/timers/timekeeping.txt
 
 결론은 clock_source 는 cycle과 
 mult, shift(두개는 미리 정의한 변수?)를 가지고 현재 시간을 나타낼수 있다.
+(1 * mult) >> shift 가 뜻하는 것은 1cycle이 지났을때의 경과된 ns
 
+================================================================================
+2016.04.16
 
+- start_kernel() : init/main.c
+  - sched_clock_postinit() : sched_clock.c
+    - setup_sched_clock() : sched_clock.c
+      sched_clock의 mult와 shift를 적절하게 구하고,
+      (mult: 10000000 shift: 0 보다 multi: 2560000000, shift:8 이
+       나오는 이유는 모르겠음. mult의 크기를 좌우하는 요소?)
+      sched_clock_poll()의 timeout 시간을 설정
+      계산상으로는 440일짜리 timer같은데, 확실하지는 않음
+      timer 만료시 update_sched_clock() 호출
 
+  - perf_event_init()
+perf tool: http://egloos.zum.com/studyfoss/v/5634580
+perf list: http://egloos.zum.com/studyfoss/v/5636485
 
-
+#include <linux/perf_event.h>
+- struct perf_guest_info_callbacks :
+- struct perf_callchain_entry :
+- struct perf_raw_record :
+- struct perf_branch_entry :
+- struct perf_branch_stack :
+- struct perf_regs_user :
+- struct hw_perf_event_extra :
+- struct hw_perf_event :
+- struct pmu : performance monitoring unit
+- enum perf_event_active_state :
+- enum perf_group_flag :
+- struct swevent_hlist : 256개의 software event hlist_head와 rcu_head를
+  가지고 있는 hash list로 struct swevent_htable 에서 사용
+- struct perf_event :
+- enum perf_event_context_type :
+- struct perf_event_context :
+- struct perf_cpu_context :
+- struct perf_output_handle :
 
 
 

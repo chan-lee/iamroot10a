@@ -132,18 +132,22 @@ EXPORT_SYMBOL_GPL(timecounter_cyc2time);
  * reduce the conversion accuracy by chosing smaller mult and shift
  * factors.
  */
+
+//@@ 참고 자료 http://yshivakrishna.blogspot.kr/2014/01/linux-clocksource-mult-and-shift.html
+//@@ 적절한 mult를 구하는 방법은 잘 모르겠음.
 void
 clocks_calc_mult_shift(u32 *mult, u32 *shift, u32 from, u32 to, u32 maxsec)
 {
 	u64 tmp;
-	u32 sft, sftacc= 32;
+	u32 sft, sftacc= 32; //@@ shift accuracy
 
 	/*
 	 * Calculate the shift factor which is limiting the conversion
 	 * range:
 	 */
-	tmp = ((u64)maxsec * from) >> 32;
-	while (tmp) {
+  //@@ 32bits를 넘는 bit자리수를 32에서 뺌
+	tmp = ((u64)maxsec * from) >> 32; //@@ 32bits를 넘는 값을 tmp에 저장함
+	while (tmp) { //@@ 최대 몇자리 bit인가를 셈
 		tmp >>=1;
 		sftacc--;
 	}

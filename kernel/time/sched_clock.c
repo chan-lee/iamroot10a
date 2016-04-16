@@ -32,8 +32,8 @@ static int irqtime = -1;
 core_param(irqtime, irqtime, int, 0400);
 
 static struct clock_data cd = {
-	.mult	= NSEC_PER_SEC / HZ, //@@ jiffies 용 clock
-};
+	.mult	= NSEC_PER_SEC / HZ, //@@ jiffies 용 clock 1000 000 000 / 100
+}; //@@ 하나의 cycle당 1000만 nano seconds.
 
 static u32 __read_mostly sched_clock_mask = 0xffffffff;
 
@@ -130,7 +130,13 @@ void __init setup_sched_clock(u32 (*read)(void), int bits, unsigned long rate)
 
   //@@ 2016.04.02 end
 	/* calculate the mult/shift to convert counter ticks to ns. */
-  //@@ mult와 shift 수정
+  //@@ mult와 shift 수정 HZ(100) -> 10억 짜리 clock으로
+  //참고 http://yshivakrishna.blogspot.kr/2014/01/linux-clocksource-mult-and-shift.html
+  //@@ mult와 그에 따른 shift를 구함
+  //@@ mult 2^8 * (NSEC_PER_SEC / rate), shift 2^8
+  //@@ mult 2^8 * (1000000000 / 100), shift 2^8
+  //@@ mult 4096000000, shift 12 (HZ=1000)
+  //@@ mult 2560000000, shift 8 (HZ=100)
 	clocks_calc_mult_shift(&cd.mult, &cd.shift, rate, NSEC_PER_SEC, 0);
 
 	r = rate;
@@ -144,9 +150,11 @@ void __init setup_sched_clock(u32 (*read)(void), int bits, unsigned long rate)
 		r_unit = ' ';
 
 	/* calculate how many ns until we wrap */
+  //@@ uint32 를 한바퀴 도는데 걸리는 시간.
 	wrap = cyc_to_ns((1ULL << bits) - 1, cd.mult, cd.shift);
 	do_div(wrap, NSEC_PER_MSEC);
-	w = wrap;
+	w = wrap; //@@ (0xFFFFFFFF * 10 000 000 / 1000 000) ms => 400억ms => 490일? 
+  //@@ wrap: jifiies 한바퀴 도는데 걸리는 시간
 
 	/* calculate the ns resolution of this counter */
 	res = cyc_to_ns(1ULL, cd.mult, cd.shift);
@@ -158,6 +166,9 @@ void __init setup_sched_clock(u32 (*read)(void), int bits, unsigned long rate)
 	 * sets the initial epoch.
 	 */
   //@@ timer expire jiffies.
+  //@@ jiffies 가 overflow나기 전에 10%정도 남겨 두었을때(440일정도?)
+  //@@ jiffies를 clock을 초기화 해서 다시 사용함
+  //@@ overlflow를 감안한 routine vs overflow가 발생않도록 일어나기전 초기화
 	sched_clock_timer.data = msecs_to_jiffies(w - (w / 10)); //@@ wrap_tick
 	update_sched_clock();
 

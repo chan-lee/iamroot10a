@@ -7764,6 +7764,7 @@ void __init perf_event_init(void)
 
 	perf_event_init_all_cpus();
 	init_srcu_struct(&pmus_srcu);
+  //@@ 2016.04.16 end. struct pmu 할차례
 	perf_pmu_register(&perf_swevent, "software", PERF_TYPE_SOFTWARE);
 	perf_pmu_register(&perf_cpu_clock, NULL, -1);
 	perf_pmu_register(&perf_task_clock, NULL, -1);
