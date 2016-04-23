@@ -6305,7 +6305,7 @@ int perf_pmu_register(struct pmu *pmu, const char *name, int type)
 
 	mutex_lock(&pmus_lock);
 	ret = -ENOMEM;
-	pmu->pmu_disable_count = alloc_percpu(int);
+	pmu->pmu_disable_count = alloc_percpu(int);	//@@ int형 변수에 대한 포인터가 리턴..
 	if (!pmu->pmu_disable_count)
 		goto unlock;
 
@@ -7772,11 +7772,11 @@ void __init perf_event_init(void)
 	perf_cpu_notifier(perf_cpu_notify);
 	register_reboot_notifier(&perf_reboot_notifier);
 
-	ret = init_hw_breakpoint();
+	ret = init_hw_breakpoint();	//@@ H/W breakpoint 관련 초기화 (ARM): https://lwn.net/Articles/353050/
 	WARN(ret, "hw_breakpoint initialization failed with: %d", ret);
 
 	/* do not patch jump label more than once per second */
-	jump_label_rate_limit(&perf_sched_events, HZ);
+	jump_label_rate_limit(&perf_sched_events, HZ);	//@@ Jump Label: https://lwn.net/Articles/412072/
 
 	/*
 	 * Build time assertion that we keep the data_head at the intended

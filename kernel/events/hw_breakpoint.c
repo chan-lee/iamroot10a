@@ -629,7 +629,7 @@ int __init init_hw_breakpoint(void)
 	int i;
 
 	for (i = 0; i < TYPE_MAX; i++)
-		nr_slots[i] = hw_breakpoint_slots(i);
+		nr_slots[i] = hw_breakpoint_slots(i);	//@@ BRP? & WRP?
 
 	for_each_possible_cpu(cpu) {
 		for (i = 0; i < TYPE_MAX; i++) {

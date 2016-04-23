@@ -469,6 +469,8 @@ EXPORT_SYMBOL(idr_preload);
  * or iteration can be performed under RCU read lock provided the user
  * destroys @ptr in RCU-safe way after removal from idr.
  */
+//@@ idr: radix tree의 일종으로 정수 ID와 특정한 포인터 값을 연결시키는 역할을 해 준다.
+//@@ F/OSS: http://egloos.zum.com/studyfoss/v/5187192
 int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp_mask)
 {
 	int max = end > 0 ? end - 1 : INT_MAX;	/* inclusive upper limit */

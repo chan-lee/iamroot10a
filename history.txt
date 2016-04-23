@@ -2528,10 +2528,37 @@ perf list: http://egloos.zum.com/studyfoss/v/5636485
 
 
 
+================================================================================
+[2016.04.23]
 
+1. Call Graph
+start_kernel() [init/main.c]
+	perf_event_init() [kernel/event/core.c]
+		...
+		perf_pmu_register(&perf_swevent, ...) - [시작]
+		perf_pmu_register(&perf_cpu_clock, ...)
+		perf_pmu_register(&perf_task_clock, ...)
+		perf_tp_register()
+			perf_pmu_register(&perf_tracepoint, ...)
+		perf_cpu_notifier(perf_cpu_notify) [include/linux/perf_event.h]
+			register_cpu_notifier(pef_cpu_notify_nb) [kernel/cpu.c]
+		register_reboot_notifier(&perf_reboot_notifier) [kernel/reboot.c]
+			blocking_notifier_chain_register(&reboot_notifier_list, ...) [kernel/notifier.c]
+				notifier_chain_register()
+		init_hw_breakpoint() [kernel/events/hw_breakpoint.c]
+			perf_pmu_register(&perf_breakpoint, ...) [kernel/event/core.c]
+			register_die_notifier(&hw_breakpoint_exceptions_nb) [kernel/notifier.c]
+		jump_label_rate_limit(&perf_sched_events, ...) [kernel/jump_label.c]
 
+		: perf_event_init() 함수는 각 CPU에 대한 S/W event infrastructure를 초기화 한 후
+		perf_swevent, perf_cpu_clock, perf_task_clock and tracepoint의 PMU를 등록하고,
+		hw-breakpoint를 초기화 한 후 perf_breakpoint를 등록함.
 
+		: H/W-breakpoint와 Jump Label 등 어려움 부분이 많았음.
 
+2. H/W breakpoint: https://lwn.net/Articles/353050/
+  - BRP (Breakpoint Register Pair)
+  - WRP (Watchpoint Register Pair)
 
-
+3. Jump Label: https://lwn.net/Articles/412072/
 

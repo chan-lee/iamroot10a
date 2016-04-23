@@ -287,9 +287,9 @@ int hw_breakpoint_slots(int type)
 	 */
 	switch (type) {
 	case TYPE_INST:
-		return get_num_brps();
+		return get_num_brps();	//@@ the number of BRPs(Breakpoint Register Pairs)
 	case TYPE_DATA:
-		return get_num_wrps();
+		return get_num_wrps();	//@@ the number of WRPs(Watchpoint Regitser Pairs)
 	default:
 		pr_warning("unknown slot type: %d\n", type);
 		return 0;

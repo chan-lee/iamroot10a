@@ -608,7 +608,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	timekeeping_init();
 	time_init();
 	sched_clock_postinit();
-	perf_event_init();
+	perf_event_init();	//@@ 2016.04.23 분석하였음
 	profile_init();
 	call_function_init();
 	WARN(!irqs_disabled(), "Interrupts were enabled early\n");

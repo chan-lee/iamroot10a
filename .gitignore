@@ -93,3 +93,17 @@ extra_certificates
 signing_key.priv
 signing_key.x509
 x509.genkey
+
+# Source Insight
+*.IAB
+*.IAD
+*.IMB
+*.IMD
+*.PFI
+*.PO
+*.PR
+*.PS
+*.PRI
+*.PW
+*.WK3
+

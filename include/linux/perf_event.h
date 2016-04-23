@@ -196,10 +196,11 @@ struct pmu {
 	struct list_head		entry;
 
 	struct device			*dev;
-	const struct attribute_group	**attr_groups;
+	const struct attribute_group	**attr_groups;	//@@ 리눅스 디바이스 드라이버 모델 관련 구조체
 	const char			*name;
 	int				type;
 
+	//@@ 아래 자료구조는 추후 확인
 	int * __percpu			pmu_disable_count;
 	struct perf_cpu_context * __percpu pmu_cpu_context;
 	int				task_ctx_nr;
@@ -209,6 +210,9 @@ struct pmu {
 	 * Fully disable/enable this PMU, can be used to protect from the PMI
 	 * as well as for lazy/batch writing of the MSRs.
 	 */
+	//@@ PMI: Performance Monitoring Interrupt
+	//@@ MSR: Model-Specific Register
+	//@@ PMU를 enalbe/disable 하기위해 사용되는 함수 포인터
 	void (*pmu_enable)		(struct pmu *pmu); /* optional */
 	void (*pmu_disable)		(struct pmu *pmu); /* optional */
 
