@@ -609,15 +609,16 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	time_init();
 	sched_clock_postinit();
 	perf_event_init();	//@@ 2016.04.23 분석하였음
-	profile_init();
-	call_function_init();
+	profile_init(); //@@ 2016.05.07 분석.
+	call_function_init(); //@@ 2016.05.07 분석.
 	WARN(!irqs_disabled(), "Interrupts were enabled early\n");
 	early_boot_irqs_disabled = false;
 	local_irq_enable();
 
-	kmem_cache_init_late();
+	kmem_cache_init_late(); //@@ 2016.05.07 분석.
+  //@@ [2016.05.07] 완료.
 
-	/*
+  /*
 	 * HACK ALERT! This is early. We're enabling the console before
 	 * we've done PCI setups etc, and console_init() must be aware of
 	 * this. But we do want output early, in case something goes wrong.

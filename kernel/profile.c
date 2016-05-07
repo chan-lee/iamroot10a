@@ -122,15 +122,18 @@ int __ref profile_init(void)
 
 	cpumask_copy(prof_cpu_mask, cpu_possible_mask);
 
+  //@@ 카운터 값을 담기 위한 영역 할당 (1st try)
 	prof_buffer = kzalloc(buffer_bytes, GFP_KERNEL|__GFP_NOWARN);
 	if (prof_buffer)
-		return 0;
+		return 0; //@@ 성공
 
+  //@@ 2nd try
 	prof_buffer = alloc_pages_exact(buffer_bytes,
 					GFP_KERNEL|__GFP_ZERO|__GFP_NOWARN);
 	if (prof_buffer)
 		return 0;
 
+  //@@ 3rd try
 	prof_buffer = vzalloc(buffer_bytes);
 	if (prof_buffer)
 		return 0;

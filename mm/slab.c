@@ -1651,8 +1651,11 @@ void __init kmem_cache_init_late(void)
 {
 	struct kmem_cache *cachep;
 
+  //@@ slab state 상태를 up 으로 세팅
+  //@@ UP: slab caches usable but not all extras yet
 	slab_state = UP;
 
+  //@@ 전체적인 tuning 을 해서 head arrays 등을 최종 업데이트 함.
 	/* 6) resize the head arrays to their final sizes */
 	mutex_lock(&slab_mutex);
 	list_for_each_entry(cachep, &slab_caches, list)

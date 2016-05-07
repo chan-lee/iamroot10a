@@ -2562,3 +2562,49 @@ start_kernel() [init/main.c]
 
 3. Jump Label: https://lwn.net/Articles/412072/
 
+================================================================================
+[2016.05.07]
+1. profile_init()
+커널 컴파일 커맨드라인으로 지정하는 profile 옵션에 대한 초기화 과정
+-- profile: 커널 text 에서 발생하는 CPU cycles 를 추적하는 것으로 보임.
+-- profile_init:
+1. 커널 텍스트의 일정 범위마다 count 를 저장할 수 있는 공간을 할당시켜줌.
+2. prof_cpu_mask 를 초기화시켜줌 (profile 에서 계속 사용됨).
+
+2. call_function_init()
+프로세서 간의  call function 을 관리 및 전달해주기 위한 자료 구조들을 초기화
+-- 1. call_single_queue (프로세서 마다 있는 queue) 초기화
+---- entry 마다 function pointer 와 arguments structure 에 대한 포인터를 저장
+-- 2. call function data 를 여러 상황에 대해서 hotplug 핸들링 (예를 들어, migration) 하기 위한 루틴 등록
+---- IPI (inter processor interrupts) 와 비슷한 개념으로 동작
+
+3. local_irq_enable()
+
+4. kmem_cache_init_late()
+6 개의 kmem_cache 초기화 과정 중 마지막 6번째 과정 수행.
+kmem_cache_init(): (1)~(5).
+kmem_cache_init_late(): (6).
+---- kmem cache 들을 전체적으로 tuning 해주면서 head arrays 를
+재조정한다 (batchcount, limit 등의 값 갱신).
+부팅 과정 동안 필요한 slab 뿐 만 아니라 전체적으로
+kmem cache 초기화 (튜닝) 를 다시 해줌.
+---- 튜닝 과정: __do_tune_cpucache(), alloc_kmemlist() (mm/slab.c) 에서 수행 (자세한 튜닝 과정은 TODO).
+
+(1): kmem_cache cache 를 초기화한다.
+kmem_cache cache 는 kmem_cache 자신을 제외한 모든 캐시들의
+kmem_cache 구조체들을 포함.
+kmem_cache 는 정적으로 할당되어 있다.
+
+(2) 첫번째 kmalloc cache 생성.
+새로운 캐시에 대한 kmem_cache 는 정상적으로 할당됨.
+__init 데이터 영역은 head array 를 위해서 사용
+
+(3) 최소한의 크기의 head array 와 함께 나머지 kmalloc caches 할당.
+
+(4) __init 데이터 head array 를 kmem_cache 로 바꾸고
+첫번째 kmalloc cache 를 kmalloc allocated arrays 로 변경
+
+(5) __init 데이터를 kmem_cache 를 위한 kmem_cache_node 로 변경.
+다른 캐시들을 kmalloc 할당된 메모리로 교체.
+
+(6) kmalloc caches 의 head arrays 를 최종적인 크기로 변경

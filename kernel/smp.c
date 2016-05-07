@@ -83,12 +83,17 @@ void __init call_function_init(void)
 	int i;
 
 	for_each_possible_cpu(i) {
+    //@@ call_single_queue 에 call_single_data 가 탑재
+    //@@ call_single_data 는 function pointer 등을 가지고 있음
+    //@@ cpu 마다 call_single_queue 를 하나씩 만든다.
 		struct call_single_queue *q = &per_cpu(call_single_queue, i);
 
 		raw_spin_lock_init(&q->lock);
 		INIT_LIST_HEAD(&q->list);
 	}
 
+  //@@ 여러 상황에 대해서 cfd (call function data) 를
+  //@@ 핸들링 (예를 들어, migration) 하기 위한 루틴 등록
 	hotplug_cfd(&hotplug_cfd_notifier, CPU_UP_PREPARE, cpu);
 	register_cpu_notifier(&hotplug_cfd_notifier);
 }

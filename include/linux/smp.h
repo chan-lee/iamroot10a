@@ -17,8 +17,8 @@ extern void cpu_idle(void);
 typedef void (*smp_call_func_t)(void *info);
 struct call_single_data {
 	struct list_head list;
-	smp_call_func_t func;
-	void *info;
+	smp_call_func_t func; //@@ function pointer
+	void *info;           //@@ pointer to the structure of arguments
 	u16 flags;
 };
 
