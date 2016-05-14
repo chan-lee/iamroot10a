@@ -623,19 +623,19 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	 * we've done PCI setups etc, and console_init() must be aware of
 	 * this. But we do want output early, in case something goes wrong.
 	 */
-	console_init();
+	console_init(); //@@ 기본 line discipline인 TTY를 등록하고 console dev 초기화
 	if (panic_later)
-		panic(panic_later, panic_param);
-
-	lockdep_info();
+		panic(panic_later, panic_param); //@@ 문제 상황을 log로 남기고, 재시작하기도함
+	lockdep_info(); //@@ 런타임 락 의존성 검사
 
 	/*
 	 * Need to run this when irqs are enabled, because it wants
 	 * to self-test [hard/soft]-irqs on/off lock inversion bugs
 	 * too:
 	 */
-	locking_selftest();
+	locking_selftest(); //@@ skip
 
+  //@@ 2016.05.14 end
 #ifdef CONFIG_BLK_DEV_INITRD
 	if (initrd_start && !initrd_below_start_ok &&
 	    page_to_pfn(virt_to_page((void *)initrd_start)) < min_low_pfn) {

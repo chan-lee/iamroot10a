@@ -2608,3 +2608,51 @@ __init 데이터 영역은 head array 를 위해서 사용
 다른 캐시들을 kmalloc 할당된 메모리로 교체.
 
 (6) kmalloc caches 의 head arrays 를 최종적인 크기로 변경
+
+================================================================================
+[2016.05.14]
+void console_init() 시작
+
+- line discipline(회선 규범) - https://en.wikipedia.org/wiki/Line_discipline
+  * https://www.kernel.org/doc/Documentation/serial/tty.txt
+  * teminal subsystem
+    - upper: character device interface ex) console
+    - middle: line discipline ex) tty, ppp
+    - lower: hardware device driver/ pseudo terminal ex) UART
+TTY driver- http://sonseungha.tistory.com/252
+Serial driver - http://sonseungha.tistory.com/238
+http://www.linux.it/~rubini/docs/serial/serial.html <= 그림
+
+tty 와 pts
+- tty : 실제 console
+- pts : pseudo TTY slave (telnet 등의 tty를 흉내내기 위한 가짜 tty)
+http://blog.naver.com/PostView.nhn?blogId=jangpro1003&logNo=90098910350&redirect=Dlog&widgetTypeCall=true
+
+- lockdep
+kernel 내의 spinlock, rwlock, mutex, semaphore 추적을 위한 클래스
+lockdep: 런타임 락 의존성검사 http://egloos.zum.com/studyfoss/v/5342153
+
+- initrd
+  * root file system이 올라오기 전에 임시적으로 root file system에
+  필요한 모듈을 올리는 init ram disk.
+  * desktop 이나 server에서는 root file system이 올라오면 사라지고
+  * embedded에서는 root file system 대신에 사용하기도 한다.
+http://www.ibm.com/developerworks/linux/library/l-initrd/index.html  
+
+initrd_start는 어디서 설정하는지 할 차례
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

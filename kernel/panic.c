@@ -96,7 +96,7 @@ void panic(const char *fmt, ...)
 		panic_smp_self_stop();
 
 	console_verbose();
-	bust_spinlocks(1);
+	bust_spinlocks(1); //@@ unblank_console을 호출하지만 skip함
 	va_start(args, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
