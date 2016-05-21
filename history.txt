@@ -2639,7 +2639,70 @@ lockdep: 런타임 락 의존성검사 http://egloos.zum.com/studyfoss/v/5342153
   * embedded에서는 root file system 대신에 사용하기도 한다.
 http://www.ibm.com/developerworks/linux/library/l-initrd/index.html  
 
-initrd_start는 어디서 설정하는지 할 차례
+
+================================================================================
+[2016.05.21]
+
+linux kernel 4.6 : http://www.zdnet.co.kr/news/news_view.asp?artice_id=20160520151340
+
+* initrd에는 initrd 방식과 새롭게 만들어진 initramfs 방식이 있다.
+* initrd vs initramfs
+  - initrd : root file system의 file system을 그대로 복사해와서
+  /dev/ram block device 장치(memory)에 올림. kernel에서 이를 mount 하기 위해서는 
+  해당 file system의 device driver가 필요함. 예) ext2
+  dd등으로 만듬
+  mount /dev/ram0 /root <= 가상의 disk
+    - cramfs /dev/ram 에서 write는 불가능하고 read만 가능한 file system으로 읽어서 압축을 풀어서 사용
+
+  - initramfs : hard disk의 file system에 해당 file system driver가
+  모듈로 존재하면 읽을 방법이 없는 문제등을 해결하기 위해
+  새롭게 만든 file system (ramfs)을 kernel에 탑재하여 tmpfs 타입으로 mount
+  이 안에 다른 모든 file system driver가 존재하여
+  나중에 실제 root file system을 읽음. cpio로 만듬
+  mount -t tmpfs nodev /root <= ram용 filesystem
+
+  - reference
+    * RAMDISK, ramfs, 그리고 tmpfs사이에 생기는 혼동!
+      http://hoyoung2.blogspot.kr/2012/02/ramdisk-ramfs-tmpfs.html
+    * initramfs, ramdisk(한글)
+      http://egloos.zum.com/furmuwon/v/11145268
+    * initrd
+      https://en.wikipedia.org/wiki/Initrd
+      https://en.wikipedia.org/wiki/Initramfs
+
+  - 요약하면 ramdisk는 mem을 disk(block device)처럼 사용하겠다는 의미이고,
+  ramfs(tmpfs) 는 mem에 있는 file system이다.
+  - ramfs와 tmpfs 는 비슷하나 약간 차이가 있는데 위의 reference 참고
+
+  - 사족으로 모자란 memory를 보충하기 위한 swap 개념과 (속도를 희생)
+    남는 memory를 속도를 올리기 위해 disk로 사용하는 ramdisk/ramfs/tmpfs 의 개념으로
+    봐도 되지 않을까?
+    (ramdisk에서 block device layer를 제거한 것이 ramfs.
+     ramfs에서 고정된 크기를 가지고 swap 을 사용할수 있게 만든것이 tmpfs)
+
+- Documentation/filesystem/ramfs-rootfs-initramfs.txt
+  * 기본적으로 ramfs 는 커널에 항상 포함(제거 못함)
+  * rootfs 는 ramfs/tmpfs 의 특별한 instance
+  * tmpfs켜지면 rootfs는 tmpfs로, 아니면 ramfs로.
+  * initramfs 는 initrd에 비해 다음이 다르다.
+    - initrd는 분리된 파일 initramfs 는 kernel에 link
+    - initrd는 특정 파일 시스템이 압축된 이미지,
+      initramfs 는 cpio 포맷에 커널 실행후 제거됨(__init)
+    - initrd는 setup후 kernel로 돌아옴. initramfs 는 돌아오지 않을수도 있음
+      (switch_root같은 명령어로 새로운 root의 init을 실행시킬때)
+    - 다른 root로 바뀔 때 initrd는 root를 바꾸고 ramdisk unmount
+      initramfs는 자체가 root이므로 그럴 필요 없고, unmount도 필요 없음
+      대신 사용하지 않는 파일 제거 및 stdin등을 새 /dev/console로 연결
+  * populating initramfs
+    - cpio format으로 되어 kernel에 링크되는 initramfs는 기본적으로 비어있으며
+      CONFIG_INITRAMFS_SOURCE 를 이용하여 파일을 추가함
+  다음시간에는 현재 문서 마저 보고 코드 진행
+  https://www.kernel.org/doc/Documentation/filesystems/ramfs-rootfs-initramfs.txt
+
+
+
+
+
 
 
 
