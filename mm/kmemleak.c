@@ -1755,7 +1755,7 @@ void __init kmemleak_init(void)
 	int i;
 	unsigned long flags;
 
-#ifdef CONFIG_DEBUG_KMEMLEAK_DEFAULT_OFF
+#ifdef CONFIG_DEBUG_KMEMLEAK_DEFAULT_OFF //@@ NOT defined
 	if (!kmemleak_skip_disable) {
 		atomic_set(&kmemleak_early_log, 0);
 		kmemleak_disable();
@@ -1763,8 +1763,8 @@ void __init kmemleak_init(void)
 	}
 #endif
 
-	jiffies_min_age = msecs_to_jiffies(MSECS_MIN_AGE);
-	jiffies_scan_wait = msecs_to_jiffies(SECS_SCAN_WAIT * 1000);
+	jiffies_min_age = msecs_to_jiffies(MSECS_MIN_AGE); //@@ MSECS_MIN_AGE = 5000
+	jiffies_scan_wait = msecs_to_jiffies(SECS_SCAN_WAIT * 1000); //@@ SECS_SCAN_WAIT = 600
 
 	object_cache = KMEM_CACHE(kmemleak_object, SLAB_NOLEAKTRACE);
 	scan_area_cache = KMEM_CACHE(kmemleak_scan_area, SLAB_NOLEAKTRACE);

@@ -480,7 +480,7 @@ static void __init mm_init(void)
 	 * page_cgroup requires contiguous pages,
 	 * bigger than MAX_ORDER unless SPARSEMEM.
 	 */
-	page_cgroup_init_flatmem(); //@@ 우리는 sparse mem 이므로 실행되지 않음
+	page_cgroup_init_flatmem();
 	//@@ ULVMM p.101
 	//@@ buddy allocator 초기화 (bootmem 해제, highmem 도 초기화)
 	mem_init(); //@@ [2014.07.19] 시작, [2014.08.23] 완료.
@@ -638,16 +638,17 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
   //@@ 2016.05.14 end
 #ifdef CONFIG_BLK_DEV_INITRD
 	if (initrd_start && !initrd_below_start_ok &&
-	    page_to_pfn(virt_to_page((void *)initrd_start)) < min_low_pfn) {
+	    page_to_pfn(virt_to_page((void *)initrd_start)) < min_low_pfn) { //@@ initrd_start 유효성 검사, initrd_start는 가상주소 Why?
 		pr_crit("initrd overwritten (0x%08lx < 0x%08lx) - disabling it.\n",
 		    page_to_pfn(virt_to_page((void *)initrd_start)),
 		    min_low_pfn);
 		initrd_start = 0;
 	}
 #endif
-	page_cgroup_init();
-	debug_objects_mem_init();
-	kmemleak_init();
+	page_cgroup_init(); //@@ section 구조체의 page_cgroup 포인터 초기화
+	debug_objects_mem_init(); //@@ 생략
+	kmemleak_init(); //@@ kmemleak 초기화 및 early_log 배열에 추가된 early log를 kmemleak object에 저장
+	//@@ 2016.06.11 END
 	setup_per_cpu_pageset();
 	numa_policy_init();
 	if (late_time_init)

@@ -135,7 +135,7 @@ static int __meminit init_section_page_cgroup(unsigned long pfn, int nid)
 	if (section->page_cgroup)
 		return 0;
 
-	table_size = sizeof(struct page_cgroup) * PAGES_PER_SECTION;
+	table_size = sizeof(struct page_cgroup) * PAGES_PER_SECTION; //@@ 64K 개
 	base = alloc_page_cgroup(table_size, nid);
 
 	/*
@@ -155,7 +155,7 @@ static int __meminit init_section_page_cgroup(unsigned long pfn, int nid)
 	 * we need to apply a mask.
 	 */
 	pfn &= PAGE_SECTION_MASK;
-	section->page_cgroup = base - pfn;
+	section->page_cgroup = base - pfn; //@@ alloc_node_page_cgroup()에서 이미 할당되었기 때문에 base에 offset 적용
 	total_usage += table_size;
 	return 0;
 }
@@ -298,7 +298,7 @@ void __init page_cgroup_init(void)
 			 */
 			if (pfn_to_nid(pfn) != nid)
 				continue;
-			if (init_section_page_cgroup(pfn, nid))
+			if (init_section_page_cgroup(pfn, nid)) //@@ 페이지(pfn)가 속한 섹션(section)의 page_cgroup 구조체 초기화
 				goto oom;
 		}
 	}
