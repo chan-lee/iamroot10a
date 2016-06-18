@@ -19,7 +19,8 @@ enum {
 	MPOL_DEFAULT,
 	MPOL_PREFERRED,
 	MPOL_BIND,
-	MPOL_INTERLEAVE,
+	MPOL_INTERLEAVE, //@@ hard disk 등의 효율을 높이기 위해 1,2,3,4 순으로 배열하지 않고,
+                   //@@ 1,10,2,11,3,12 등의 순서로 사용하는것.
 	MPOL_LOCAL,
 	MPOL_MAX,	/* always last member of enum */
 };

@@ -2591,6 +2591,8 @@ void __init numa_policy_init(void)
 		};
 	}
 
+  //@@ 2016.06.17 end
+
 	/*
 	 * Set interleaving policy for system init. Interleaving is only
 	 * enabled across suitably sized nodes (default is >= 16MB), or

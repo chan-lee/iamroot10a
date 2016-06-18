@@ -2725,18 +2725,34 @@ mem_section : page를 64K개씩 모은다. (4K * 64K = 256M)
       - pageset_init()
 
 
+================================================================================
+[2016.06.18]
 
+struct per_cpu_pages
+struct per_cpu_pageset
 
+per_cpu는 cpu 종속적인 변수로 lock을 줄일수 있고, cpu cache 성능을 올릴수 있다.
+https://lwn.net/Articles/22911/
 
+zone과 pageset 의 관계글
+http://jake.dothome.co.kr/per-cpu-page-frame-cache/
+node -> zone -> pageset -> pages ->
 
+KERNEL_DS, USER_DS(data segment)
+https://wiki.kldp.org/wiki.php/%C4%BF%B3%CE%B3%BB%BF%A1%BC%ADReadWrite%BB%E7%BF%EB%C7%CF%B1%E2 
 
+get_fs, KERNEL_DS and USER_DS (한글)
+http://egloos.zum.com/singi/v/1554544
 
+struct mempolicy
+struct sp_node
 
+interleave: hard disk 등의 효율을 높이기 위해 1,2,3,4 순으로 배열하지 않고,
+1,10,2,11,3,12 등의 순서로 사용하는것
 
-
-
-
-
+NUMA interleave: NUMA 구조에서는 CPU마다 memory controller 가 있는데, 이를 UMA와 비슷하게
+사용할 수 있도록 해줌
+http://infoages.tistory.com/1499
 
 
 

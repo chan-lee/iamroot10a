@@ -649,7 +649,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	debug_objects_mem_init(); //@@ 생략
 	kmemleak_init(); //@@ kmemleak 초기화 및 early_log 배열에 추가된 early log를 kmemleak object에 저장
 	//@@ 2016.06.11 END
-	setup_per_cpu_pageset();
+	setup_per_cpu_pageset(); //@@ pageset 할당하고 high(watermark)와 batch를 설정함
 	numa_policy_init();
 	if (late_time_init)
 		late_time_init();
