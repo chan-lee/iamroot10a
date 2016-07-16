@@ -2742,6 +2742,7 @@ KERNEL_DS, USER_DS(data segment)
 https://wiki.kldp.org/wiki.php/%C4%BF%B3%CE%B3%BB%BF%A1%BC%ADReadWrite%BB%E7%BF%EB%C7%CF%B1%E2 
 
 get_fs, KERNEL_DS and USER_DS (한글)
+http://daehee87.tistory.com/325
 http://egloos.zum.com/singi/v/1554544
 
 struct mempolicy
@@ -2750,9 +2751,34 @@ struct sp_node
 interleave: hard disk 등의 효율을 높이기 위해 1,2,3,4 순으로 배열하지 않고,
 1,10,2,11,3,12 등의 순서로 사용하는것
 
+UMA: memeory controller(North Bridge)
 NUMA interleave: NUMA 구조에서는 CPU마다 memory controller 가 있는데, 이를 UMA와 비슷하게
 사용할 수 있도록 해줌
 http://infoages.tistory.com/1499
 
 
+================================================================================
+[2016.07.16]
+KERNEL_DS: user가 kernel 영역에 접근하지 못하도록
+설정해 놓은 커널의 주소 영역. kernel에서 user data를
+접근하려면 이 제한을 임시로 풀어야 한다.
+http://daehee87.tistory.com/325
 
+Documentation/vm/numa_memory_policy
+- NUMA 구조에서 사용하는 mempolicy
+  * 계층구조로 되어있다.
+  * system Default -> task policy -> vm policy/ shared policy
+  * 지정되어 있지 않으면 상위 policy를 따른다
+  * set_mempolicy, get_mempolicy, mbind 등의 api 제공
+  * numactl command line을 이용해서도 제어 가능
+
+NUMA Auto Balancing
+- NUMA 효율을 높이기 위해 서로 다른 cpu와 memorty를 사용할 경우
+task의 cpu를 옮기거나, 메모리를 해당 cpu의 메모리로migration 하거나...
+- 관련자료 http://www.linux-kvm.org/images/7/75/01x07b-NumaAutobalancing.pdf
+
+- BogoMips, cpu 성능 측도- calibrate_delay() 를 통해 측정
+http://psman2.tistory.com/entry/bogoMIPS-%EC%B8%A1%EC%A0%95
+
+읽을 거리: UniKernel
+http://zigispace.net/900

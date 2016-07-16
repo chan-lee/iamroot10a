@@ -577,6 +577,7 @@ void __init pidhash_init(void)
 
 void __init pidmap_init(void)
 {
+	//@@ 2016.07.16 END
 	/* Veryify no one has done anything silly */
 	BUILD_BUG_ON(PID_MAX_LIMIT >= PIDNS_HASH_ADDING);
 

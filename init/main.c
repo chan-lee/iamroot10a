@@ -190,7 +190,7 @@ static int __init obsolete_checksetup(char *line)
 }
 
 /*
- * This should be approx 2 Bo*oMips to start (note initial shift), and will
+ * This should be approx 2 BogoMips to start (note initial shift), and will
  * still work even if initially too large, it will just take slightly longer
  */
 unsigned long loops_per_jiffy = (1<<12);
@@ -652,9 +652,9 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	setup_per_cpu_pageset(); //@@ pageset 할당하고 high(watermark)와 batch를 설정함
 	numa_policy_init();
 	if (late_time_init)
-		late_time_init();
-	sched_clock_init();
-	calibrate_delay();
+		late_time_init(); //@@ platform 에 따른 추가 초기화
+	sched_clock_init(); //@@ 각 cpu의 sched_clock(scd)를 초기화
+	calibrate_delay(); //@@ timer 혹은 delay를 통해 BogoMips를 계산(자세한 부분 생략)
 	pidmap_init();
 	anon_vma_init();
 #ifdef CONFIG_X86

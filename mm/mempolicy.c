@@ -811,13 +811,13 @@ static long do_set_mempolicy(unsigned short mode, unsigned short flags,
 	 * with no 'mm'.
 	 */
 	if (mm)
-		down_write(&mm->mmap_sem);
+		down_write(&mm->mmap_sem); //@@ lock.
 	task_lock(current);
 	ret = mpol_set_nodemask(new, nodes, scratch);
 	if (ret) {
 		task_unlock(current);
 		if (mm)
-			up_write(&mm->mmap_sem);
+			up_write(&mm->mmap_sem); //@@ unlock.
 		mpol_put(new);
 		goto out;
 	}
@@ -2617,6 +2617,7 @@ void __init numa_policy_init(void)
 	if (unlikely(nodes_empty(interleave_nodes)))
 		node_set(prefer, interleave_nodes);
 
+  /// interleave 방식으로 current(init task)에 setting한다.
 	if (do_set_mempolicy(MPOL_INTERLEAVE, 0, &interleave_nodes))
 		printk("numa_policy_init: interleaving failed\n");
 
