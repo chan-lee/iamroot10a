@@ -1,0 +1,15 @@
+---- bust_spinlocks Matches (11 in 5 files) ----
+Bust_spinlocks.c (lib): * lib/bust_spinlocks.c
+Bust_spinlocks.c (lib): * Provides a minimal bust_spinlocks for architectures which don't have one of their own.
+Bust_spinlocks.c (lib): * bust_spinlocks() clears any spinlocks which would prevent oops, die(), BUG()
+Bust_spinlocks.c (lib):void __attribute__((weak)) bust_spinlocks(int yes)
+Fault.c (arch\arm\mm):	bust_spinlocks(1);
+Fault.c (arch\arm\mm):	bust_spinlocks(0);
+Kernel.h (include\linux):extern void bust_spinlocks(int yes);
+Panic.c (kernel):	bust_spinlocks(1);
+Panic.c (kernel):	bust_spinlocks(0);
+Traps.c (arch\arm\kernel):	bust_spinlocks(1);
+Traps.c (arch\arm\kernel):	bust_spinlocks(0);
+---- bust_spinlocks Search Errors Encountered (1) ----
+The following 1 files could not be processed:
+D:\Docs\Linux\Kernel\iamroot.kernel\drivers\gpu\drm\nouveau\core\subdev\i2c\aux.c : File could not be opened.

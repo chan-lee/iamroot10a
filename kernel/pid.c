@@ -588,11 +588,14 @@ void __init pidmap_init(void)
 				PIDS_PER_CPU_MIN * num_possible_cpus());
 	pr_info("pid_max: default: %u minimum: %u\n", pid_max, pid_max_min);
 
+	//@@ PAGE 크기 만큼의 메모리를 할당
 	init_pid_ns.pidmap[0].page = kzalloc(PAGE_SIZE, GFP_KERNEL);
+
 	/* Reserve PID 0. We never call free_pidmap(0) */
-	set_bit(0, init_pid_ns.pidmap[0].page);
+	set_bit(0, init_pid_ns.pidmap[0].page); //@@ init 프로세스 PID 플래그 설정
 	atomic_dec(&init_pid_ns.pidmap[0].nr_free);
 
+	//@@ pid 구조체를 위한 캐시(kmem cache) 생성
 	init_pid_ns.pid_cachep = KMEM_CACHE(pid,
 			SLAB_HWCACHE_ALIGN | SLAB_PANIC);
 }

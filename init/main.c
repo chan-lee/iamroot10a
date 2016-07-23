@@ -655,13 +655,13 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 		late_time_init(); //@@ platform 에 따른 추가 초기화
 	sched_clock_init(); //@@ 각 cpu의 sched_clock(scd)를 초기화
 	calibrate_delay(); //@@ timer 혹은 delay를 통해 BogoMips를 계산(자세한 부분 생략)
-	pidmap_init();
-	anon_vma_init();
+	pidmap_init(); //@@ PID min, default, max값 설정 및 PID 0를 위한 pidmap[0].page 할당 및 초기화
+	anon_vma_init(); //@@ anonymous vma 초기화
 #ifdef CONFIG_X86
 	if (efi_enabled(EFI_RUNTIME_SERVICES))
 		efi_enter_virtual_mode();
 #endif
-	thread_info_cache_init();
+	thread_info_cache_init(); //@@ "thread_info" kmem cache 생성(초기화)
 	cred_init();
 	fork_init(totalram_pages);
 	proc_caches_init();
