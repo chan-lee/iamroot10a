@@ -662,10 +662,11 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 		efi_enter_virtual_mode();
 #endif
 	thread_info_cache_init(); //@@ "thread_info" kmem cache 생성(초기화)
-	cred_init();
-	fork_init(totalram_pages);
-	proc_caches_init();
-	buffer_init();
+	cred_init(); //@@ cred 초기화
+	fork_init(totalram_pages); //@@ task_struct를 kmem_cache에 만들고 생성가능한 thread 갯수 설정
+	proc_caches_init(); //@@ task_struct 내부의 자료구조를 kmem_cache로 만듬
+	buffer_init(); //@@ buffer_head를 kmem_cache에 생성하고, 적절한 max_buffer_head 설정
+  //@@ 2016.07.30 end
 	key_init();
 	security_init();
 	dbg_late_init();

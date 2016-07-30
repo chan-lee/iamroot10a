@@ -2782,3 +2782,63 @@ http://psman2.tistory.com/entry/bogoMIPS-%EC%B8%A1%EC%A0%95
 
 읽을 거리: UniKernel
 http://zigispace.net/900
+
+================================================================================
+[2016.07.23]
+PID 관리
+http://egloos.zum.com/studyfoss/v/5242243
+PID namespace 설명
+http://bluese05.tistory.com/18
+
+anon vma
+https://www.quora.com/How-do-anonymous-VMAs-work-in-Linux
+
+EUID, EGID, sticky bit
+http://sksstar.tistory.com/36
+
+linux file permission
+https://www.linux.co.kr/home/lecture/?leccode=10736
+
+================================================================================
+[2016.07.30]
+The Linux Programming Interface - Chap 9. 참조
+Documentation/security/credentials.txt 참조
+
+struct cred {
+  UID/GID, SUID/SGID, EUID,EGID, FSUID/FSGID : 4가지 종류의 id/gid들
+  capability를 나타내는 kernel_cap_t 4가지
+  session_keyring, process_keyring, thread_keyring 3가지 keyring
+  secruity : LSM security
+  user_struct, user_namespace
+  group_info : supplementary groups
+}
+task 에는 다른 태스크에 의해서 영향을 받는 objective context인 real_cred와
+다른 태스크에 영향을 주는 subjective context인 cred 가 있다
+
+Documentation/security/keys.txt
+struct key {
+}
+3가지 종류
+* keyring: key의 payload에 다른 key의 링크를 담고 있는 key
+* user: user space에서 사용하는 key
+* logon: kernel 내부에서 사용하는 key
+
+각 프로세스는 3가지의 keyring을 구독하고 있다.(위의 cred)
+  - session_keyring, process_keyring, thread_keyring 3가지 keyring
+user_struct에는 2가지 keyring이 있다.(위의 cred안의 user_struct)
+  - uid_keyring(user specific), session_keyring
+
+struct rlimit {
+	unsigned long	rlim_cur;
+	unsigned long	rlim_max;
+};
+resource limit
+#define RLIM_NLIMITS 16 16가지 resource limit(CPU, filesize, ...)
+
+buffer_head : block(sector * N) 과 page와의 연관 관계를 나타내는 구조체
+page* 와 page내에서의 offset을 가리키는 포인터가 있다(char* b_data)
+2.6 이후로는 struct bio 를 사용. (연속된 block을 접근하기가 어렵기 때문)
+
+bio : segment(block * N) 를 연속된 vector 구조체로 연결
+http://blog.naver.com/kkn2988/141641230
+
