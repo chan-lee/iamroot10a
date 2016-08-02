@@ -37,7 +37,7 @@
  * TASK_SIZE - the maximum size of a user space task.
  * TASK_UNMAPPED_BASE - the lower boundary of the mmap VM area
  */
-//@@ CONFIG_PAGE_OFFSET (0xC0000000)
+/* @@ CONFIG_PAGE_OFFSET (0xC0000000) */
 #define PAGE_OFFSET		UL(CONFIG_PAGE_OFFSET)
 #define TASK_SIZE		(UL(CONFIG_PAGE_OFFSET) - UL(SZ_16M))
 #define TASK_UNMAPPED_BASE	ALIGN(TASK_SIZE / 3, SZ_16M)
@@ -135,7 +135,7 @@
 /*
  * Convert a physical address to a Page Frame Number and back
  */
-#define	__phys_to_pfn(paddr)	((unsigned long)((paddr) >> PAGE_SHIFT)) //@@ PAGE_SHIFT = 12
+#define	__phys_to_pfn(paddr)	((unsigned long)((paddr) >> PAGE_SHIFT)) /* @@ PAGE_SHIFT = 12 */
 #define	__pfn_to_phys(pfn)	((phys_addr_t)(pfn) << PAGE_SHIFT)
 
 /*
@@ -186,8 +186,8 @@ extern unsigned long __pv_phys_offset;
 	: "=r" (to)					\
 	: "r" (from), "I" (type))
 
-//@@ 아래 함수에 대한 설명은 C팀 자료 참조)
-//@@ http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=185905
+/* @@ 아래 함수에 대한 설명은 C팀 자료 참조) */
+/* @@ http://www.iamroot.org/xe/index.php?mid=Kernel_10_ARM&document_srl=185905 */
 static inline unsigned long __virt_to_phys(unsigned long x)
 {
 	unsigned long t;
@@ -247,7 +247,7 @@ static inline void *phys_to_virt(phys_addr_t x)
 /*
  * Drivers should NOT use these either.
  */
-#define __pa(x)			__virt_to_phys((unsigned long)(x)) //@@ 가상주소를 물리주소로 변환
+#define __pa(x)			__virt_to_phys((unsigned long)(x)) /* @@ 가상주소를 물리주소로 변환 */
 #define __va(x)			((void *)__phys_to_virt((unsigned long)(x)))
 #define pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
 
