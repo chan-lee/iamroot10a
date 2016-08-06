@@ -2808,12 +2808,14 @@ struct cred {
   UID/GID, SUID/SGID, EUID,EGID, FSUID/FSGID : 4가지 종류의 id/gid들
   capability를 나타내는 kernel_cap_t 4가지
   session_keyring, process_keyring, thread_keyring 3가지 keyring
-  secruity : LSM security
+  secruity : LSM security(SELinux, AppArmor, Tomoyo...)
   user_struct, user_namespace
   group_info : supplementary groups
 }
 task 에는 다른 태스크에 의해서 영향을 받는 objective context인 real_cred와
 다른 태스크에 영향을 주는 subjective context인 cred 가 있다
+subject(주체) : 사용자, 프로그램, 프로세스
+object(객체) : 파일, 디바이스
 
 Documentation/security/keys.txt
 struct key {
@@ -2841,4 +2843,16 @@ page* 와 page내에서의 offset을 가리키는 포인터가 있다(char* b_da
 
 bio : segment(block * N) 를 연속된 vector 구조체로 연결
 http://blog.naver.com/kkn2988/141641230
+
+================================================================================
+[2016.08.06]
+
+Linux Security Module Framework : http://www.kroah.com/linux/talks/ols_2002_lsm_paper/lsm.pdf
+
+SELinux :
+https://www.linux.co.kr/home/lecture/?leccode=10637
+https://kldp.org/files/selinux_140.pdf
+
+DAC (Discretionary Access Control) : 표준 리눅스 보안 - object만 관리
+MAC (Mandatory Access Control) : SELinux등 - subject와 object 같이 관리
 
