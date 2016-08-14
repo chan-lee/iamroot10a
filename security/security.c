@@ -66,6 +66,8 @@ int __init security_init(void)
 {
 	printk(KERN_INFO "Security Framework initialized\n");
 
+	//@@ default_security_ops는 null function으로 구성되어있음.
+	//@@ LSM, SMACK,TOMOYO 등 모델에 따라 security_ops는 재구성된다.(register_secuirty 참조)
 	security_fixup_ops(&default_security_ops);
 	security_ops = &default_security_ops;
 	do_security_initcalls();

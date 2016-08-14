@@ -667,8 +667,9 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	proc_caches_init(); //@@ task_struct 내부의 자료구조를 kmem_cache로 만듬
 	buffer_init(); //@@ buffer_head를 kmem_cache에 생성하고, 적절한 max_buffer_head 설정
   //@@ 2016.07.30 end
-	key_init();
-	security_init();
+	//@@ 2016.08.06 start
+	key_init(); //@@ key management 자료구조 초기화
+	security_init(); //@@ security default operations(dummy) 를 할당하고 각각 security module 들을 초기화를 한다.
 	dbg_late_init();
 	vfs_caches_init(totalram_pages);
 	signals_init();

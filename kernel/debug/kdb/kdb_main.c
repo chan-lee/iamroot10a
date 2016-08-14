@@ -2861,6 +2861,11 @@ void __init kdb_init(int lvl)
 
 	if (kdb_init_lvl == KDB_INIT_FULL || lvl <= kdb_init_lvl)
 		return;
+	//@@ lvl=KDB_INIT_FULL 이기 때문에 3가지 초기화를 수행한다.
+	//@@ 1) Initialize Command Table
+	//@@ 2) Initialize Breakpoints
+	//@@ 3) Build kdb_cmds tables
+	//@@ 2016.08.06 end
 	for (i = kdb_init_lvl; i < lvl; i++) {
 		switch (i) {
 		case KDB_NOT_INITIALIZED:

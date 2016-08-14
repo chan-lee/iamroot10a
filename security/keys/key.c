@@ -1077,6 +1077,10 @@ EXPORT_SYMBOL(unregister_key_type);
 /*
  * Initialise the key management state.
  */
+//@@ key_init : key 관리 자료구조를 초기화함.
+//@@  1) struct key에 대한 kmem_cache를 생성
+//@@  2) key 종류(keyring, user, logon, dead)에 대한 linked list(key_typed_list)에 추가
+//@@  3) root_key_user의 node를 RB Tree(key_user_tree)의 root 로 만든다.
 void __init key_init(void)
 {
 	/* allocate a slab in which we can store keys */
@@ -1094,6 +1098,7 @@ void __init key_init(void)
 		     NULL,
 		     &key_user_tree.rb_node);
 
+	//@@ color만 설정하고 rotation(rebalance)을 하지 않음.
 	rb_insert_color(&root_key_user.node,
 			&key_user_tree);
 }

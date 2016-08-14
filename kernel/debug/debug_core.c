@@ -799,6 +799,7 @@ void __weak kgdb_arch_late(void)
 {
 }
 
+//@@ KDB(Kernel Debugger) 초기화
 void __init dbg_late_init(void)
 {
 	dbg_is_early = false;
