@@ -2844,6 +2844,7 @@ page* 와 page내에서의 offset을 가리키는 포인터가 있다(char* b_da
 bio : segment(block * N) 를 연속된 vector 구조체로 연결
 http://blog.naver.com/kkn2988/141641230
 
+segment > block > sector
 ================================================================================
 [2016.08.06]
 
@@ -2856,3 +2857,25 @@ https://kldp.org/files/selinux_140.pdf
 DAC (Discretionary Access Control) : 표준 리눅스 보안 - object만 관리
 MAC (Mandatory Access Control) : SELinux등 - subject와 object 같이 관리
 
+================================================================================
+[2016.08.20]
+#include <linux/dcache.h>
+struct dentry_stat_t {
+}; //@@ 통계용
+struct dentry {
+	struct hlist_bl_node d_hash;	/* lookup hash list */ //@@ list bit lock
+	struct dentry *d_parent;	/* parent directory */
+	struct qstr d_name;
+	struct inode *d_inode;		/* Where the name belongs to - NULL is
+	const struct dentry_operations *d_op;
+	struct super_block *d_sb;	/* The root of the dentry tree */
+};
+
+리눅스 파일 시스템 :
+http://egaoneko.github.io/os/2015/05/24/linux-starter-guide-4.html#fnref:10
+
+VFS:
+리눅스 커널의 이해 12장: http://netwk.hannam.ac.kr/data/linux_kernel/Chap%2012.PPT
+리눅스 배우기 9장 : http://snsmo.tistory.com/28
+
+block device > partition = (block group N) = super block + block1 ~ block N

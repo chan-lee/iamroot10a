@@ -670,7 +670,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	//@@ 2016.08.06 start
 	key_init(); //@@ key management 자료구조 초기화
 	security_init(); //@@ security default operations(dummy) 를 할당하고 각각 security module 들을 초기화를 한다.
-	dbg_late_init();
+	dbg_late_init(); //@@ debug용 command 설정, break point 설정. 입력된 command 실행
 	vfs_caches_init(totalram_pages);
 	signals_init();
 	/* rootfs populating might need page-writeback */

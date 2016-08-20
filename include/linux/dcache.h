@@ -54,7 +54,7 @@ struct qstr {
 #define hashlen_hash(hashlen) ((u32) (hashlen))
 #define hashlen_len(hashlen)  ((u32)((hashlen) >> 32))
 
-struct dentry_stat_t {
+struct dentry_stat_t { //@@ statistics.
 	int nr_dentry;
 	int nr_unused;
 	int age_limit;          /* age in seconds */
@@ -107,7 +107,7 @@ struct dentry {
 	/* RCU lookup touched fields */
 	unsigned int d_flags;		/* protected by d_lock */
 	seqcount_t d_seq;		/* per dentry seqlock */
-	struct hlist_bl_node d_hash;	/* lookup hash list */
+	struct hlist_bl_node d_hash;	/* lookup hash list */ //@@ list bit lock
 	struct dentry *d_parent;	/* parent directory */
 	struct qstr d_name;
 	struct inode *d_inode;		/* Where the name belongs to - NULL is

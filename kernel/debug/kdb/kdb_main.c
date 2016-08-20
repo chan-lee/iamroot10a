@@ -2873,6 +2873,8 @@ void __init kdb_init(int lvl)
 			kdb_initbptab();	/* Initialize Breakpoints */
 			break;
 		case KDB_INIT_EARLY:
+      // @@ kernel/debug/kdb/kdb_cmds 에 있는 내용을 가지고 컴파일하여
+      // @@ object 파일로 만든후 kdb_cmds[] 에 넣는데 이를 실행함
 			kdb_cmd_init();		/* Build kdb_cmds tables */
 			break;
 		}
