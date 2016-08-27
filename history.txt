@@ -2879,3 +2879,30 @@ VFS:
 리눅스 배우기 9장 : http://snsmo.tistory.com/28
 
 block device > partition = (block group N) = super block + block1 ~ block N
+
+================================================================================
+[2016.08.27]
+VFS <-> minix/ ext2/ vfat <-> buffer cache <-> disk driver
+kernel에서 특정 파일 시스템에 대한 처리가 있는 것은 아니다.
+(흡사 LSM <-> SELinux/ tomoyo <-> ... 과 비슷)
+
+VFS 수퍼블럭은 하나의 mount된 파일시스템을 나타내며 내부에 두종류의 inode가 있다
+mounted inode : mount된 첫번째 inode를 가리킴
+covered inode : 어느 디렉토리에 마운트 되었는가를 나타내는데, /일 경우는 없다
+
+file system 등록 -> mount (super block 읽기) -> inode 읽기 -> data 읽기(buffer cache)
+
+inode cache는 사용횟수(LFU)에 의해 유지되는데 directory의 경우
+상대적으로 오래 남아있을수 있다. hash key : dev id + inode id
+
+direcotry cache(dcache) 는 path가 짧을수록 유리한듯하다. hash key : string
+cache 교체 방식은 2단 LRU이다.
+cache가 queue에 이미 있는데 다시 hit할 경우의 처리에 따라서
+FIFO(무시), LRU(다시 맨뒤)로 나눠질수 있다.
+dcache는 2단계 LRU로 옮기는 변종방식이다.
+
+buffer_head (request packet)
+* free buffer와 LRU 로 구성
+추가 설명 필요
+/proc
+...
