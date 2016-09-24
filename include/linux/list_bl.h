@@ -16,6 +16,7 @@
  * arbitrary bits (not just a single lock bit), if the need arises to store
  * some fast and compact auxiliary data.
  */
+//@@ 사용하지 않는 head의 하위 bit를 lock으로 사용하는 버전 bl => bitlock
 
 #if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
 #define LIST_BL_LOCKMASK	1UL

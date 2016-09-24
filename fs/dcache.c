@@ -3004,6 +3004,9 @@ static void __init dcache_init_early(void)
 	if (hashdist)
 		return;
 
+  // @@struct hlist_bl_head *dentry_hashtable __read_mostly;
+  // @@ hlist_bl hlist의 bitlock 버전 align으로
+  // @@ 사용하지 않는 하위bit를 사용
 	dentry_hashtable =
 		alloc_large_system_hash("Dentry cache",
 					sizeof(struct hlist_bl_head),
@@ -3075,8 +3078,8 @@ void __init vfs_caches_init(unsigned long mempages)
 	names_cachep = kmem_cache_create("names_cache", PATH_MAX, 0,
 			SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
 
-	dcache_init();
-	inode_init();
+	dcache_init(); //@@ kmemcache에dcache 추가
+	inode_init(); //@@ kmemcache에 inode 추가
 	files_init(mempages);
 	mnt_init();
 	bdev_cache_init();

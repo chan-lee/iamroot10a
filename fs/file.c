@@ -439,6 +439,8 @@ void exit_files(struct task_struct *tsk)
 
 void __init files_defer_init(void)
 {
+  // @@ nr_open: 한 process에서 열수 있는 파일수
+  // @@ nr_file: linux에서 동시에 열수 있는 파일수. proc을 통해서도 쉽게 변경가능
 	sysctl_nr_open_max = min((size_t)INT_MAX, ~(size_t)0/sizeof(void *)) &
 			     -BITS_PER_LONG;
 }

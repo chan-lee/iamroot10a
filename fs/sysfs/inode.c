@@ -45,6 +45,7 @@ static const struct inode_operations sysfs_inode_operations ={
 
 int __init sysfs_inode_init(void)
 {
+  //@@ backing dev : block dev에 page로 연결(backing)되어 있는 dev?
 	return bdi_init(&sysfs_backing_dev_info);
 }
 

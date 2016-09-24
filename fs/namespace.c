@@ -2732,7 +2732,7 @@ void __init mnt_init(void)
 
 	br_lock_init(&vfsmount_lock);
 
-	err = sysfs_init();
+	err = sysfs_init(); //@@ procfs 에서 device 부분을 빼낸 sysfs.
 	if (err)
 		printk(KERN_WARNING "%s: sysfs_init error: %d\n",
 			__func__, err);

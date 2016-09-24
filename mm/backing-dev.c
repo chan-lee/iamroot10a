@@ -432,6 +432,7 @@ int bdi_init(struct backing_dev_info *bdi)
 {
 	int i, err;
 
+  //@@ 2016.09.24 end.
 	bdi->dev = NULL;
 
 	bdi->min_ratio = 0;

@@ -2904,5 +2904,63 @@ dcache는 2단계 LRU로 옮기는 변종방식이다.
 buffer_head (request packet)
 * free buffer와 LRU 로 구성
 추가 설명 필요
-/proc
+/proc vs ramfs와 비슷한 개념
 ...
+
+================================================================================
+[2016.09.24]
+vfs_caches_init() 시작
+* dcache, inode, file, bdev, chrdev 를 kmemcache에 추가
+
+#include <linux/mount.h>
+struct vfsmount {
+	struct dentry *mnt_root;	/* root of the mounted tree */
+	struct super_block *mnt_sb;	/* pointer to superblock */
+	int mnt_flags;
+}
+#include <linux/path.h>
+struct path {
+	struct vfsmount *mnt;
+	struct dentry *dentry;
+};
+
+pid 관리
+http://egloos.zum.com/studyfoss/v/5242243
+#include <linux/pid.h>
+struct pid {
+	atomic_t count;
+	unsigned int level;
+	/* lists of tasks that use this pid */
+	struct hlist_head tasks[PIDTYPE_MAX];
+	struct rcu_head rcu;
+	struct upid numbers[1];
+};
+#include <linux/fs.h>
+struct fown_struct {
+	rwlock_t lock;          /* protects pid, uid, euid fields */
+	struct pid *pid;	/* pid or -pgrp where SIGIO should be sent */
+	enum pid_type pid_type;	/* Kind of process group SIGIO should be sent to */
+	kuid_t uid, euid;	/* uid/euid of process setting the owner */
+	int signum;		/* posix.1b rt signal to be delivered on IO */
+};
+#include <linux/fs.h>
+struct file {
+	struct path		f_path;
+	struct inode		*f_inode;	/* cached value */
+	const struct file_operations	*f_op;
+	struct fown_struct	f_owner;
+	const struct cred	*f_cred;
+	struct file_ra_state	f_ra;
+};
+
+lglock: local/global locks
+문서
+https://www.kernel.org/doc/Documentation/locking/lglock.txt
+VFS 를 위해 고안된 lock으로 seqlock 과 RCU 사용을 먼저 시도하라함
+
+sysfs: procfs(process) 에서 device 부분을 빼낸 sysfs.
+
+backing dev : block dev에 page로 연결(backing)되어 있는 dev?
+character device도 포함하는 것인지는 확인해봐야함.
+
+
