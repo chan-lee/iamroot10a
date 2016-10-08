@@ -2963,4 +2963,14 @@ sysfs: procfs(process) 에서 device 부분을 빼낸 sysfs.
 backing dev : block dev에 page로 연결(backing)되어 있는 dev?
 character device도 포함하는 것인지는 확인해봐야함.
 
+================================================================================
+[2016.10.08]
+bdi_init(struct backing_dev_info* bdi) 부터 시작.
+--> backing_device_info 초기화
+----> FPROP_FRAC_BASE -> period 동안 특정 event 가 발생할 수 있는 upper bound (?)
 
+----> sysfs_inode_init()
+--------> bdi_init()
+------------> bdi_wb_init() 분석 중. writeback 과정.
+
+Writeback 은 background / kupdate 두 가지 데몬(?)에 의해서 수행되는 것으로 판단된다.

@@ -433,6 +433,7 @@ int bdi_init(struct backing_dev_info *bdi)
 	int i, err;
 
   //@@ 2016.09.24 end.
+  //@@ 2016.10.08 start.
 	bdi->dev = NULL;
 
 	bdi->min_ratio = 0;
@@ -442,7 +443,7 @@ int bdi_init(struct backing_dev_info *bdi)
 	INIT_LIST_HEAD(&bdi->bdi_list);
 	INIT_LIST_HEAD(&bdi->work_list);
 
-	bdi_wb_init(&bdi->wb, bdi);
+	bdi_wb_init(&bdi->wb, bdi); //@@ 2016.10.08 분석 중.
 
 	for (i = 0; i < NR_BDI_STAT_ITEMS; i++) {
 		err = percpu_counter_init(&bdi->bdi_stat[i], 0);

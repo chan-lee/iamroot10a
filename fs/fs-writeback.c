@@ -972,7 +972,7 @@ static long wb_do_writeback(struct bdi_writeback *wb)
 	set_bit(BDI_writeback_running, &wb->bdi->state);
 	while ((work = get_next_work_item(bdi)) != NULL) {
 
-		trace_writeback_exec(bdi, work);
+		trace_writeback_exec(bdi, work); //@@ include/trace/events/writeback.h 참고
 
 		wrote += wb_writeback(wb, work);
 
