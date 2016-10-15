@@ -2974,3 +2974,23 @@ bdi_init(struct backing_dev_info* bdi) 부터 시작.
 ------------> bdi_wb_init() 분석 중. writeback 과정.
 
 Writeback 은 background / kupdate 두 가지 데몬(?)에 의해서 수행되는 것으로 판단된다.
+
+================================================================================
+[2016.10.15]
+struct backing_dev_info {
+};
+struct bdi_writeback {
+};
+writeback: pdflush style vs kupdate style
+https://lwn.net/Articles/326552/
+per backing device writeback
+https://linuxplumbersconf.org/2009/slides/Jens-Axboe-lpc2009-slides-axboe.pdf
+
+struct bdi_writeback_work {
+};
+
+- pageflags로 살펴본 메모리의 일생
+http://egloos.zum.com/studyfoss/v/5512112
+- Linux Kernel Development
+ 16. The Page Cache and Page Writeback
+
