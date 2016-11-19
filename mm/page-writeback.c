@@ -1723,6 +1723,12 @@ EXPORT_SYMBOL(tag_pages_for_writeback);
  * tag we set). The rule we follow is that TOWRITE tag can be cleared only
  * by the process clearing the DIRTY tag (and submitting the page for IO).
  */
+//@@ 일반적으로 이미 io 중인 page이면 dirty 상태라도 write를 skip한다.
+//@@ 그런데 이는 fsync()/msync() call에는 data 무결성을 방해하므로 이때는
+//@@ io가 끝나길 기다렸다가 모두 flush한다. 이 flag가 WB_SYNC_ALL 이다.
+//@@ livelock을 피하기 위해 TOWRITE tag를 사용하는데 이 tag는 다른 프로세스가
+//@@ clear하지 못하고, DIRTY tag를 clear할 때만 동시에 clear하도록 하는 룰을
+//@@ 만듬
 int write_cache_pages(struct address_space *mapping,
 		      struct writeback_control *wbc, writepage_t writepage,
 		      void *data)
@@ -1739,16 +1745,17 @@ int write_cache_pages(struct address_space *mapping,
 	int range_whole = 0;
 	int tag;
 
-	pagevec_init(&pvec, 0);
-	if (wbc->range_cyclic) {
+  //@@ 2016.11.19 end
+	pagevec_init(&pvec, 0); //@@ 14개짜리 array vector.
+	if (wbc->range_cyclic) { //@@ range에 있는 index를 최소 한번은 실행하라
 		writeback_index = mapping->writeback_index; /* prev offset */
 		index = writeback_index;
-		if (index == 0)
+		if (index == 0) //@@ 처음이면 끝까지 돌면 한바퀴 돈것.
 			cycled = 1;
-		else
+		else //@@ 중간부터 시작이면 다시 앞으로 돌아가야 빼먹은 것을 실행할수 있다.
 			cycled = 0;
 		end = -1;
-	} else {
+	} else { //@@ page의 특정 부분(bytes)만 writeback 할때
 		index = wbc->range_start >> PAGE_CACHE_SHIFT;
 		end = wbc->range_end >> PAGE_CACHE_SHIFT;
 		if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)

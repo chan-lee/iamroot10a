@@ -2979,18 +2979,104 @@ Writeback 은 background / kupdate 두 가지 데몬(?)에 의해서 수행되�
 [2016.10.15]
 struct backing_dev_info {
 };
+
 struct bdi_writeback {
+	struct backing_dev_info *bdi;	/* our parent bdi */
+	unsigned int nr;
+
+	unsigned long last_old_flush;	/* last old data flush */
+
+	struct delayed_work dwork;	/* work item used for writeback */
+	struct list_head b_dirty;	/* dirty inodes */
+	struct list_head b_io;		/* parked for writeback */ //@@ writeback할 queue.
+	struct list_head b_more_io;	/* parked for more writeback */
+	spinlock_t list_lock;		/* protects the b_* lists */
 };
+
 writeback: pdflush style vs kupdate style
 https://lwn.net/Articles/326552/
+- pdflush : 명시적 호출
+- kupdate : 주기적으로 호출. ex) 5초
 per backing device writeback
 https://linuxplumbersconf.org/2009/slides/Jens-Axboe-lpc2009-slides-axboe.pdf
 
-struct bdi_writeback_work {
+/*
+ * Passed into wb_writeback(), essentially a subset of writeback_control
+ */
+struct wb_writeback_work {
+	long nr_pages;
+	struct super_block *sb;
+	unsigned long *older_than_this;
+	enum writeback_sync_modes sync_mode;
+	unsigned int tagged_writepages:1;
+	unsigned int for_kupdate:1;
+	unsigned int range_cyclic:1;
+	unsigned int for_background:1;
+	unsigned int for_sync:1;	/* sync(2) WB_SYNC_ALL writeback */
+	enum wb_reason reason;		/* why was writeback initiated? */
+
+	struct list_head list;		/* pending work list */
+	struct completion *done;	/* set if the caller waits */
 };
 
 - pageflags로 살펴본 메모리의 일생
 http://egloos.zum.com/studyfoss/v/5512112
 - Linux Kernel Development
  16. The Page Cache and Page Writeback
+
+================================================================================
+[2016.10.29] 
+- Linux Kernel Development
+ 16. The Page Cache and Page Writeback
+
+* 페이지 캐시(page cache)
+
+* write cache 전략 3가지
+
+* buffer cache와 page cache 의 차이?
+
+* flush thread
+
+* laptop mode
+
+* bdflush, kupdated, pdflush
+
+
+================================================================================
+[2016.11.19] 
+init()
+  vfs_caches_init(totalram_pages);
+    mnt_init();
+	    sysfs_init();
+        sysfs_inode_init();
+	        bdi_init(&sysfs_backing_dev_info);
+            bdi_wb_init(&bdi->wb, bdi); //@@ 2016.10.08 분석 중.
+              void bdi_writeback_workfn(struct work_struct *work) fn 등록
+                wb_do_writeback(struct bdi_writeback *wb);
+                  wb_writeback()
+
+bdi_writeback과 wb_writeback_work 의 차이?
+
+deadlock vs livelock
+livelock 은 lock을 계속 획득하지 못하되 사이사이에 cpu가 다른일을 하는것
+(deadlock 은 cpu가 sleep, livelock은 cpu가 무한루프)
+http://zepeh.tistory.com/196
+https://www.quora.com/What-is-the-difference-between-deadlock-and-livelock-deadlock-infinite-recursion-and-starvation
+
+* dirty cache disk flushing
+http://blog.helperchoi.com/120
+dirty_background_ratio :
+dirty_ratio :
+dirty_expire_centisecs :
+dirty_writeback_centisecs :
+nr_pdflush_threads :
+
+
+write_cache_pages()
+//@@ 일반적으로 이미 io 중인 page이면 dirty 상태라도 write를 skip한다.
+//@@ 그런데 이는 fsync()/msync() call에는 data 무결성을 방해하므로 이때는
+//@@ io가 끝나길 기다렸다가 모두 flush한다. 이 flag가 WB_SYNC_ALL 이다.
+//@@ livelock을 피하기 위해 TOWRITE tag를 사용하는데 이 tag는 다른 프로세스가
+//@@ clear하지 못하고, DIRTY tag를 clear할 때만 동시에 clear하도록 하는 룰을
+//@@ 만듬
 

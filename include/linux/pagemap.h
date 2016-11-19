@@ -349,7 +349,7 @@ static inline void lock_page(struct page *page)
 {
 	might_sleep();
 	if (!trylock_page(page))
-		__lock_page(page);
+		__lock_page(page); //@@ lock 획득 못할 경우
 }
 
 /*
