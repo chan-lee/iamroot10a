@@ -3080,3 +3080,19 @@ write_cache_pages()
 //@@ clear하지 못하고, DIRTY tag를 clear할 때만 동시에 clear하도록 하는 룰을
 //@@ 만듬
 
+================================================================================
+[2016.11.26] 
+                  wb_writeback()
+                    writeback_sb_inodes() //@@ superblock
+                      __writeback_single_inode();
+                        do_writepages()
+                          generic_writepages();
+	                          write_cache_pages();
+                            address_space의 a_ops의 
+                            => writepage function pointer로 수행
+
+- bdi_writeback_workfn은 결국 work에 있는 wb와 kupdaed() style의
+fs writepage와 write_inode 를 수행함
+- 자세한 사항은 skip
+다음 시간은 bdi_init의 bdi_wb_init 함수 호출후 시작
+

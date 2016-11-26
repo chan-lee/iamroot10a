@@ -1832,7 +1832,7 @@ continue_unlock:
 				goto continue_unlock;
 
 			trace_wbc_writepage(wbc, mapping->backing_dev_info);
-			ret = (*writepage)(page, wbc, data);
+			ret = (*writepage)(page, wbc, data); //@@ fs에 맞는 write.
 			if (unlikely(ret)) {
 				if (ret == AOP_WRITEPAGE_ACTIVATE) {
 					unlock_page(page);
