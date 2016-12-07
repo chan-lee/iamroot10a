@@ -446,6 +446,9 @@ int bdi_init(struct backing_dev_info *bdi)
 	bdi_wb_init(&bdi->wb, bdi); //@@ 2016.10.08 분석 중.
 
   //@@ 2016.11.26 end
+  //@@ 2016.12.03 start
+  //@@ bdi statistic 을 percpu에서 관리한다.
+  //@@ bdi page statistic은 4가지 종류가 있다.
 	for (i = 0; i < NR_BDI_STAT_ITEMS; i++) {
 		err = percpu_counter_init(&bdi->bdi_stat[i], 0);
 		if (err)

@@ -278,10 +278,12 @@ int __init init_rootfs(void)
 {
 	int err;
 
+	//@@ ramfs backing device info만 초기화하고 insmod가 될 경우, register file system을 한다.
 	err = bdi_init(&ramfs_backing_dev_info);
 	if (err)
 		return err;
 
+	//@@ rootfs를 등록하지만 rootfs에 대한 backing device info를 알 수가 없다.
 	err = register_filesystem(&rootfs_fs_type);
 	if (err)
 		bdi_destroy(&ramfs_backing_dev_info);

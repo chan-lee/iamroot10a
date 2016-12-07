@@ -3096,3 +3096,24 @@ fs writepage와 write_inode 를 수행함
 - 자세한 사항은 skip
 다음 시간은 bdi_init의 bdi_wb_init 함수 호출후 시작
 
+================================================================================
+[2016.12.03] 
+sysfs_init()
+  sysfs_inode_init()
+    bdi_init
+      - backing_dev_info 구조체(sysfs_backing_dev_info)에 대한 초기화를 설정한다.
+      - write back 에 대한 초기화와 bdi_writeback_workfn worker를 등록한다.
+  register_filesystem()
+    - sysfs file system 등록
+  kern_mount()
+    - sysfs에 대한 kernel mount 수행
+    - struct mount 할당과 file system에 맞는 mount operation 수행
+
+kobject_create_and_add()
+  - /sys/fs에 대한 kobject를 생성한다.
+  - kobject 참조: http://sonseungha.tistory.com/236
+
+init_rootfs()
+  - fs/ramfs/inode.c
+  - ramfs 에 대한 backing device info 초기화
+  - rootfs file system 등록 

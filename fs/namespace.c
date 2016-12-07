@@ -780,23 +780,29 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void 
 	if (!type)
 		return ERR_PTR(-ENODEV);
 
+	//@@ struct mount 객체 초기화하여 할당받는다.
 	mnt = alloc_vfsmnt(name);
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
 
+	//@@ kernel internal mount 표시한다.
 	if (flags & MS_KERNMOUNT)
 		mnt->mnt.mnt_flags = MNT_INTERNAL;
 
+	//@@ 파일시스템에 대한 root dentry와 super block을 생성한다.
 	root = mount_fs(type, flags, name, data);
 	if (IS_ERR(root)) {
 		free_vfsmnt(mnt);
 		return ERR_CAST(root);
 	}
 
+	//@@ 할당받은 struct mount에 root dentry와 super block를 할당한다.
 	mnt->mnt.mnt_root = root;
 	mnt->mnt.mnt_sb = root->d_sb;
 	mnt->mnt_mountpoint = mnt->mnt.mnt_root;
 	mnt->mnt_parent = mnt;
+	//@@ mount instance를 super block의 s_mounts에 추가한다.
+	//@@ 같은 super block에 속하는 mount instance를 추가한다.
 	br_write_lock(&vfsmount_lock);
 	list_add_tail(&mnt->mnt_instance, &root->d_sb->s_mounts);
 	br_write_unlock(&vfsmount_lock);
@@ -2740,6 +2746,7 @@ void __init mnt_init(void)
 	if (!fs_kobj)
 		printk(KERN_WARNING "%s: kobj create error\n", __func__);
 	init_rootfs();
+	//@@ 2016.12.03 end
 	init_mount_tree();
 }
 

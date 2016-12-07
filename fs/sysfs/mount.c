@@ -112,22 +112,27 @@ static struct dentry *sysfs_mount(struct file_system_type *fs_type,
 	struct super_block *sb;
 	int error;
 
+	//@@ kernel mount 와 sysfs mount인지 검사한다.
 	if (!(flags & MS_KERNMOUNT) && !current_user_ns()->may_mount_sysfs)
 		return ERR_PTR(-EPERM);
 
+	//@@ sysfs super info 객체를 할당 받음.
 	info = kzalloc(sizeof(*info), GFP_KERNEL);
 	if (!info)
 		return ERR_PTR(-ENOMEM);
 
+	//@@ kobj_ns_ops_tbl에 할당된 operation을 할당한다.
 	for (type = KOBJ_NS_TYPE_NONE; type < KOBJ_NS_TYPES; type++)
 		info->ns[type] = kobj_ns_grab_current(type);
 
+	//@@ find or create a superblock
 	sb = sget(fs_type, sysfs_test_super, sysfs_set_super, flags, info);
 	if (IS_ERR(sb) || sb->s_fs_info != info)
 		free_sysfs_super_info(info);
 	if (IS_ERR(sb))
 		return ERR_CAST(sb);
 	if (!sb->s_root) {
+		//@@ root dentry를 할당한다.
 		error = sysfs_fill_super(sb, data, flags & MS_SILENT ? 1 : 0);
 		if (error) {
 			deactivate_locked_super(sb);
@@ -136,6 +141,7 @@ static struct dentry *sysfs_mount(struct file_system_type *fs_type,
 		sb->s_flags |= MS_ACTIVE;
 	}
 
+	//@@ root dentry를 return한다.
 	return dget(sb->s_root);
 }
 
@@ -166,12 +172,15 @@ int __init sysfs_init(void)
 	if (!sysfs_dir_cachep)
 		goto out;
 
+	//@@ sysfs에 대한 backing device info를 초기화한다.
 	err = sysfs_inode_init();
 	if (err)
 		goto out_err;
 
+	//@@ sysfs 를 등록한다.
 	err = register_filesystem(&sysfs_fs_type);
 	if (!err) {
+		//@@ 등록후, 마운트를 한다.
 		sysfs_mnt = kern_mount(&sysfs_fs_type);
 		if (IS_ERR(sysfs_mnt)) {
 			printk(KERN_ERR "sysfs: could not mount!\n");

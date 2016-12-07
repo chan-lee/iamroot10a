@@ -1091,16 +1091,19 @@ mount_fs(struct file_system_type *type, int flags, const char *name, void *data)
 	char *secdata = NULL;
 	int error = -ENOMEM;
 
+	//@@ sysfs_init에서 호출될 경우, data 가 null 이다.
 	if (data && !(type->fs_flags & FS_BINARY_MOUNTDATA)) {
 		secdata = alloc_secdata();
 		if (!secdata)
 			goto out;
 
+		//@@ super block data를 복사한다.
 		error = security_sb_copy_data(data, secdata);
 		if (error)
 			goto out_free_secdata;
 	}
 
+	//@@ 파일 시스템에 구현된 mount operation을 수행한다.
 	root = type->mount(type, flags, name, data);
 	if (IS_ERR(root)) {
 		error = PTR_ERR(root);
