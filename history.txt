@@ -3111,9 +3111,19 @@ sysfs_init()
 
 kobject_create_and_add()
   - /sys/fs에 대한 kobject를 생성한다.
-  - kobject 참조: http://sonseungha.tistory.com/236
+  - kobject 참조: 
+    Documentation/kobject.txt
+    Linux 2.6.x Kernel Device Model(03.kernel_device_model_print용.pdf)
 
 init_rootfs()
   - fs/ramfs/inode.c
   - ramfs 에 대한 backing device info 초기화
   - rootfs file system 등록 
+================================================================================
+[2016.12.17] 
+init_mount_tree()
+    - rootfs mount
+    - rootfs namespace 생성
+    - kernel process의 PWD와 root directory 설정
+bdev_cache_init()
+    - block device file system(pseudo file system) 등록과 mount

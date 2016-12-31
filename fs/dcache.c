@@ -3083,5 +3083,6 @@ void __init vfs_caches_init(unsigned long mempages)
 	files_init(mempages);
 	mnt_init();
 	bdev_cache_init();
+	//@@ 2016.12.17 end
 	chrdev_init();
 }

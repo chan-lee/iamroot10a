@@ -2691,24 +2691,31 @@ static void __init init_mount_tree(void)
 	struct path root;
 	struct file_system_type *type;
 
+	//@@ rootfs 을 얻는다.
 	type = get_fs_type("rootfs");
 	if (!type)
 		panic("Can't find rootfs type");
+	//@@ rootfs을 마운트한다.
 	mnt = vfs_kern_mount(type, 0, "rootfs", NULL);
+	//@@ rootfs에 대한 모듈을 활성화한다.
 	put_filesystem(type);
 	if (IS_ERR(mnt))
 		panic("Can't create rootfs");
 
+	//@@ rootfs에 대한 namespace를 생성한다.
 	ns = create_mnt_ns(mnt);
 	if (IS_ERR(ns))
 		panic("Can't allocate initial namespace");
 
+	//@@ init_task.nsproxy 의 mount namespace에 rootfs mount namespace를 할당한다.
 	init_task.nsproxy->mnt_ns = ns;
+	//@@ namespace의 count를 증가시킨다.
 	get_mnt_ns(ns);
 
 	root.mnt = mnt;
 	root.dentry = mnt->mnt_root;
 
+	//@@ PWD와 ROOT directory를 설정한다.
 	set_fs_pwd(current->fs, &root);
 	set_fs_root(current->fs, &root);
 }
@@ -2747,6 +2754,7 @@ void __init mnt_init(void)
 		printk(KERN_WARNING "%s: kobj create error\n", __func__);
 	init_rootfs();
 	//@@ 2016.12.03 end
+	//@@ 2016.12.17 start
 	init_mount_tree();
 }
 

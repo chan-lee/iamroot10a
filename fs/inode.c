@@ -360,6 +360,8 @@ EXPORT_SYMBOL(address_space_init_once);
  * once, because the fields are idempotent across use
  * of the inode, so let the slab aware of that.
  */
+//@@ inode 초기화 
+//@@ list head, address space
 void inode_init_once(struct inode *inode)
 {
 	memset(inode, 0, sizeof(*inode));

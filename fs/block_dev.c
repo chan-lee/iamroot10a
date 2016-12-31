@@ -391,6 +391,8 @@ static void bdev_destroy_inode(struct inode *inode)
 	call_rcu(&inode->i_rcu, bdev_i_callback);
 }
 
+//@@ kmem_cache(bdev_inode) 를 초기화 한다.
+//@@ block_device, vfs_inode
 static void init_once(void *foo)
 {
 	struct bdev_inode *ei = (struct bdev_inode *) foo;
@@ -452,6 +454,7 @@ static struct file_system_type bd_type = {
 
 static struct super_block *blockdev_superblock __read_mostly;
 
+//@@ block device file system(pseudo file system) 등록과 mount를 한다.
 void __init bdev_cache_init(void)
 {
 	int err;

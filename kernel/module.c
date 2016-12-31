@@ -996,6 +996,8 @@ bool try_module_get(struct module *module)
 }
 EXPORT_SYMBOL(try_module_get);
 
+//@@ module reference count 감소
+//@@ module이 live하지 않으면 wake up 해준다.
 void module_put(struct module *module)
 {
 	if (module) {
