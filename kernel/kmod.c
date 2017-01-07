@@ -251,6 +251,7 @@ fail:
 	do_exit(0);
 }
 
+//@@ 실행만 시키고 return. cf) wait_for_helper
 static int call_helper(void *data)
 {
 	/* Worker thread started blocking khelper thread. */
@@ -278,6 +279,7 @@ static void umh_complete(struct subprocess_info *sub_info)
 		call_usermodehelper_freeinfo(sub_info);
 }
 
+//@@ 실행이 종료될 때까지 기다렸다 리턴. cf) call_helper
 /* Keventd can't block, but this (a child) can. */
 static int wait_for_helper(void *data)
 {
@@ -329,10 +331,10 @@ static void __call_usermodehelper(struct work_struct *work)
 	/* CLONE_VFORK: wait until the usermode helper has execve'd
 	 * successfully We need the data structures to stay around
 	 * until that is done.  */
-	if (wait == UMH_WAIT_PROC)
+	if (wait == UMH_WAIT_PROC) //@@ 실행이 종료될때까지 대기
 		pid = kernel_thread(wait_for_helper, sub_info,
 				    CLONE_FS | CLONE_FILES | SIGCHLD);
-	else {
+	else { //@@ 실행까지만 대기
 		pid = kernel_thread(call_helper, sub_info,
 				    CLONE_VFORK | SIGCHLD);
 		/* Worker thread stopped blocking khelper thread. */

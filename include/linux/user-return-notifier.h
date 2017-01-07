@@ -28,6 +28,7 @@ void fire_user_return_notifiers(void);
 
 static inline void clear_user_return_notifier(struct task_struct *p)
 {
+  //@@ thread가 system call 에서 복귀될 때 알려주는 notify? 라고 추정되나 잘 모르겠음.
 	clear_tsk_thread_flag(p, TIF_USER_RETURN_NOTIFY);
 }
 

@@ -1029,7 +1029,7 @@ enum perf_event_task_context {
 
 struct task_struct {
 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
-	void *stack;
+	void *stack; //@@ task의 stack. 시작위치에 struct thread_info 가 있을것으로 추정
 	atomic_t usage;
 	unsigned int flags;	/* per process flags, defined below */
 	unsigned int ptrace;
@@ -2301,6 +2301,7 @@ static inline void threadgroup_unlock(struct task_struct *tsk) {}
 
 static inline void setup_thread_stack(struct task_struct *p, struct task_struct *org)
 {
+  //@@ stack의 시작에 struct thread_info* 가 있는 것으로 추정됨
 	*task_thread_info(p) = *task_thread_info(org);
 	task_thread_info(p)->task = p;
 }

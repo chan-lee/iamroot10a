@@ -3127,3 +3127,72 @@ init_mount_tree()
     - kernel process의 PWD와 root directory 설정
 bdev_cache_init()
     - block device file system(pseudo file system) 등록과 mount
+
+struct mount {
+	struct list_head mnt_hash;
+	struct mount *mnt_parent;
+	struct dentry *mnt_mountpoint;
+	struct vfsmount mnt;
+#ifdef CONFIG_SMP
+	struct mnt_pcp __percpu *mnt_pcp;
+#else
+	int mnt_count;
+	int mnt_writers;
+#endif
+	struct list_head mnt_mounts;	/* list of children, anchored here */
+	struct list_head mnt_child;	/* and going through their mnt_child */
+	struct list_head mnt_instance;	/* mount instance on sb->s_mounts */
+	const char *mnt_devname;	/* Name of device e.g. /dev/dsk/hda1 */
+	struct list_head mnt_list;
+	struct list_head mnt_expire;	/* link in fs-specific expiry list */
+	struct list_head mnt_share;	/* circular list of shared mounts */
+	struct list_head mnt_slave_list;/* list of slave mounts */
+	struct list_head mnt_slave;	/* slave list entry */
+	struct mount *mnt_master;	/* slave is on master->mnt_slave_list */
+	struct mnt_namespace *mnt_ns;	/* containing namespace */
+	struct mountpoint *mnt_mp;	/* where is it mounted */
+#ifdef CONFIG_FSNOTIFY
+	struct hlist_head mnt_fsnotify_marks;
+	__u32 mnt_fsnotify_mask;
+#endif
+	int mnt_id;			/* mount identifier */
+	int mnt_group_id;		/* peer group identifier */
+	int mnt_expiry_mark;		/* true if marked for expiry */
+	int mnt_pinned;
+	int mnt_ghosts;
+};
+
+고급 마운트 옵션 : http://egloos.zum.com/studyfoss/v/5262292
+
+sysfs and namespaces : https://lwn.net/Articles/295587/
+
+Kobject
+- Documentation/kobject.txt
+- kernel에서 중요한 struct를 OOP의 base class처럼 구현
+
+================================================================================
+[2017.01.07] 
+vfs_caches_init()
+  chrdev_init
+    [fp] base_probe
+      request_module
+        __request_module
+          call_modprobe
+            call_usermodehelper_setup
+              [fp] __call_usermodehelper
+                kernel_thread
+                  do_fork
+                    copy_process
+                      dup_task_struct
+                        thread_info
+
+- PI futex : Priority Inheritance fast userspace mutex
+- 우선 순위 역전 : http://egloos.zum.com/kkan22/v/3272705
+  낮은 우선 순위의 task가 mutex를 잡음으로서 높은 우선 순위 task가 실행되지 못함
+  - 우선 순위 계승 프로토콜(priority inheritance protocol)
+  - 우선 순위 상한 프로토콜(priority ceiling protocol)
+rt_mutex_init_task의 pi_lock 우선 순위 계승 lock 보던 중
+  - modprobe의 usermodehelper를 kernel_thread(do_fork)를 이용하여
+  신규 task를 만들고 wait/non-wait 함수 중 하나를 stack으로 지정하여 실행시키는
+  준비를 하는 곳을 보고있음
+

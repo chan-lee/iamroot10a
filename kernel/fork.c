@@ -302,6 +302,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
 	if (!tsk)
 		return NULL;
 
+  //@@ task_struct의 stack에 최대 page size의 memory를 할당.
 	ti = alloc_thread_info_node(tsk, node);
 	if (!ti)
 		goto free_tsk;
@@ -312,7 +313,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
 
 	tsk->stack = ti;
 
-	setup_thread_stack(tsk, orig);
+	setup_thread_stack(tsk, orig); //@@ orig로 부터 stack의 tread_info 복사
 	clear_user_return_notifier(tsk);
 	clear_tsk_need_resched(tsk);
 	stackend = end_of_stack(tsk);
@@ -333,7 +334,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
 	tsk->splice_pipe = NULL;
 	tsk->task_frag.page = NULL;
 
-	account_kernel_stack(ti, 1);
+	account_kernel_stack(ti, 1); // mmzone 통계에 1추가
 
 	return tsk;
 
@@ -1090,6 +1091,7 @@ SYSCALL_DEFINE1(set_tid_address, int __user *, tidptr)
 
 static void rt_mutex_init_task(struct task_struct *p)
 {
+  // 2017.01.07 end
 	raw_spin_lock_init(&p->pi_lock);
 #ifdef CONFIG_RT_MUTEXES
 	plist_head_init(&p->pi_waiters);
@@ -1186,6 +1188,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 		goto fork_out;
 
 	retval = -ENOMEM;
+  //@@ task 할당/복사하고, thread_info(stack) 도 할당/복사함
 	p = dup_task_struct(current);
 	if (!p)
 		goto fork_out;
