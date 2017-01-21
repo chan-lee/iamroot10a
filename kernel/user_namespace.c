@@ -86,6 +86,7 @@ int create_user_ns(struct cred *new)
 	if (!ns)
 		return -ENOMEM;
 
+  //@ inode num을 새로 할당 받음
 	ret = proc_alloc_inum(&ns->proc_inum);
 	if (ret) {
 		kmem_cache_free(user_ns_cachep, ns);
@@ -99,8 +100,10 @@ int create_user_ns(struct cred *new)
 	ns->owner = owner;
 	ns->group = group;
 
+  //@@ 새로 만들어진 ns를 new cred에 등록
 	set_cred_user_ns(new, ns);
 
+  //@@ sysfs와 proc을 true로 만들어 주는데 잘 모르겠음
 	update_mnt_policy(ns);
 
 	return 0;

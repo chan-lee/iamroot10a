@@ -2826,6 +2826,7 @@ bool current_chrooted(void)
 	return chrooted;
 }
 
+//@@ sysfs와 proc을 true로 만들어 주는데 잘 모르겠음
 void update_mnt_policy(struct user_namespace *userns)
 {
 	struct mnt_namespace *ns = current->nsproxy->mnt_ns;

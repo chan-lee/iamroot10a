@@ -332,15 +332,17 @@ int copy_creds(struct task_struct *p, unsigned long clone_flags)
 		return 0;
 	}
 
-	new = prepare_creds();
+	new = prepare_creds(); //@@ current에서 새로 만듬.
 	if (!new)
 		return -ENOMEM;
 
 	if (clone_flags & CLONE_NEWUSER) {
-		ret = create_user_ns(new);
+		ret = create_user_ns(new); //@ new cred에 user_ns넣음.
 		if (ret < 0)
 			goto error_put;
 	}
+
+  //@@ 2017.01.21 end
 
 #ifdef CONFIG_KEYS
 	/* new threads get their own thread keyrings if their parent already

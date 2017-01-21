@@ -2820,6 +2820,8 @@ object(객체) : 파일, 디바이스
 Documentation/security/keys.txt
 struct key {
 }
+https://www.kernel.org/doc/Documentation/security/keys.txt
+
 3가지 종류
 * keyring: key의 payload에 다른 key의 링크를 담고 있는 key
 * user: user space에서 사용하는 key
@@ -3190,9 +3192,27 @@ vfs_caches_init()
 - 우선 순위 역전 : http://egloos.zum.com/kkan22/v/3272705
   낮은 우선 순위의 task가 mutex를 잡음으로서 높은 우선 순위 task가 실행되지 못함
   - 우선 순위 계승 프로토콜(priority inheritance protocol)
+    * 낮은 우선 순위를 블록당한 높은 우선 순위의 우선 순위로
+      올리고 종료 후 원래대로
   - 우선 순위 상한 프로토콜(priority ceiling protocol)
+    * 일단 상한으로 올리는 듯함
 rt_mutex_init_task의 pi_lock 우선 순위 계승 lock 보던 중
   - modprobe의 usermodehelper를 kernel_thread(do_fork)를 이용하여
+  - 우선 순위 계승은 realtime 에서는 필수적인 요소로 추측됨
   신규 task를 만들고 wait/non-wait 함수 중 하나를 stack으로 지정하여 실행시키는
   준비를 하는 곳을 보고있음
 
+================================================================================
+[2017.01.21] 
+- PI 문서
+  Documentation/rt-mutex.txt
+  Documentation/rt-mutex-design.txt
+  Documentation/pi-futex.txt
+
+- Key retention service : CONFIG_KEYS
+  http://www.ibm.com/developerworks/library/l-key-retention/
+
+- Kernel Key Management
+  https://lwn.net/Articles/210502/
+  key 란 무엇인가? 왜 kernel에서 저장해야 하는가?
+  고민하다가 끝남

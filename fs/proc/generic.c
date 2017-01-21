@@ -138,6 +138,7 @@ retry:
 		return -ENOMEM;
 
 	spin_lock_irq(&proc_inum_lock);
+  //@inode num 추적용 ida로 부터 새로운 inode 번호 할당 받음
 	error = ida_get_new(&proc_inum_ida, &i);
 	spin_unlock_irq(&proc_inum_lock);
 	if (error == -EAGAIN)
@@ -145,6 +146,7 @@ retry:
 	else if (error)
 		return error;
 
+  //@@ 최대값을 넘으면 다시 지움
 	if (i > UINT_MAX - PROC_DYNAMIC_FIRST) {
 		spin_lock_irq(&proc_inum_lock);
 		ida_remove(&proc_inum_ida, i);
