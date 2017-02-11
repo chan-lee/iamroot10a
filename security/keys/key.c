@@ -604,6 +604,7 @@ void key_put(struct key *key)
 	if (key) {
 		key_check(key);
 
+    //@@ spinlock이 걸리므로 gc에게 위임함
 		if (atomic_dec_and_test(&key->usage))
 			schedule_work(&key_gc_work);
 	}

@@ -1228,6 +1228,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 		goto bad_fork_cleanup_count;
 
 	p->did_exec = 0;
+  //@@ delay accounting task (task delay 측정도구)
 	delayacct_tsk_init(p);	/* Must remain after dup_task_struct() */
 	copy_flags(clone_flags, p);
 	INIT_LIST_HEAD(&p->children);
@@ -1315,7 +1316,10 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	p->sequential_io_avg	= 0;
 #endif
 
+  //@@ 2017.02.11 End
+
 	/* Perform scheduler related setup. Assign this task to a CPU. */
+  //@@ 실제 스케줄러에 넣는것은 아닌것 같음 => 확인 필요함
 	sched_fork(p);
 
 	retval = perf_event_init_task(p);

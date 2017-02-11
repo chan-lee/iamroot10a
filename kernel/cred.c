@@ -344,10 +344,12 @@ int copy_creds(struct task_struct *p, unsigned long clone_flags)
 
   //@@ 2017.01.21 end
 
+  //@@ 2017.02.11 start
 #ifdef CONFIG_KEYS
 	/* new threads get their own thread keyrings if their parent already
 	 * had one */
 	if (new->thread_keyring) {
+    //@@ 당연히 다른 thread이므로 부모 keyring제거
 		key_put(new->thread_keyring);
 		new->thread_keyring = NULL;
 		if (clone_flags & CLONE_THREAD)
@@ -358,6 +360,7 @@ int copy_creds(struct task_struct *p, unsigned long clone_flags)
 	 * anything outside of those threads doesn't inherit.
 	 */
 	if (!(clone_flags & CLONE_THREAD)) {
+    //@@ 다른 process이면 process_keyring도 제거
 		key_put(new->process_keyring);
 		new->process_keyring = NULL;
 	}
@@ -365,6 +368,7 @@ int copy_creds(struct task_struct *p, unsigned long clone_flags)
 
 	atomic_inc(&new->user->processes);
 	p->cred = p->real_cred = get_cred(new);
+  //@@ 왜 2인가? => 부모와 자기자신일것으로 추측
 	alter_cred_subscribers(new, 2);
 	validate_creds(new);
 	return 0;

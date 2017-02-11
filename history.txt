@@ -3216,3 +3216,49 @@ rt_mutex_init_task의 pi_lock 우선 순위 계승 lock 보던 중
   https://lwn.net/Articles/210502/
   key 란 무엇인가? 왜 kernel에서 저장해야 하는가?
   고민하다가 끝남
+  
+
+================================================================================
+[2017.02.11] 
+  - key란
+  key는 file system에 접근하기 위한(특히 remote fs) kernel에서 사용하는
+  데이터덩어리로서 일반적인 암호화에서 사용하는 key와는
+  다른 의미이다. kernel이 가지고 있는 이유는 성능 때문인 것 같다.
+  key는 kernel이 사용하거나 userspace에 의해 사용되는데,
+  file system에서만 사용하는지 더 확대하여 사용하는지는
+  잘 모르겠다.
+
+- execution domains
+  understanding linux kernel - 827 page
+  linux는 다른 운영체제의 실행 파일을 실행할 수 있는데,
+  windows같은 non-posix OS는 dosemu 나 WINE을 통해
+  system call를 emulate 해준다.
+  반면 posix 호환 실행 파일은 바로 실행을 할 수 있는데,
+  posix 종류에 따라 personality 로 나뉘고 이를
+  exec_domain 에 저장한다
+
+struct exec_domain {
+};
+하지만 4.x kernel에서 아무도 관리를 안해서 제거한듯하다.
+https://lwn.net/Articles/640083/
+
+- delay accounting task
+  - Documentation/accounting/delay-accounting.txt
+struct task_delay_info {
+};
+task가 얼마나 delay되었는지 측정하는 구조체
+
+* 현재 보고 있는 곳
+  1  1 vfs_caches_init   674  init/main.c
+  2  1 chrdev_init      3087  fs/dcache.c
+  3  1 base_probe        576  fs/char_dev.c
+  4  1 request_module    893  block/genhd.c
+  5  1 __request_module    37  include/linux/kmod.h
+  6  1 call_modprobe     191  kernel/kmod.c
+  7  1 call_usermodehelper_setup   102  kernel/kmod.c
+  8  1 __call_usermodehelper   546  kernel/kmod.c
+  9  2 kernel_thread     338  kernel/kmod.c
+ 10  1 do_fork          1655  return do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
+ 11  1 copy_process     1612  p = copy_process(clone_flags, stack_start, stack_size,
+>12  1 sched_fork       1323  sched_fork(p);
+
