@@ -368,7 +368,7 @@ copy_thread(unsigned long clone_flags, unsigned long stack_start,
 
 	clear_ptrace_hw_breakpoint(p);
 
-	if (clone_flags & CLONE_SETTLS)
+	if (clone_flags & CLONE_SETTLS) //@@ TLS
 		thread->tp_value[0] = childregs->ARM_r3;
 	thread->tp_value[1] = get_tpuser();
 

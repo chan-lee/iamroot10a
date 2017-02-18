@@ -3262,3 +3262,26 @@ task가 얼마나 delay되었는지 측정하는 구조체
  11  1 copy_process     1612  p = copy_process(clone_flags, stack_start, stack_size,
 >12  1 sched_fork       1323  sched_fork(p);
 
+================================================================================
+[2017.02.18] 
+* Linux Audit System
+  - syslog로 불가능한 filtering된 log를 남길수 있다.
+  - filter는 user -> task -> exit 에 설치 가능
+  - https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/chap-system_auditing.html
+  - http://blog.plura.io/?p=5758 (한글)
+  - https://wiki.archlinux.org/index.php/Audit_framework
+
+* Thread Local Storage
+  - http://egloos.zum.com/studyfoss/v/5259841 (linux)
+  - http://egloos.zum.com/sweeper/v/1985738 (windows)
+
+* uprobe : User-Level Dynamic Tracing
+  - https://events.linuxfoundation.org/slides/lfcs2010_keniston.pdf
+
+* signal stack : sig handler 가 실행하는 동안 사용하는 stack.
+  - https://www.gnu.org/software/libc/manual/html_node/Signal-Stack.html
+
+* GNU C Library
+  - http://database.sarang.net/study/glibc/0.htm (한글)
+
+* 여전히 copyProcess 중(sigpending)

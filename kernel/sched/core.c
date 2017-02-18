@@ -1699,7 +1699,7 @@ void sched_fork(struct task_struct *p)
 	unsigned long flags;
 	int cpu = get_cpu();
 
-	__sched_fork(p);
+	__sched_fork(p); //@@ sched 관련 초기화
 	/*
 	 * We mark the process as running here. This guarantees that
 	 * nobody will actually run it, and a signal or other external
@@ -1721,7 +1721,7 @@ void sched_fork(struct task_struct *p)
 			p->static_prio = NICE_TO_PRIO(0);
 			p->rt_priority = 0;
 		} else if (PRIO_TO_NICE(p->static_prio) < 0)
-			p->static_prio = NICE_TO_PRIO(0);
+			p->static_prio = NICE_TO_PRIO(0); //@@ 120. nice:0
 
 		p->prio = p->normal_prio = __normal_prio(p);
 		set_load_weight(p);
@@ -1737,7 +1737,7 @@ void sched_fork(struct task_struct *p)
 		p->sched_class = &fair_sched_class;
 
 	if (p->sched_class->task_fork)
-		p->sched_class->task_fork(p);
+		p->sched_class->task_fork(p); //@@ current로 부터 적절하게 child에 관련 값을 채움
 
 	/*
 	 * The child is not yet in the pid-hash so no cgroup attach races,

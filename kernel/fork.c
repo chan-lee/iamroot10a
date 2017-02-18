@@ -1319,7 +1319,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
   //@@ 2017.02.11 End
 
 	/* Perform scheduler related setup. Assign this task to a CPU. */
-  //@@ 실제 스케줄러에 넣는것은 아닌것 같음 => 확인 필요함
+  //@@ task의 스케줄러관련 변수 초기화 및 설정
 	sched_fork(p);
 
 	retval = perf_event_init_task(p);
@@ -1329,6 +1329,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	if (retval)
 		goto bad_fork_cleanup_policy;
 	/* copy all the process information */
+  //@@ sem_undo_list 복사
 	retval = copy_semundo(clone_flags, p);
 	if (retval)
 		goto bad_fork_cleanup_audit;
@@ -1350,7 +1351,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	retval = copy_namespaces(clone_flags, p);
 	if (retval)
 		goto bad_fork_cleanup_mm;
-	retval = copy_io(clone_flags, p);
+	retval = copy_io(clone_flags, p); //@@ block device io복사
 	if (retval)
 		goto bad_fork_cleanup_namespaces;
 	retval = copy_thread(clone_flags, stack_start, stack_size, p);
@@ -1384,6 +1385,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	/*
 	 * sigaltstack should be cleared when sharing the same VM
 	 */
+  //@@ signal alter stack용 signal stack의 stack pointer
 	if ((clone_flags & (CLONE_VM|CLONE_VFORK)) == CLONE_VM)
 		p->sas_ss_sp = p->sas_ss_size = 0;
 
@@ -1392,6 +1394,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	 * child regardless of CLONE_PTRACE.
 	 */
 	user_disable_single_step(p);
+  //@@ TIF : Thread Info Flag.
 	clear_tsk_thread_flag(p, TIF_SYSCALL_TRACE);
 #ifdef TIF_SYSCALL_EMU
 	clear_tsk_thread_flag(p, TIF_SYSCALL_EMU);
@@ -1448,7 +1451,8 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	 * A fatal signal pending means that current will exit, so the new
 	 * thread can't slip out of an OOM kill (or normal SIGKILL).
 	*/
-	recalc_sigpending();
+  //@@ 2017.02.18 end
+	recalc_sigpending(); //@@ update thread info sigpending.
 	if (signal_pending(current)) {
 		spin_unlock(&current->sighand->siglock);
 		write_unlock_irq(&tasklist_lock);

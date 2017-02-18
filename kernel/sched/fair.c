@@ -721,6 +721,7 @@ __update_curr(struct cfs_rq *cfs_rq, struct sched_entity *curr,
 	update_min_vruntime(cfs_rq);
 }
 
+//@@ 통계 관련 수치 갱신
 static void update_curr(struct cfs_rq *cfs_rq)
 {
 	struct sched_entity *curr = cfs_rq->curr;
@@ -1732,7 +1733,7 @@ place_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int initial)
 	 * little, place the new task so that it fits in the slot that
 	 * stays open at the end.
 	 */
-	if (initial && sched_feat(START_DEBIT))
+	if (initial && sched_feat(START_DEBIT)) //@@ 굶지않게 현재 태스크 앞에 위치시킴
 		vruntime += sched_vslice(cfs_rq, se);
 
 	/* sleeps up to a single latency don't count. */
@@ -5836,11 +5837,12 @@ static void task_fork_fair(struct task_struct *p)
 		rcu_read_unlock();
 	}
 
+  //@@ 통계 관련 수치 갱신
 	update_curr(cfs_rq);
 
 	if (curr)
 		se->vruntime = curr->vruntime;
-	place_entity(cfs_rq, se, 1);
+	place_entity(cfs_rq, se, 1); //@@ vruntime 갱신
 
 	if (sysctl_sched_child_runs_first && curr && entity_before(curr, se)) {
 		/*

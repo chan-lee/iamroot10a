@@ -1220,6 +1220,7 @@ struct task_struct {
 	sigset_t saved_sigmask;	/* restored if set_restore_sigmask() was used */
 	struct sigpending pending;
 
+  //@@ signal alter stack용 signal stack의 stack pointer
 	unsigned long sas_ss_sp;
 	size_t sas_ss_size;
 	int (*notifier)(void *priv);
