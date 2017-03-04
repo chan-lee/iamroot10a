@@ -3285,6 +3285,7 @@ task가 얼마나 delay되었는지 측정하는 구조체
   - http://database.sarang.net/study/glibc/0.htm (한글)
 
 * 여전히 copyProcess 중(sigpending)
+
 ================================================================================
 [2017.03.04] 
 * struct pid - [2016.07.23] PID 관리 참조
@@ -3295,4 +3296,30 @@ task가 얼마나 delay되었는지 측정하는 구조체
 * KSM(Kernel Samepage Merge OR Kernel Shared Memory)
   - https://en.wikipedia.org/wiki/Kernel_same-page_merging
   - http://www.dbguide.net/knowledge.db?cmd=view&boardUid=147560&boardConfigUid=20&boardStep=&categoryUid=196(로그인 필요함)
+
+* linux signal
+  - http://tdoodle.tistory.com/entry/시그널의-모든것-All-about-Linux-signals
+* signal handler 실행과정
+  - http://egloos.zum.com/studyfoss/v/5182475
+
+* PID
+  - http://egloos.zum.com/studyfoss/v/5242243
+
+* Netlink
+  - 커널과 user space의 정보 전달을 위해 사용 혹은 IPC처럼
+    - http://proneer.tistory.com/entry/Netlink-Socket
+  - Why and How to Use Netlink Socket
+    - http://www.linuxjournal.com/article/7356
+  - references
+    - http://onecellboy.tistory.com/232
+  - netlink library
+    - http://www.infradead.org/~tgr/libnl/doc/core.html#core_netlink_fundamentals
+
+struct ring_buffer;
+  - 복잡한 이유가?
+
+* Kernel Samepage Merging
+  - https://en.wikipedia.org/wiki/Kernel_same-page_merging
+  - www.linux-kvm.org/page/KSM
+  - http://noon.tistory.com/581
 
