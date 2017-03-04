@@ -1452,6 +1452,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	 * thread can't slip out of an OOM kill (or normal SIGKILL).
 	*/
   //@@ 2017.02.18 end
+  //@@ 2017.03.04 start
 	recalc_sigpending(); //@@ update thread info sigpending.
 	if (signal_pending(current)) {
 		spin_unlock(&current->sighand->siglock);
@@ -1460,11 +1461,16 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 		goto bad_fork_free_pid;
 	}
 
+	//@@ PID관리를 위한 구조체들을 초기화하고 task_struct에 struct pid를 attach한다.
 	if (likely(p->pid)) {
+		//@@ ptrace용 구조체를 초기화한다.
 		ptrace_init_task(p, (clone_flags & CLONE_PTRACE) || trace);
 
+		//@@ http://egloos.zum.com/studyfoss/v/5242243 참조
+		//@@ http://bluese05.tistory.com/18 참조
 		init_task_pid(p, PIDTYPE_PID, pid);
 		if (thread_group_leader(p)) {
+			//@@ thread group leader에 대한 처리(PGID,SID, siblling,...)
 			init_task_pid(p, PIDTYPE_PGID, task_pgrp(current));
 			init_task_pid(p, PIDTYPE_SID, task_session(current));
 
@@ -1481,6 +1487,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 			attach_pid(p, PIDTYPE_SID);
 			__this_cpu_inc(process_counts);
 		} else {
+			//@@ 단순 thread에 대한 처리
 			current->signal->nr_threads++;
 			atomic_inc(&current->signal->live);
 			atomic_inc(&current->signal->sigcnt);
@@ -1494,15 +1501,20 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	total_forks++;
 	spin_unlock(&current->sighand->siglock);
 	write_unlock_irq(&tasklist_lock);
+	//@@ connector에게 fork event를 전달한다.
 	proc_fork_connector(p);
+	//@@ 각 cgroup sub system별로 fork를 호출한다.
 	cgroup_post_fork(p);
 	if (clone_flags & CLONE_THREAD)
 		threadgroup_change_end(current);
+	//@@ task 생성했다는 것을 perf에 기록하는 것으로 추정함.
 	perf_event_fork(p);
 
 	trace_task_newtask(p, clone_flags);
 
 	return p;
+	//@@ 2017.03.04 end
+	//@@ 아래 free,exit 부분 진행은 다음시간 결정!!!
 
 bad_fork_free_pid:
 	if (pid != &init_struct_pid)

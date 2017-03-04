@@ -3285,3 +3285,14 @@ task가 얼마나 delay되었는지 측정하는 구조체
   - http://database.sarang.net/study/glibc/0.htm (한글)
 
 * 여전히 copyProcess 중(sigpending)
+================================================================================
+[2017.03.04] 
+* struct pid - [2016.07.23] PID 관리 참조
+* process event connector
+  - process event를 user space에 전달하기 위한 통신 module
+  - netlink를 이용하여 구현되어 있다.
+  - Documentation/connector/connector.txt
+* KSM(Kernel Samepage Merge OR Kernel Shared Memory)
+  - https://en.wikipedia.org/wiki/Kernel_same-page_merging
+  - http://www.dbguide.net/knowledge.db?cmd=view&boardUid=147560&boardConfigUid=20&boardStep=&categoryUid=196(로그인 필요함)
+
