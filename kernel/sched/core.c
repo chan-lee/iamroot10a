@@ -1787,12 +1787,15 @@ void wake_up_new_task(struct task_struct *p)
 	 *  - cpus_allowed can change in the fork path
 	 *  - any previously selected cpu might disappear through hotplug
 	 */
+	//@@ balancing을 위해 cpu를 할당한다.
 	set_task_cpu(p, select_task_rq(p, SD_BALANCE_FORK, 0));
 #endif
 
 	/* Initialize new task's runnable average */
 	init_task_runnable_average(p);
+	//@@ run queue를 선택
 	rq = __task_rq_lock(p);
+	//@@ 선택된 run queue에 struct task를 enqueue한다.
 	activate_task(rq, p, 0);
 	p->on_rq = 1;
 	trace_sched_wakeup_new(p, true);

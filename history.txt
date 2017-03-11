@@ -3322,4 +3322,9 @@ struct ring_buffer;
   - https://en.wikipedia.org/wiki/Kernel_same-page_merging
   - www.linux-kvm.org/page/KSM
   - http://noon.tistory.com/581
+================================================================================
+[2017.03.11]
+* call_usermodehelper_setup & call_usermodehelper_exec
+ - http://blog.naver.com/david_shkim/50131518253
 
+* do_exec_common 분석중

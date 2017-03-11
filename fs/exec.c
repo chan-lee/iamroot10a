@@ -1482,9 +1482,12 @@ static int do_execve_common(const char *filename,
 	 * further execve() calls fail. */
 	current->flags &= ~PF_NPROC_EXCEEDED;
 
+	//@@ displaced에 old files를 저장하고 do_exec가 성공하면 이를 해제한다.
+	//@@ current task에는 copy된 files를 할당한다.
 	retval = unshare_files(&displaced);
 	if (retval)
 		goto out_ret;
+	//@@ 2017.03.11 end
 
 	retval = -ENOMEM;
 	bprm = kzalloc(sizeof(*bprm), GFP_KERNEL);

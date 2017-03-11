@@ -291,6 +291,9 @@ static int wait_for_helper(void *data)
 	current->sighand->action[SIGCHLD-1].sa.sa_handler = SIG_DFL;
 	spin_unlock_irq(&current->sighand->siglock);
 
+	//@@ copy_process 과정중 exit_signal에 SIGCHLD를 설정한다.
+	//@@ 이후, ____call_usermodehelper가 종료되면서 SIGCHLD를 발생시키고 sig_wait4가 풀리는 것으로 예상함.
+	//@@ sys_wait4는 kernel/exit.c 의 wait4 system call을 참조.
 	pid = kernel_thread(____call_usermodehelper, sub_info, SIGCHLD);
 	if (pid < 0) {
 		sub_info->retval = pid;

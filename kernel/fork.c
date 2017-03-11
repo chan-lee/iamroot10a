@@ -1515,6 +1515,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	return p;
 	//@@ 2017.03.04 end
 	//@@ 아래 free,exit 부분 진행은 다음시간 결정!!!
+	//@@ 예외처리는 넘어가기로 함.
 
 bad_fork_free_pid:
 	if (pid != &init_struct_pid)
@@ -1627,26 +1628,33 @@ long do_fork(unsigned long clone_flags,
 
 	p = copy_process(clone_flags, stack_start, stack_size,
 			 child_tidptr, NULL, trace);
+	//@@ 2017.03.11 start
 	/*
 	 * Do this prior waking up the new thread - the thread pointer
 	 * might get invalid after that point, if the thread exits quickly.
 	 */
+	//@@ copy_process가 성공하면 new thread를 wake up해주는 과정이다.
 	if (!IS_ERR(p)) {
 		struct completion vfork;
 
 		trace_sched_process_fork(current, p);
 
+		//@@ application에서 사용되는 PID(integer) 를 namespace기반에서 구한다,
 		nr = task_pid_vnr(p);
 
+		//@@ TID(Thread ID) 설정을 한다.
+		//@@ put_user는 커널 공간에서 사용자 공간으로 데이터를 복사한다,
 		if (clone_flags & CLONE_PARENT_SETTID)
 			put_user(nr, parent_tidptr);
 
+		//@@ fork init completion을 설정함.
 		if (clone_flags & CLONE_VFORK) {
 			p->vfork_done = &vfork;
 			init_completion(&vfork);
 			get_task_struct(p);
 		}
 
+		//@@ new task를 run queue에 enqueue 한다.
 		wake_up_new_task(p);
 
 		/* forking complete and child started to run, tell ptracer */
