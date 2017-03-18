@@ -1483,11 +1483,13 @@ static inline pid_t task_pid_nr(struct task_struct *tsk)
 static inline pid_t task_pid_nr_ns(struct task_struct *tsk,
 					struct pid_namespace *ns)
 {
+  //@@ 현재 namespace
 	return __task_pid_nr_ns(tsk, PIDTYPE_PID, ns);
 }
 
 static inline pid_t task_pid_vnr(struct task_struct *tsk)
 {
+  //@@ 현재 namespace
 	return __task_pid_nr_ns(tsk, PIDTYPE_PID, NULL);
 }
 

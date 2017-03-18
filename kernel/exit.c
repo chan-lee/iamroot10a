@@ -1242,7 +1242,7 @@ unlock_sig:
 	 * possibly take page faults for user memory.
 	 */
 	get_task_struct(p);
-	pid = task_pid_vnr(p);
+	pid = task_pid_vnr(p); //@@ vritual number
 	why = ptrace ? CLD_TRAPPED : CLD_STOPPED;
 	read_unlock(&tasklist_lock);
 
@@ -1523,12 +1523,13 @@ repeat:
 
 	set_current_state(TASK_INTERRUPTIBLE);
 	read_lock(&tasklist_lock);
-	tsk = current;
+	tsk = current; //@@ 각 cpu 마다.
 	do {
 		retval = do_wait_thread(wo, tsk);
 		if (retval)
 			goto end;
 
+    //@@ attach 된 ptrace도 같이 wait검사
 		retval = ptrace_do_wait(wo, tsk);
 		if (retval)
 			goto end;
@@ -1652,7 +1653,7 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 	wo.wo_info	= NULL;
 	wo.wo_stat	= stat_addr;
 	wo.wo_rusage	= ru;
-	ret = do_wait(&wo);
+	ret = do_wait(&wo); //@@ wait 중이면 schedule()을 호출하여 context-switch.
 	put_pid(pid);
 
 	return ret;

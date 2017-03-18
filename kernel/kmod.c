@@ -308,6 +308,7 @@ static int wait_for_helper(void *data)
 		 *
 		 * Thus the __user pointer cast is valid here.
 		 */
+    //@@ 2017.03.18 end. 다음 ____call_usermodehelper.
 		sys_wait4(pid, (int __user *)&ret, 0, NULL);
 
 		/*
