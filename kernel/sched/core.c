@@ -3157,6 +3157,9 @@ void set_user_nice(struct task_struct *p, long nice)
 		p->static_prio = NICE_TO_PRIO(nice);
 		goto out_unlock;
 	}
+	//@@ 왜 dequeue와 enqueue를 하는가?
+	//@@ - task는 red-block tree로 관리되기 때문에 re-order를 위해 한다.
+	//@@ - RT 또는 CFG runqueue 이동할 수 있기 때문에... 
 	on_rq = p->on_rq;
 	if (on_rq)
 		dequeue_task(rq, p, 0);
@@ -4326,6 +4329,7 @@ int set_cpus_allowed_ptr(struct task_struct *p, const struct cpumask *new_mask)
 
 	rq = task_rq_lock(p, &flags);
 
+	//@@ cpu mask가 동일하거나 교집합이 될 경우, 현재것을 유지함.
 	if (cpumask_equal(&p->cpus_allowed, new_mask))
 		goto out;
 
@@ -4342,6 +4346,7 @@ int set_cpus_allowed_ptr(struct task_struct *p, const struct cpumask *new_mask)
 
 	dest_cpu = cpumask_any_and(cpu_active_mask, new_mask);
 	if (p->on_rq) {
+		//@@ migration_cpu_stop->__migrate_task에서 afficity 변경과 migration을 수행한다.
 		struct migration_arg arg = { p, dest_cpu };
 		/* Need help from migration thread: drop lock and wait. */
 		task_rq_unlock(rq, p, &flags);

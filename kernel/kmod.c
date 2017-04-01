@@ -205,20 +205,25 @@ static int ____call_usermodehelper(void *data)
 	struct cred *new;
 	int retval;
 
+	//@@ 2017.04.01 start
+	//@@ 모든 signal handler와 flag를 디폴트값으로 설정함.
 	spin_lock_irq(&current->sighand->siglock);
 	flush_signal_handlers(current, 1);
 	spin_unlock_irq(&current->sighand->siglock);
 
 	/* We can run anywhere, unlike our parent keventd(). */
+	//@@ cpu_all_mask에 따라 cpu affinity 변경과 migration를 한다.
 	set_cpus_allowed_ptr(current, cpu_all_mask);
 
 	/*
 	 * Our parent is keventd, which runs with elevated scheduling priority.
 	 * Avoid propagating that into the userspace child.
 	 */
+	//@@ user nice 를 설정한다.
 	set_user_nice(current, 0);
 
 	retval = -ENOMEM;
+	//@@ current의 credential(real_cred)를 기본으로 해서 new를 생성한다.
 	new = prepare_kernel_cred(current);
 	if (!new)
 		goto fail;
@@ -237,6 +242,7 @@ static int ____call_usermodehelper(void *data)
 		}
 	}
 
+	//@@ new credential를 current->real_cred로 교체하고 이전 credetial은 free한다.
 	commit_creds(new);
 
 	retval = do_execve(sub_info->path,

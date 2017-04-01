@@ -1472,6 +1472,7 @@ static int do_execve_common(const char *filename,
 	 * don't check setuid() return code.  Here we additionally recheck
 	 * whether NPROC limit is still exceeded.
 	 */
+	//@@현 사용자가 사용하려는 프로세스수를 검사한다.
 	if ((current->flags & PF_NPROC_EXCEEDED) &&
 	    atomic_read(&current_user()->processes) > rlimit(RLIMIT_NPROC)) {
 		retval = -EAGAIN;
@@ -1484,6 +1485,8 @@ static int do_execve_common(const char *filename,
 
 	//@@ displaced에 old files를 저장하고 do_exec가 성공하면 이를 해제한다.
 	//@@ current task에는 copy된 files를 할당한다.
+	//@@ Understanding the Linux Kernel, 3rd Edition, 20.4. The exec Functions 참조
+	//@@ to make a copy of the files_struct structure containing the open files of the process, if it is shared with other processes
 	retval = unshare_files(&displaced);
 	if (retval)
 		goto out_ret;
@@ -1494,15 +1497,18 @@ static int do_execve_common(const char *filename,
 	if (!bprm)
 		goto out_files;
 
+	//@@ current task의 credential를 기본으로 해서 new credential을 생성하고 bprm->cred에 할당한다.
 	retval = prepare_bprm_creds(bprm);
 	if (retval)
 		goto out_free;
 
+	//@@ bprm->unsafe 설정, retval는 항상 0보다 크다.
 	retval = check_unsafe_exec(bprm);
 	if (retval < 0)
 		goto out_free;
 	clear_in_exec = retval;
 	current->in_execve = 1;
+	//@@ 2017.04.01 end
 
 	file = open_exec(filename);
 	retval = PTR_ERR(file);
