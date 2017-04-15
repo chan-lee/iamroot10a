@@ -18,7 +18,7 @@ struct linux_binprm {
 	unsigned long vma_pages;
 #else
 # define MAX_ARG_PAGES	32
-	struct page *page[MAX_ARG_PAGES];
+	struct page *page[MAX_ARG_PAGES]; //@@ arguments 저장용?
 #endif
 	struct mm_struct *mm;
 	unsigned long p; /* current top of mem */

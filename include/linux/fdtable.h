@@ -40,7 +40,7 @@ static inline bool fd_is_open(int fd, const struct fdtable *fdt)
 }
 
 /*
- * Open file table structure
+ * Open file table structure //@@ 각 프로세스마다 가지고 있음.
  */
 struct files_struct {
   /*
@@ -56,7 +56,7 @@ struct files_struct {
 	int next_fd;
 	unsigned long close_on_exec_init[1];
 	unsigned long open_fds_init[1];
-	struct file __rcu * fd_array[NR_OPEN_DEFAULT];
+	struct file __rcu * fd_array[NR_OPEN_DEFAULT]; //@@ stdin, stdout, stderr ...
 };
 
 #define rcu_dereference_check_fdtable(files, fdtfd) \

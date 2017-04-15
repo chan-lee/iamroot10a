@@ -3358,3 +3358,46 @@ struct ring_buffer;
 [2017.04.01]
 * do_exec_common 분석중
   - 다음시간엔 struct linux_binprm 봤으면 함.
+
+================================================================================
+[2017.04.15]
+struct linux_binprm {
+	struct page *page[MAX_ARG_PAGES];
+};
+
+
+- The Linux Programming Interface 95p 참조
+- http://mintnlatte.tistory.com/135
+struct fdtable {
+	unsigned int max_fds;
+	struct file __rcu **fd; //< files struct의 fd_array.
+};
+
+// 각 프로세스당 open file table structure
+struct files_struct {
+	struct fdtable __rcu *fdt;
+	struct fdtable fdtab;
+
+	struct file __rcu * fd_array[NR_OPEN_DEFAULT];
+  //@@ stdin, stdout, stderr 순으로..
+};
+
+files_struct와 fdtable 구조체의 관계를 살펴보다 종료.
+
+  1  1 vfs_caches_init   674  init/main.c
+  2  1 chrdev_init      3087  fs/dcache.c
+  3  2 base_probe        576  fs/char_dev.c
+  4  2 request_module    568  fs/char_dev.c
+  5  1 __request_module    37  include/linux/kmod.h
+  6  1 call_modprobe     191  kernel/kmod.c
+  7  1 call_usermodehelper_setup   102  kernel/kmod.c
+  8  1 __call_usermodehelper   556  kernel/kmod.c
+  9  1 wait_for_helper   345  kernel/kmod.c
+ 10  1 ____call_usermodehelper   303  kernel/kmod.c
+ 11  1 do_execve         248  kernel/kmod.c
+ 12  1 do_execve_common  1599  fs/exec.c
+ 13  1 open_exec        1513  fs/exec.c
+ 14  1 do_filp_open      764  fs/exec.c
+ 15  1 path_openat      3044  filp = path_openat(dfd, pathname, &nd, op, flags | LOOKUP_RCU);
+>16  1 path_init        2986  error = path_init(dfd, pathname->name, flags | LOOKUP_PARENT, nd, &base);
+

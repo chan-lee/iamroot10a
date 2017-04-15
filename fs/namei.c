@@ -2978,10 +2978,11 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 	file->f_flags = op->open_flag;
 
 	if (unlikely(file->f_flags & __O_TMPFILE)) {
-		error = do_tmpfile(dfd, pathname, nd, flags, op, file, &opened);
+		error = do_tmpfile(dfd, pathname, nd, flags, op, file, &opened); //@@ temp 파일 만들기로 추정
 		goto out;
 	}
 
+  //@@ 2017.04.15 end.
 	error = path_init(dfd, pathname->name, flags | LOOKUP_PARENT, nd, &base);
 	if (unlikely(error))
 		goto out;
