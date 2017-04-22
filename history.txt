@@ -3401,3 +3401,12 @@ files_struct와 fdtable 구조체의 관계를 살펴보다 종료.
  15  1 path_openat      3044  filp = path_openat(dfd, pathname, &nd, op, flags | LOOKUP_RCU);
 >16  1 path_init        2986  error = path_init(dfd, pathname->name, flags | LOOKUP_PARENT, nd, &base);
 
+================================================================================
+[2017.04.22]
+Pathname lookup in Linux
+ - https://lwn.net/Articles/649115/
+RCU-walk: faster pathname lookup in Linux
+ - https://lwn.net/Articles/649729/
+다음시간은 "Pathname lookup in Linux"를 읽고 시작할 예정
+
+ 

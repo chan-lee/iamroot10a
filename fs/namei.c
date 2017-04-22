@@ -1350,6 +1350,7 @@ static int lookup_fast(struct nameidata *nd,
 	 * of a false negative due to a concurrent rename, we're going to
 	 * do the non-racy lookup, below.
 	 */
+	//@@ 해당 dentry를 찾는다.(RCU인 경우와 아닌 경우, 찾는 방법이 다름)
 	if (nd->flags & LOOKUP_RCU) {
 		unsigned seq;
 		dentry = __d_lookup_rcu(parent, &nd->last, &seq);
@@ -1397,6 +1398,7 @@ unlazy:
 		dentry = __d_lookup(parent, &nd->last);
 	}
 
+	//@@ 위에서 찾은 dentry에 대한 validate를 검사한다.
 	if (unlikely(!dentry))
 		goto need_lookup;
 
@@ -1415,6 +1417,7 @@ unlazy:
 
 	path->mnt = mnt;
 	path->dentry = dentry;
+	//@@ 2017.04.22 end
 	err = follow_managed(path, nd->flags);
 	if (unlikely(err < 0)) {
 		path_put_conditional(path, nd);
@@ -1828,6 +1831,7 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 	return err;
 }
 
+//@@ nd->seq(sequence lock의 sequence), nd->inode, nd->root 등을 설정한다.
 static int path_init(int dfd, const char *name, unsigned int flags,
 		     struct nameidata *nd, struct file **fp)
 {
@@ -1837,14 +1841,18 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 	nd->flags = flags | LOOKUP_JUMPED;
 	nd->depth = 0;
 	if (flags & LOOKUP_ROOT) {
+		//@@ root를 찾는 경우
 		struct inode *inode = nd->root.dentry->d_inode;
 		if (*name) {
+			//@@ inode lookup 가능한지를 확인하고 permission을 검사한다.
 			if (!can_lookup(inode))
 				return -ENOTDIR;
 			retval = inode_permission(inode, MAY_EXEC);
 			if (retval)
 				return retval;
 		}
+		//@@ nameidata 값(path를 root)을 할당하고 return 한다.
+		//@@ path_get - mount와 dentry 정보를 위한 refcount를 증가시킨다.
 		nd->path = nd->root;
 		nd->inode = inode;
 		if (flags & LOOKUP_RCU) {
@@ -1859,6 +1867,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 	nd->root.mnt = NULL;
 
 	if (*name=='/') {
+		//@@ nameidata 값(path를 root)을 할당한다.
 		if (flags & LOOKUP_RCU) {
 			lock_rcu_walk();
 			set_root_rcu(nd);
@@ -1868,6 +1877,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 		}
 		nd->path = nd->root;
 	} else if (dfd == AT_FDCWD) {
+		//@@ nameidata 값(path를 task current working directory)을 할당한다.
 		if (flags & LOOKUP_RCU) {
 			struct fs_struct *fs = current->fs;
 			unsigned seq;
@@ -1884,6 +1894,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 		}
 	} else {
 		/* Caller must check execute permissions on the starting path component */
+		//@@ struct file_struct(open된 file정보가 있는 구조체)에서 dfd에 해당하는 file 정보(struct fd)를 구한다.
 		struct fd f = fdget_raw(dfd);
 		struct dentry *dentry;
 
@@ -1906,6 +1917,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 			nd->seq = __read_seqcount_begin(&nd->path.dentry->d_seq);
 			lock_rcu_walk();
 		} else {
+			//@@ 위에서 얻은 struct fd를 반납한다.
 			path_get(&nd->path);
 			fdput(f);
 		}
@@ -2687,18 +2699,22 @@ static int do_last(struct nameidata *nd, struct path *path,
 	int error;
 
 	nd->flags &= ~LOOKUP_PARENT;
-	nd->flags |= op->intent;
+	nd->flags |= op->intent;  // LOOKUP_OPEN, CREATE, EXCL, RENAME
 
 	if (nd->last_type != LAST_NORM) {
+		// LAST_NORM은 file이고 이외는 디렉토리이기 때문에 finish_open으로 이동한다.
 		error = handle_dots(nd, nd->last_type);
 		if (error)
 			return error;
 		goto finish_open;
 	}
 
+	//@@ 해당하는 inode/dentry를 찾음
 	if (!(open_flag & O_CREAT)) {
+		//@@ create option이 아닌 경우
 		if (nd->last.name[nd->last.len])
 			nd->flags |= LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
+		//@@ symbolic link
 		if (open_flag & O_PATH && !(nd->flags & LOOKUP_FOLLOW))
 			symlink_ok = true;
 		/* we _can_ be in RCU mode here */
@@ -2982,12 +2998,15 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 		goto out;
 	}
 
-  //@@ 2017.04.15 end.
+	//@@ 2017.04.15 end.
+	//@@ 2017.04.22 start
+	//@@ struct nameidata와 base 값을 얻어온다.
 	error = path_init(dfd, pathname->name, flags | LOOKUP_PARENT, nd, &base);
 	if (unlikely(error))
 		goto out;
 
 	current->total_link_count = 0;
+	//@@ last component를 찾아서 struct nameidate에 할당한다.
 	error = link_path_walk(pathname->name, nd);
 	if (unlikely(error))
 		goto out;

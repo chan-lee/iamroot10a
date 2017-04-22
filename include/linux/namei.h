@@ -25,6 +25,12 @@ struct nameidata {
 /*
  * Type of the last component on LOOKUP_PARENT
  */
+// Understanding kernel - ch12 pathname lookup 
+//@@ LAST_NORM Last component is a regular filename
+//@@ LAST_ROOT Last component is  ¡°/ ¡± (that is, the entire pathname is  ¡°/ ¡±)
+//@@ LAST_DOT Last component is  ¡°.¡±
+//@@ LAST_DOTDOT Last component is  ¡°.. ¡±
+//@@ LAST_BIND Last component is a symbolic link into a special filesystem
 enum {LAST_NORM, LAST_ROOT, LAST_DOT, LAST_DOTDOT, LAST_BIND};
 
 /*
