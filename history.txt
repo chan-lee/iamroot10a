@@ -3409,4 +3409,9 @@ RCU-walk: faster pathname lookup in Linux
  - https://lwn.net/Articles/649729/
 다음시간은 "Pathname lookup in Linux"를 읽고 시작할 예정
 
+================================================================================
+[2017.05.13]
+[Linux] VFS scalability - dcache
+ - http://studyfoss.egloos.com/5469672/
+
  

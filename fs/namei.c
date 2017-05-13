@@ -1392,6 +1392,7 @@ static int lookup_fast(struct nameidata *nd,
 			goto unlazy;
 		return 0;
 unlazy:
+		// REF-walk mode 설정 : 기본이 RCU-walk mode인 것 같다.
 		if (unlazy_walk(nd, dentry))
 			return -ECHILD;
 	} else {
