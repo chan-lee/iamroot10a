@@ -1011,7 +1011,7 @@ static int follow_managed(struct path *path, unsigned flags)
 	       unlikely(managed != 0)) {
 		/* Allow the filesystem to manage the transit without i_mutex
 		 * being held. */
-		if (managed & DCACHE_MANAGE_TRANSIT) {
+		if (managed & DCACHE_MANAGE_TRANSIT) { //@@ 잘모르겠음.
 			BUG_ON(!path->dentry->d_op);
 			BUG_ON(!path->dentry->d_op->d_manage);
 			ret = path->dentry->d_op->d_manage(path->dentry, false);
@@ -1267,6 +1267,7 @@ static struct dentry *lookup_dcache(struct qstr *name, struct dentry *dir,
 	int error;
 
 	*need_lookup = false;
+  //@@ hash 함수를 이용하여 lookup 되어 있는 dentry 검색.
 	dentry = d_lookup(dir, name);
 	if (dentry) {
 		if (dentry->d_flags & DCACHE_OP_REVALIDATE) {
@@ -1325,7 +1326,7 @@ static struct dentry *__lookup_hash(struct qstr *name,
 	struct dentry *dentry;
 
 	dentry = lookup_dcache(name, base, flags, &need_lookup);
-	if (!need_lookup)
+	if (!need_lookup) //@@ 새로 만들어진 dentry.
 		return dentry;
 
 	return lookup_real(base->d_inode, dentry, flags);
@@ -1361,7 +1362,7 @@ static int lookup_fast(struct nameidata *nd,
 		 * This sequence count validates that the inode matches
 		 * the dentry name information from lookup.
 		 */
-		*inode = dentry->d_inode;
+		*inode = dentry->d_inode; //@@ 핵심 return.
 		if (read_seqcount_retry(&dentry->d_seq, seq))
 			return -ECHILD;
 
@@ -1447,8 +1448,10 @@ static int lookup_slow(struct nameidata *nd, struct path *path)
 	mutex_unlock(&parent->d_inode->i_mutex);
 	if (IS_ERR(dentry))
 		return PTR_ERR(dentry);
-	path->mnt = nd->path.mnt;
-	path->dentry = dentry;
+	path->mnt = nd->path.mnt; //@@ 핵심 return
+	path->dentry = dentry; //@@ 핵심 return
+  //@@ 관리할 필요가 있는 폴더면(mount point, automount fs, transit?)
+  //@@ 해당 관리 구조체에 추가함. 잘은 모르겠다.
 	err = follow_managed(path, nd->flags);
 	if (unlikely(err < 0)) {
 		path_put_conditional(path, nd);
@@ -1515,6 +1518,7 @@ static inline int should_follow_link(struct inode *inode, int follow)
 	return 0;
 }
 
+// lookup 에 존재하면 path와 inode를 nd에 추가함.
 static inline int walk_component(struct nameidata *nd, struct path *path,
 		int follow)
 {
@@ -1527,24 +1531,27 @@ static inline int walk_component(struct nameidata *nd, struct path *path,
 	 */
 	if (unlikely(nd->last_type != LAST_NORM))
 		return handle_dots(nd, nd->last_type);
-	err = lookup_fast(nd, path, &inode);
+	err = lookup_fast(nd, path, &inode); //@@ 바로 inode를 채워줌
 	if (unlikely(err)) {
 		if (err < 0)
 			goto out_err;
 
-		err = lookup_slow(nd, path);
+    //@@ 2017.05.20 start.
+		err = lookup_slow(nd, path); //@@ path에 mnt와 dentry를 찾아줌.
 		if (err < 0)
 			goto out_err;
 
-		inode = path->dentry->d_inode;
+		inode = path->dentry->d_inode; //@@ d_inode는 dentry 자체의 inode.
+		//@@ inode를 까보면 디렉토리 안의 파일 및 디렉토리 목록이 있을것이다.
 	}
 	err = -ENOENT;
 	if (!inode)
 		goto out_path_put;
 
-	if (should_follow_link(inode, follow)) {
+	if (should_follow_link(inode, follow)) { //@@ link를 쫒아가야 하는가?
 		if (nd->flags & LOOKUP_RCU) {
-			if (unlikely(unlazy_walk(nd, path->dentry))) {
+      //@@ RUC walk 에서 REF walk 로 전환.
+			if (unlikely(unlazy_walk(nd, path->dentry))) { //@@ spin lock으로 ref 증가.
 				err = -ECHILD;
 				goto out_err;
 			}
@@ -1552,8 +1559,8 @@ static inline int walk_component(struct nameidata *nd, struct path *path,
 		BUG_ON(inode != path->dentry->d_inode);
 		return 1;
 	}
-	path_to_nameidata(path, nd);
-	nd->inode = inode;
+	path_to_nameidata(path, nd); //@@ return result.
+	nd->inode = inode; //@@ return result.
 	return 0;
 
 out_path_put:
@@ -1561,6 +1568,7 @@ out_path_put:
 out_err:
 	terminate_walk(nd);
 	return err;
+  //@@ 2017.05.20 end
 }
 
 /*
@@ -1815,6 +1823,7 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 		name += len;
 
 		err = walk_component(nd, &next, LOOKUP_FOLLOW);
+    //@@ 2017.05.20 end
 		if (err < 0)
 			return err;
 

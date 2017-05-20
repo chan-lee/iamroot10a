@@ -2894,7 +2894,7 @@ covered inode : 어느 디렉토리에 마운트 되었는가를 나타내는데
 
 file system 등록 -> mount (super block 읽기) -> inode 읽기 -> data 읽기(buffer cache)
 
-inode cache는 사용횟수(LFU)에 의해 유지되는데 directory의 경우
+node cache는 사용횟수(LFU)에 의해 유지되는데 directory의 경우
 상대적으로 오래 남아있을수 있다. hash key : dev id + inode id
 
 direcotry cache(dcache) 는 path가 짧을수록 유리한듯하다. hash key : string
@@ -3409,9 +3409,24 @@ RCU-walk: faster pathname lookup in Linux
  - https://lwn.net/Articles/649729/
 다음시간은 "Pathname lookup in Linux"를 읽고 시작할 예정
 
+struct nameidata {
+};
+understanding linux kernel - p503(parent path name lookup)
+
 ================================================================================
 [2017.05.13]
 [Linux] VFS scalability - dcache
  - http://studyfoss.egloos.com/5469672/
 
- 
+================================================================================
+[2017.05.20]
+unlazy_walk, complete_walk (RCU-walk: faster pathname lookup in Linux)
+- https://lwn.net/Articles/649729/
+RCU walk : lazy walk
+REF walk : unlzay walk
+lookup을 이용해 끝까지 다 갔을때 : complete walk?
+
+다음 할 차례
+walk_component() 함수 완료: 그 후 어느 함수인지 모르겠음.
+link_path_walk() 로 추정되는데, 함수 이름중 link 가 link 파일을 말하는지 모르겠음.
+

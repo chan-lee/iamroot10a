@@ -12,7 +12,7 @@ enum { MAX_NESTED_LINKS = 8 };
 
 struct nameidata {
 	struct path	path;
-	struct qstr	last;
+	struct qstr	last; //@@ quick string.
 	struct path	root;
 	struct inode	*inode; /* path.dentry.d_inode */
 	unsigned int	flags;

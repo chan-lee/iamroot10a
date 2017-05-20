@@ -1905,7 +1905,7 @@ struct dentry *__d_lookup(const struct dentry *parent, const struct qstr *name)
 	unsigned int len = name->len;
 	unsigned int hash = name->hash;
 	const unsigned char *str = name->name;
-	struct hlist_bl_head *b = d_hash(parent, hash);
+	struct hlist_bl_head *b = d_hash(parent, hash); //@@ memory 위치로 hash함.
 	struct hlist_bl_node *node;
 	struct dentry *found = NULL;
 	struct dentry *dentry;
@@ -1932,6 +1932,7 @@ struct dentry *__d_lookup(const struct dentry *parent, const struct qstr *name)
 	 */
 	rcu_read_lock();
 	
+  //@@ parent 의 hash table 위치를 찾아 list를 loop함.
 	hlist_bl_for_each_entry_rcu(dentry, node, b, d_hash) {
 
 		if (dentry->d_name.hash != hash)

@@ -204,6 +204,7 @@ struct dentry_operations {
 
 #define DCACHE_MOUNTED		0x10000	/* is a mountpoint */
 #define DCACHE_NEED_AUTOMOUNT	0x20000	/* handle automount on this dir */
+//@@ TRANSIT 은 의미를 잘 모르겠음.
 #define DCACHE_MANAGE_TRANSIT	0x40000	/* manage transit from this dirent */
 #define DCACHE_MANAGED_DENTRY \
 	(DCACHE_MOUNTED|DCACHE_NEED_AUTOMOUNT|DCACHE_MANAGE_TRANSIT)
