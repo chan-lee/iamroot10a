@@ -828,12 +828,15 @@ follow_link(struct path *link, struct nameidata *nd, void **p)
 		mntget(link->mnt);
 
 	error = -ELOOP;
+	//@@ check consecutive symbolic link count
 	if (unlikely(current->total_link_count >= 40))
 		goto out_put_nd_path;
 
+	//@@ reschedule if requested by the current process(flag TIF_NEED_RESCHED)
 	cond_resched();
 	current->total_link_count++;
 
+	//@@ update atime of inode
 	touch_atime(link);
 	nd_set_link(nd, NULL);
 
@@ -841,6 +844,7 @@ follow_link(struct path *link, struct nameidata *nd, void **p)
 	if (error)
 		goto out_put_nd_path;
 
+	//@@ mount된 file system의 follow_link: symbolic link에 대한 real pathname을 축출하고 nd->saved_names 배열에 저장한다.
 	nd->last_type = LAST_BIND;
 	*p = dentry->d_inode->i_op->follow_link(dentry, nd);
 	error = PTR_ERR(*p);
@@ -850,6 +854,8 @@ follow_link(struct path *link, struct nameidata *nd, void **p)
 	error = 0;
 	s = nd_get_link(nd);
 	if (s) {
+		//@@ nd->path를 current->fs->root로 설정하고 nd->flags를 LOOPUP_JUMPED 추가한다.
+		//@@ real pathname이 symbolic link일 수 있기 때문에 vfs_follow_link에서 다시 link_path_walk를 recursive하게 호출하는 것 같음.
 		error = __vfs_follow_link(nd, s);
 		if (unlikely(error))
 			put_link(nd, link, *p);
@@ -1578,10 +1584,13 @@ out_err:
  * Without that kind of total limit, nasty chains of consecutive
  * symlinks can cause almost arbitrarily long lookups.
  */
+//@@ current->link_count : recursive symlink(예를 들면, symbolic link points to itself 경우)를 방지하기 위한 변수
+//@@ cuurne->total_link_count : consecutive symlinks의 최대값을 지정한다.symbolic link가 많을 경우, kernel stack overflow를 발생시킬수 있어 이를 제한한다.(Inderstanding the kernel,Edition 3, 12.5.3. Lookup of Symbolic Links)
 static inline int nested_symlink(struct path *path, struct nameidata *nd)
 {
 	int res;
 
+	//@@ check nested link count of current task, MAX_NESTED_LINKS is 8.
 	if (unlikely(current->link_count >= MAX_NESTED_LINKS)) {
 		path_put_conditional(path, nd);
 		path_put(&nd->path);
@@ -1596,13 +1605,17 @@ static inline int nested_symlink(struct path *path, struct nameidata *nd)
 		struct path link = *path;
 		void *cookie;
 
+		//@@ symbolic link에 대한 real pathname을 구한다.
 		res = follow_link(&link, nd, &cookie);
 		if (res)
 			break;
+		//@@ 위에서 구한 real pathname을 가지고 walk component를 한다.
 		res = walk_component(nd, path, LOOKUP_FOLLOW);
+		//@@ release the temporary data structures allocated by the follow_link method
 		put_link(nd, &link, cookie);
 	} while (res > 0);
 
+	//@@ current->link_count를 감소한다. current->total_link_count는 아직 감소하지 않는다.
 	current->link_count--;
 	nd->depth--;
 	return res;
@@ -1827,11 +1840,15 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 		if (err < 0)
 			return err;
 
+		//@@ 2017.05.27 start
 		if (err) {
+			//@@ Lookup symbolic link
 			err = nested_symlink(&next, nd);
 			if (err)
 				return err;
 		}
+		//@@ cache에 있는 inode->i_opflags에 IOP_LOOKUP을 설정한다. 이는 inode에 의해 lookup을 할 수 있다는 것을 의미한다.
+		//@@ inode->lookup operation(function pointer)가 없으면 오류처리한다.
 		if (!can_lookup(nd->inode)) {
 			err = -ENOTDIR; 
 			break;

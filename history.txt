@@ -3430,3 +3430,11 @@ lookup을 이용해 끝까지 다 갔을때 : complete walk?
 walk_component() 함수 완료: 그 후 어느 함수인지 모르겠음.
 link_path_walk() 로 추정되는데, 함수 이름중 link 가 link 파일을 말하는지 모르겠음.
 
+================================================================================
+[2017.05.27]
+Understanding the kernel, 12.5 pathname lookup
+nested_symlink() 함수 분석하면서 link_path_walk 완료함.
+https://lwn.net/Articles/649115/에 link_path_walk와 walk_component 간단한 설명이 있음.
+
+다음은 do_last 진행 예정
+
