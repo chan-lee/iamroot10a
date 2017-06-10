@@ -1317,7 +1317,7 @@ static struct dentry *lookup_real(struct inode *dir, struct dentry *dentry,
 		return ERR_PTR(-ENOENT);
 	}
 
-	old = dir->i_op->lookup(dir, dentry, flags);
+	old = dir->i_op->lookup(dir, dentry, flags); //@@ dir용 inode로 부터 파일을 찾아 성공하면 dentry에 inode에 넣는다.
 	if (unlikely(old)) {
 		dput(dentry);
 		dentry = old;
@@ -2489,7 +2489,7 @@ static int atomic_open(struct nameidata *nd, struct dentry *dentry,
 	int error;
 	int acc_mode;
 	int create_error = 0;
-	struct dentry *const DENTRY_NOT_SET = (void *) -1UL;
+	struct dentry *const DENTRY_NOT_SET = (void *) -1UL; //@@ 초기화 안된 상태.
 
 	BUG_ON(dentry->d_inode);
 
@@ -2648,7 +2648,7 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 	struct inode *dir_inode = dir->d_inode;
 	struct dentry *dentry;
 	int error;
-	bool need_lookup;
+	bool need_lookup; //@@ lookup 되어 있지 않을 경우 true 가 됨.
 
 	*opened &= ~FILE_CREATED;
 	dentry = lookup_dcache(&nd->last, dir, nd->flags, &need_lookup);
@@ -2659,11 +2659,13 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 	if (!need_lookup && dentry->d_inode)
 		goto out_no_open;
 
+  //@@ atomic_open 을 지원하면 호출.
 	if ((nd->flags & LOOKUP_OPEN) && dir_inode->i_op->atomic_open) {
 		return atomic_open(nd, dentry, path, file, op, got_write,
 				   need_lookup, opened);
 	}
 
+  //@@ 2017.06.10 end
 	if (need_lookup) {
 		BUG_ON(dentry->d_inode);
 
@@ -2673,6 +2675,7 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 	}
 
 	/* Negative dentry, just create the file */
+  //@@ Netgative dentry : dentry에 inode 가 없는 경우
 	if (!dentry->d_inode && (op->open_flag & O_CREAT)) {
 		umode_t mode = op->mode;
 		if (!IS_POSIXACL(dir->d_inode))
@@ -2773,7 +2776,7 @@ static int do_last(struct nameidata *nd, struct path *path,
 
 retry_lookup:
 	if (op->open_flag & (O_CREAT | O_TRUNC | O_WRONLY | O_RDWR)) {
-		error = mnt_want_write(nd->path.mnt);
+		error = mnt_want_write(nd->path.mnt); //@@ write 가능할 때까지 기다림.
 		if (!error)
 			got_write = true;
 		/*
@@ -3038,6 +3041,7 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 	if (unlikely(error))
 		goto out;
 
+  //@@ 2017.06.10 start
 	error = do_last(nd, &path, file, op, &opened, pathname);
 	while (unlikely(error > 0)) { /* trailing symlink */
 		struct path link = path;

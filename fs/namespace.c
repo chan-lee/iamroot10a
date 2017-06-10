@@ -302,6 +302,7 @@ static int mnt_is_readonly(struct vfsmount *mnt)
  * frozen. When the write operation is finished, __mnt_drop_write() must be
  * called. This is effectively a refcount.
  */
+//@@ write 가능한 상태까지 기다림
 int __mnt_want_write(struct vfsmount *m)
 {
 	struct mount *mnt = real_mount(m);
@@ -346,7 +347,7 @@ int mnt_want_write(struct vfsmount *m)
 	int ret;
 
 	sb_start_write(m->mnt_sb);
-	ret = __mnt_want_write(m);
+	ret = __mnt_want_write(m); //@@ write 가능한 상태까지 기다림
 	if (ret)
 		sb_end_write(m->mnt_sb);
 	return ret;
