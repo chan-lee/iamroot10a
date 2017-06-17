@@ -2361,10 +2361,14 @@ int vfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 		return -EACCES;	/* shouldn't it be ENOSYS? */
 	mode &= S_IALLUGO;
 	mode |= S_IFREG;
+	//@@ security 검사를 하는 것으로 예상함.
 	error = security_inode_create(dir, dentry, mode);
 	if (error)
 		return error;
+	//@@ create operation은 inode를 생성, inode 정보를 채운다.
+	//@@ 그리고 dentry와 inode 를 연결해준다.
 	error = dir->i_op->create(dir, dentry, mode, want_excl);
+	//@@ file create event를 fsnotify_group에 전달한다.
 	if (!error)
 		fsnotify_create(dir, dentry);
 	return error;
@@ -2667,16 +2671,19 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 
   //@@ 2017.06.10 end
 	if (need_lookup) {
+		//@@ lookup_dcache에서 dentry가 없어 new alloc한 경우
 		BUG_ON(dentry->d_inode);
 
+		//@@ inode를 찾는다.
 		dentry = lookup_real(dir_inode, dentry, nd->flags);
 		if (IS_ERR(dentry))
 			return PTR_ERR(dentry);
 	}
 
 	/* Negative dentry, just create the file */
-  //@@ Netgative dentry : dentry에 inode 가 없는 경우
+  //@@ Netgative dentry : dentry에 inode 가 없는 경우 : file이 없는 경우.
 	if (!dentry->d_inode && (op->open_flag & O_CREAT)) {
+  //@@ 2017.06.17 start
 		umode_t mode = op->mode;
 		if (!IS_POSIXACL(dir->d_inode))
 			mode &= ~current_umask();
@@ -2695,12 +2702,14 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 		error = security_path_mknod(&nd->path, dentry, mode, 0);
 		if (error)
 			goto out_dput;
+		//@@ new inode를 생성한다.
 		error = vfs_create(dir->d_inode, dentry, mode,
 				   nd->flags & LOOKUP_EXCL);
 		if (error)
 			goto out_dput;
 	}
 out_no_open:
+	//@@ positive dentry(file 있는 경우).
 	path->dentry = dentry;
 	path->mnt = nd->path.mnt;
 	return 1;
@@ -2785,6 +2794,8 @@ retry_lookup:
 		 * dropping this one anyway.
 		 */
 	}
+	//@@ file(last component)에 대한 inode를 생성하거나 inode를 찾아 dentry와 연결한다.
+	//@@ path에 dentry를 넘겨준다.
 	mutex_lock(&dir->d_inode->i_mutex);
 	error = lookup_open(nd, path, file, op, got_write, opened);
 	mutex_unlock(&dir->d_inode->i_mutex);
@@ -2793,6 +2804,7 @@ retry_lookup:
 		if (error)
 			goto out;
 
+		//@@ atomic open 인 경우
 		if ((*opened & FILE_CREATED) ||
 		    !S_ISREG(file_inode(file)->i_mode))
 			will_truncate = false;
@@ -2802,6 +2814,7 @@ retry_lookup:
 	}
 
 	if (*opened & FILE_CREATED) {
+		//@@ 파일이 생성된 경우
 		/* Don't check for write permission, don't truncate */
 		open_flag &= ~O_TRUNC;
 		will_truncate = false;
@@ -2830,9 +2843,12 @@ retry_lookup:
 	if ((open_flag & (O_EXCL | O_CREAT)) == (O_EXCL | O_CREAT))
 		goto exit_dput;
 
+	//@@ autofs에 대한 처리로 unmount되어 있는 경우, automunt 하는 것으로 추정함.
+	//@@ autofs는 일정시간 경과후, unmount된다고 함.그래서, unmount됐으나 inode는 cache된 경우에 대한 처리로 보여짐.
 	error = follow_managed(path, nd->flags);
 	if (error < 0)
 		goto exit_dput;
+	//@@ 2017.06.17 end
 
 	if (error)
 		nd->flags |= LOOKUP_JUMPED;
