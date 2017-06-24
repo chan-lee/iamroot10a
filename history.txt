@@ -3462,5 +3462,7 @@ comma operation - https://en.wikipedia.org/wiki/Comma_operator
 lookup_open 완료
 do_last 계속 진행중
 
-
-
+================================================================================
+[2017.06.17]
+link path walk 복습중
+그중 walk_component 후 follow_link 하기전에 마침
