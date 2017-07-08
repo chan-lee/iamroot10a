@@ -671,9 +671,11 @@ static inline void path_to_nameidata(const struct path *path,
 {
 	if (!(nd->flags & LOOKUP_RCU)) {
 		dput(nd->path.dentry);
+
 		if (nd->path.mnt != path->mnt)
 			mntput(nd->path.mnt);
 	}
+
 	nd->path.mnt = path->mnt;
 	nd->path.dentry = path->dentry;
 }
@@ -1361,6 +1363,7 @@ static int lookup_fast(struct nameidata *nd,
 	if (nd->flags & LOOKUP_RCU) {
 		unsigned seq;
 		dentry = __d_lookup_rcu(parent, &nd->last, &seq);
+
 		if (!dentry)
 			goto unlazy;
 
@@ -1369,6 +1372,7 @@ static int lookup_fast(struct nameidata *nd,
 		 * the dentry name information from lookup.
 		 */
 		*inode = dentry->d_inode; //@@ 핵심 return.
+		
 		if (read_seqcount_retry(&dentry->d_seq, seq))
 			return -ECHILD;
 
@@ -1381,22 +1385,29 @@ static int lookup_fast(struct nameidata *nd,
 		 */
 		if (__read_seqcount_retry(&parent->d_seq, nd->seq))
 			return -ECHILD;
+		
 		nd->seq = seq;
 
 		if (unlikely(dentry->d_flags & DCACHE_OP_REVALIDATE)) {
 			status = d_revalidate(dentry, nd->flags);
+
 			if (unlikely(status <= 0)) {
 				if (status != -ECHILD)
 					need_reval = 0;
+
 				goto unlazy;
 			}
 		}
+
 		path->mnt = mnt;
 		path->dentry = dentry;
+
 		if (unlikely(!__follow_mount_rcu(nd, path, inode)))
 			goto unlazy;
+
 		if (unlikely(path->dentry->d_flags & DCACHE_NEED_AUTOMOUNT))
 			goto unlazy;
+		
 		return 0;
 unlazy:
 		// REF-walk mode 설정 : 기본이 RCU-walk mode인 것 같다.
@@ -1537,7 +1548,9 @@ static inline int walk_component(struct nameidata *nd, struct path *path,
 	 */
 	if (unlikely(nd->last_type != LAST_NORM))
 		return handle_dots(nd, nd->last_type);
+
 	err = lookup_fast(nd, path, &inode); //@@ 바로 inode를 채워줌
+	
 	if (unlikely(err)) {
 		if (err < 0)
 			goto out_err;
@@ -1562,9 +1575,11 @@ static inline int walk_component(struct nameidata *nd, struct path *path,
 				goto out_err;
 			}
 		}
+
 		BUG_ON(inode != path->dentry->d_inode);
 		return 1;
 	}
+
 	path_to_nameidata(path, nd); //@@ return result.
 	nd->inode = inode; //@@ return result.
 	return 0;
@@ -1778,7 +1793,7 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 	struct path next;
 	int err;
 	
-	while (*name=='/')
+	while (*name=='/') //@@ Skip first character of the path - [Hyun, KIM]
 		name++;
 	if (!*name)
 		return 0;
@@ -1793,12 +1808,14 @@ static int link_path_walk(const char *name, struct nameidata *nd)
  		if (err)
 			break;
 
-		len = hash_name(name, &this.hash);
+		len = hash_name(name, &this.hash); //@@ Find length and hash of the component after '/' - [Hyun, KIM]
 		this.name = name;
 		this.len = len;
 
 		type = LAST_NORM;
-		if (name[0] == '.') switch (len) {
+
+		if (name[0] == '.') {
+			switch (len) {
 			case 2:
 				if (name[1] == '.') {
 					type = LAST_DOTDOT;
@@ -1807,10 +1824,13 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 				break;
 			case 1:
 				type = LAST_DOT;
+			}
 		}
+
 		if (likely(type == LAST_NORM)) {
 			struct dentry *parent = nd->path.dentry;
 			nd->flags &= ~LOOKUP_JUMPED;
+
 			if (unlikely(parent->d_flags & DCACHE_OP_HASH)) {
 				err = parent->d_op->d_hash(parent, &this);
 				if (err < 0)
@@ -1818,10 +1838,11 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 			}
 		}
 
+		//@@ Set nd->last to 'this' component (directory we found now) - [Hyun, KIM]
 		nd->last = this;
 		nd->last_type = type;
 
-		if (!name[len])
+		if (!name[len]) //@@ Return 0 if the character of the path is 0 (NULL) - [Hyun, KIM]
 			return 0;
 		/*
 		 * If it wasn't NUL, we know it was '/'. Skip that
@@ -1829,8 +1850,9 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 		 */
 		do {
 			len++;
-		} while (unlikely(name[len] == '/'));
-		if (!name[len])
+		} while (unlikely(name[len] == '/')); //@@ Break if the name[len] is NOT '/' - [Hyun, KIM]
+		
+		if (!name[len]) //@@ Return 0 if the character of the path is 0 (NULL) - [Hyun, KIM]
 			return 0;
 
 		name += len;
