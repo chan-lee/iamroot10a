@@ -603,6 +603,8 @@ static int complete_walk(struct nameidata *nd)
 	if (likely(!(dentry->d_flags & DCACHE_OP_WEAK_REVALIDATE)))
 		return 0;
 
+	//@@ NFS와 같은 파일시스템에서 revalidate한다.
+	//@@ weak인 이유는 inode만을 기준으로 revalidate하기 때문에 붙여졌다고 추정함.
 	status = dentry->d_op->d_weak_revalidate(dentry, nd->flags);
 	if (status > 0)
 		return 0;
@@ -2387,17 +2389,18 @@ static int may_open(struct path *path, int acc_mode, int flag)
 	if (!inode)
 		return -ENOENT;
 
+	//@@ inode의 flag 검사
 	switch (inode->i_mode & S_IFMT) {
 	case S_IFLNK:
-		return -ELOOP;
+		return -ELOOP; //@@ symbolic link의 너무 들어갔을 경우.
 	case S_IFDIR:
 		if (acc_mode & MAY_WRITE)
-			return -EISDIR;
+			return -EISDIR;  //@@ directory에 write할려고 하는 경우.
 		break;
 	case S_IFBLK:
 	case S_IFCHR:
 		if (path->mnt->mnt_flags & MNT_NODEV)
-			return -EACCES;
+			return -EACCES;  //@@ 장치가 없는 경우
 		/*FALLTHRU*/
 	case S_IFIFO:
 	case S_IFSOCK:
@@ -2405,9 +2408,12 @@ static int may_open(struct path *path, int acc_mode, int flag)
 		break;
 	}
 
+	//@@ check inode permission
 	error = inode_permission(inode, acc_mode);
 	if (error)
 		return error;
+
+	//@@ 2017.07.08 end
 
 	/*
 	 * An append-only file must be opened in append mode for writing.
@@ -2850,6 +2856,8 @@ retry_lookup:
 		goto exit_dput;
 	//@@ 2017.06.17 end
 
+	//@@ 2017.07.08 start
+	//@@ LOOKUP_JUMPED : last component를 찾으면 clear된다. 더 찾아봐야하면 설정된다.
 	if (error)
 		nd->flags |= LOOKUP_JUMPED;
 
@@ -2863,6 +2871,7 @@ finish_lookup:
 		goto out;
 	}
 
+	//@@ follow link 할지를 확인한다.
 	if (should_follow_link(inode, !symlink_ok)) {
 		if (nd->flags & LOOKUP_RCU) {
 			if (unlikely(unlazy_walk(nd, path->dentry))) {
@@ -2890,17 +2899,22 @@ finish_open:
 		path_put(&save_parent);
 		return error;
 	}
+	//@@ name에 inode 정보를 저장한다.
 	audit_inode(name, nd->path.dentry, 0);
 	error = -EISDIR;
+	//@@ 디렉토리 생성인 경우, out
 	if ((open_flag & O_CREAT) && S_ISDIR(nd->inode->i_mode))
 		goto out;
 	error = -ENOTDIR;
+	//@@ 디렉토리를 lookup하는데, lookup을 할 수 없으면 out
 	if ((nd->flags & LOOKUP_DIRECTORY) && !can_lookup(nd->inode))
 		goto out;
+	//@@ regular file 인경우, will_truncate가 true임.
 	if (!S_ISREG(nd->inode->i_mode))
 		will_truncate = false;
 
 	if (will_truncate) {
+		//@@ trucate 해야할 경우, write access를 할 수 있을 때까지 기다림.
 		error = mnt_want_write(nd->path.mnt);
 		if (error)
 			goto out;
