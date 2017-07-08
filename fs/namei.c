@@ -1400,7 +1400,7 @@ static int lookup_fast(struct nameidata *nd,
 		}
 
 		path->mnt = mnt;
-		path->dentry = dentry;
+		path->dentry = dentry; //@@ dentry도 추가
 
 		if (unlikely(!__follow_mount_rcu(nd, path, inode)))
 			goto unlazy;
@@ -1413,7 +1413,7 @@ unlazy:
 		// REF-walk mode 설정 : 기본이 RCU-walk mode인 것 같다.
 		if (unlazy_walk(nd, dentry))
 			return -ECHILD;
-	} else {
+	} else { //@@ RCU가 아닌경우
 		dentry = __d_lookup(parent, &nd->last);
 	}
 
@@ -1525,11 +1525,11 @@ static inline int should_follow_link(struct inode *inode, int follow)
 {
 	if (unlikely(!(inode->i_opflags & IOP_NOFOLLOW))) {
 		if (likely(inode->i_op->follow_link))
-			return follow;
+			return follow; //@@ follow 가능하면.
 
 		/* This gets set once for the inode lifetime */
 		spin_lock(&inode->i_lock);
-		inode->i_opflags |= IOP_NOFOLLOW;
+		inode->i_opflags |= IOP_NOFOLLOW; //@@ follow 사용 불가.
 		spin_unlock(&inode->i_lock);
 	}
 	return 0;
@@ -1566,10 +1566,10 @@ static inline int walk_component(struct nameidata *nd, struct path *path,
 	err = -ENOENT;
 	if (!inode)
 		goto out_path_put;
-
+        //@@ follow :LOOKUP_FOLLOW.
 	if (should_follow_link(inode, follow)) { //@@ link를 쫒아가야 하는가?
 		if (nd->flags & LOOKUP_RCU) {
-      //@@ RUC walk 에서 REF walk 로 전환.
+      //@@ link면 쫒아 들어가기 위한 준비 => RUC walk 에서 REF walk 로 전환.
 			if (unlikely(unlazy_walk(nd, path->dentry))) { //@@ spin lock으로 ref 증가.
 				err = -ECHILD;
 				goto out_err;
@@ -1600,7 +1600,7 @@ out_err:
  * symlinks can cause almost arbitrarily long lookups.
  */
 //@@ current->link_count : recursive symlink(예를 들면, symbolic link points to itself 경우)를 방지하기 위한 변수
-//@@ cuurne->total_link_count : consecutive symlinks의 최대값을 지정한다.symbolic link가 많을 경우, kernel stack overflow를 발생시킬수 있어 이를 제한한다.(Inderstanding the kernel,Edition 3, 12.5.3. Lookup of Symbolic Links)
+//@@ cuurne->total_link_count : consecutive symlinks의 최대값을 지정한다.symbolic link가 많을 경우, kernel stack overflow를 발생시킬수 있어 이를 제한한다.(Understanding the kernel,Edition 3, 12.5.3. Lookup of Symbolic Links)
 static inline int nested_symlink(struct path *path, struct nameidata *nd)
 {
 	int res;
@@ -1810,7 +1810,7 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 
 		len = hash_name(name, &this.hash); //@@ Find length and hash of the component after '/' - [Hyun, KIM]
 		this.name = name;
-		this.len = len;
+		this.len = len; //@@ 뒤에 path가 기록되어 있으므로, 갯수를 기록해야한다.
 
 		type = LAST_NORM;
 
@@ -1828,7 +1828,7 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 		}
 
 		if (likely(type == LAST_NORM)) {
-			struct dentry *parent = nd->path.dentry;
+			struct dentry *parent = nd->path.dentry; //@@ 초기값은 root.
 			nd->flags &= ~LOOKUP_JUMPED;
 
 			if (unlikely(parent->d_flags & DCACHE_OP_HASH)) {
@@ -1839,8 +1839,8 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 		}
 
 		//@@ Set nd->last to 'this' component (directory we found now) - [Hyun, KIM]
-		nd->last = this;
-		nd->last_type = type;
+		nd->last = this; // name. 현재 찾은 directory.
+		nd->last_type = type; // NORM.
 
 		if (!name[len]) //@@ Return 0 if the character of the path is 0 (NULL) - [Hyun, KIM]
 			return 0;
@@ -1863,7 +1863,7 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 			return err;
 
 		//@@ 2017.05.27 start
-		if (err) {
+		if (err) { //@@ link를 쫒아갈경우: 1.
 			//@@ Lookup symbolic link
 			err = nested_symlink(&next, nd);
 			if (err)
@@ -1915,7 +1915,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 
 	nd->root.mnt = NULL;
 
-	if (*name=='/') {
+	if (*name=='/') { //@@ 절대 경로.
 		//@@ nameidata 값(path를 root)을 할당한다.
 		if (flags & LOOKUP_RCU) {
 			lock_rcu_walk();
@@ -1925,7 +1925,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 			path_get(&nd->root);
 		}
 		nd->path = nd->root;
-	} else if (dfd == AT_FDCWD) {
+	} else if (dfd == AT_FDCWD) { //@@ 현재 작업 디렉토리.
 		//@@ nameidata 값(path를 task current working directory)을 할당한다.
 		if (flags & LOOKUP_RCU) {
 			struct fs_struct *fs = current->fs;
