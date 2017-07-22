@@ -2437,6 +2437,8 @@ static int may_open(struct path *path, int acc_mode, int flag)
 
 	//@@ 2017.07.08 end
 
+	//@@ 2017.07.22 start
+
 	/*
 	 * An append-only file must be opened in append mode for writing.
 	 */
@@ -2446,6 +2448,14 @@ static int may_open(struct path *path, int acc_mode, int flag)
 		if (flag & O_TRUNC)
 			return -EPERM;
 	}
+
+	/**
+	 *@@ 2017.07.22
+	 *
+	 * O_NOATIME: Don't update file last access time on read() (since Linux 2.6.8)
+	 *
+	 * Why ownership or superuser is needed with O_NOATIME?
+	 */
 
 	/* O_NOATIME can only be set by the owner or superuser */
 	if (flag & O_NOATIME && !inode_owner_or_capable(inode))
@@ -2946,7 +2956,7 @@ finish_open_created:
 	error = may_open(&nd->path, acc_mode, open_flag);
 	if (error)
 		goto out;
-	file->f_path.mnt = nd->path.mnt;
+	file->f_path.mnt = nd->path.mnt; //@@ ???
 	error = finish_open(file, nd->path.dentry, NULL, opened);
 	if (error) {
 		if (error == -EOPENSTALE)

@@ -669,15 +669,19 @@ static int do_dentry_open(struct file *f,
 	struct inode *inode;
 	int error;
 
+	//@@ file.f_mode: Process access mode, OPEN_FMODE()???
 	f->f_mode = OPEN_FMODE(f->f_flags) | FMODE_LSEEK |
 				FMODE_PREAD | FMODE_PWRITE;
 
+	//@@ O_PATH: refer to the man page (man 2 open)
 	if (unlikely(f->f_flags & O_PATH))
 		f->f_mode = FMODE_PATH;
 
+	//@@ increase count of vfsmount and dentry for the file
 	path_get(&f->f_path);
 	inode = f->f_inode = f->f_path.dentry->d_inode;
 	if (f->f_mode & FMODE_WRITE) {
+		//@@ 2017.07.22 end
 		error = __get_file_write_access(inode, f->f_path.mnt);
 		if (error)
 			goto cleanup_file;
