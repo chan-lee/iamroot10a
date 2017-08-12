@@ -685,13 +685,17 @@ static int do_dentry_open(struct file *f,
 		error = __get_file_write_access(inode, f->f_path.mnt);
 		if (error)
 			goto cleanup_file;
+		//@@ 2017.08.12 start
+		//@@ character/block/fifo/sock 이 아닌 경우, file_take_write
 		if (!special_file(inode->i_mode))
 			file_take_write(f);
 	}
 
+	//@@ super block list에 file 추가
 	f->f_mapping = inode->i_mapping;
 	file_sb_list_add(f, inode->i_sb);
 
+	//@@ FMODE_PATH는 실제로 file open 하는 것이 아님.
 	if (unlikely(f->f_mode & FMODE_PATH)) {
 		f->f_op = &empty_fops;
 		return 0;
@@ -703,10 +707,13 @@ static int do_dentry_open(struct file *f,
 	if (error)
 		goto cleanup_all;
 
-	error = break_lease(inode, f->f_flags);
+	//@@ file lease : 일정 기간동안 권한을 잠시 빌려주는 것을 의미한다.
+	//@@ lease된 것을 모두 해제한다.
+	error = break_leas(inode, f->f_flags);
 	if (error)
 		goto cleanup_all;
 
+	//@@ file operation open 
 	if (!open && f->f_op)
 		open = f->f_op->open;
 	if (open) {
@@ -717,8 +724,10 @@ static int do_dentry_open(struct file *f,
 	if ((f->f_mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ)
 		i_readcount_inc(inode);
 
+	//@@ option flag를 지운다.
 	f->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
 
+	//@@ file readahead state 초기화
 	file_ra_state_init(&f->f_ra, f->f_mapping->host->i_mapping);
 
 	return 0;

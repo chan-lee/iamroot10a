@@ -766,14 +766,18 @@ struct file *open_exec(const char *name)
 		goto out;
 
 	err = -EACCES;
+	//@@ 정규파일이 아니면 오류 처리
 	if (!S_ISREG(file_inode(file)->i_mode))
 		goto exit;
 
+	//@@ 실행할 수 없으면 오류 처리
 	if (file->f_path.mnt->mnt_flags & MNT_NOEXEC)
 		goto exit;
 
+	//@@ file system에 FSNOTIFY_EVENT_PATH 를 전달한다.
 	fsnotify_open(file);
 
+	//@@ file write 접근을 금지 설정함.
 	err = deny_write_access(file);
 	if (err)
 		goto exit;
@@ -1514,6 +1518,7 @@ static int do_execve_common(const char *filename,
 	retval = PTR_ERR(file);
 	if (IS_ERR(file))
 		goto out_unmark;
+	//@@ 2017.08.12 end
 
 	sched_exec();
 

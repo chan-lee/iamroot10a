@@ -3479,4 +3479,13 @@ link path walk 복습중
 [2017.07.22]
 may_open()에서 시작 - L2440 [fs/namei.c]
 do_dentry_open()에서 종료 - L684 [fs/open.c]
+[C++11] atomic - http://sweeper.egloos.com/3059861
+Hazard Pointer 구현(1) - https://m.blog.naver.com/PostView.nhn?blogId=jjoommnn&logNo=130127286459&proxyReferer=https%3A%2F%2Fwww.google.co.kr%2F
+
+================================================================================
+[2017.08.12]
+O_DIRECT : 캐쉬를 거치지 않고 DMA로 바로 데이터 전송하고 리턴. 데이터가 모두 전송됬는지 보장하지 않는다.
+ - http://heart4u.co.kr/tblog/476
+[C++] Return value optimiztion (RVO) - [C++] Return value optimiztion (RVO)
+
 

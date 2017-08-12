@@ -2957,6 +2957,7 @@ finish_open_created:
 	if (error)
 		goto out;
 	file->f_path.mnt = nd->path.mnt; //@@ ???
+	//@@ file operation의 open을 호출한다.(VFS 계층에 open이 설정되는 것 같음.)
 	error = finish_open(file, nd->path.dentry, NULL, opened);
 	if (error) {
 		if (error == -EOPENSTALE)
@@ -2964,22 +2965,29 @@ finish_open_created:
 		goto out;
 	}
 opened:
+	//@@ O_DIRECT인 경우, flag를 검사한다.
 	error = open_check_o_direct(file);
 	if (error)
 		goto exit_fput;
+	//@@ IMA(Integrity Measurement Architecture) 검사
 	error = ima_file_check(file, op->acc_mode);
 	if (error)
 		goto exit_fput;
 
 	if (will_truncate) {
+		//@@ inode의 offset을 0으로 설정한다(do_truncate)
 		error = handle_truncate(file);
 		if (error)
 			goto exit_fput;
 	}
 out:
+	//@@ got_write가 true인 경우는, truncate가 되는 경우임.
 	if (got_write)
 		mnt_drop_write(nd->path.mnt);
+	//@@ parent path의 reference 를 감소한다.
 	path_put(&save_parent);
+	//@@ RCU walk 인 경우, unlock rcu walk
+	//@@ REF walk 인 경우, 현재 path를 path_put한다.
 	terminate_walk(nd);
 	return error;
 
@@ -3106,6 +3114,7 @@ static struct file *path_openat(int dfd, struct filename *pathname,
   //@@ 2017.06.10 start
 	error = do_last(nd, &path, file, op, &opened, pathname);
 	while (unlikely(error > 0)) { /* trailing symlink */
+		//@@ 심볼릭 링크인 경우로 보임.
 		struct path link = path;
 		void *cookie;
 		if (!(nd->flags & LOOKUP_FOLLOW)) {
@@ -3128,8 +3137,10 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 out:
 	if (nd->root.mnt && !(nd->flags & LOOKUP_ROOT))
 		path_put(&nd->root);
+	//@@ release base(base가 뭔지 모르겠음)
 	if (base)
 		fput(base);
+	//@@ open 되지 않은 경우,이전에 할당된 file 정보들을 지운다.
 	if (!(opened & FILE_OPENED)) {
 		BUG_ON(!error);
 		put_filp(file);
