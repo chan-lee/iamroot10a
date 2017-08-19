@@ -270,6 +270,7 @@ static int __bprm_mm_init(struct linux_binprm *bprm)
 	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
 	INIT_LIST_HEAD(&vma->anon_vma_chain);
 
+	//@@ vma에 page 크기만큼의 address를 할당 : 기본 stack용
 	err = insert_vm_struct(mm, vma);
 	if (err)
 		goto err;
@@ -361,6 +362,7 @@ static int bprm_mm_init(struct linux_binprm *bprm)
 	int err;
 	struct mm_struct *mm = NULL;
 
+	//@@ mm_struct 할당 및 초기화
 	bprm->mm = mm = mm_alloc();
 	err = -ENOMEM;
 	if (!mm)
@@ -370,6 +372,7 @@ static int bprm_mm_init(struct linux_binprm *bprm)
 	if (err)
 		goto err;
 
+	//@@ vma struct 초기화(page size 만큼 stack 영역 할당)
 	err = __bprm_mm_init(bprm);
 	if (err)
 		goto err;
@@ -1520,16 +1523,21 @@ static int do_execve_common(const char *filename,
 		goto out_unmark;
 	//@@ 2017.08.12 end
 
+	//@@ 2017.08.19 start
+	//@@ idle cpu로 migration 한다. 이후 과정에 부하가 많아질 것을 예상하여 가장 널널한 cpu로 자원을 할당한다.
 	sched_exec();
 
 	bprm->file = file;
 	bprm->filename = filename;
 	bprm->interp = filename;
 
+	//@@ bprm에 mm_struct와 vma struct를 생성하고 연결한다.
+	//@@ 이후, 로딩에 이용한 구조체로 보임.
 	retval = bprm_mm_init(bprm);
 	if (retval)
 		goto out_file;
 
+	//@@ argument count와 environment count를 계산한다.
 	bprm->argc = count(argv, MAX_ARG_STRINGS);
 	if ((retval = bprm->argc) < 0)
 		goto out;
@@ -1538,9 +1546,12 @@ static int do_execve_common(const char *filename,
 	if ((retval = bprm->envc) < 0)
 		goto out;
 
+	//@@ permission 검사하고 128바이트를 파일에서 읽어 bprm->buf에 채운다.
+	//@@ ELF 포맷은 64바이트가 헤드이다.
 	retval = prepare_binprm(bprm);
 	if (retval < 0)
 		goto out;
+	//@@ 2017.08.19 end
 
 	retval = copy_strings_kernel(1, &bprm->filename, bprm);
 	if (retval < 0)

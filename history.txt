@@ -3488,4 +3488,7 @@ O_DIRECT : 캐쉬를 거치지 않고 DMA로 바로 데이터 전송하고 리�
  - http://heart4u.co.kr/tblog/476
 [C++] Return value optimiztion (RVO) - [C++] Return value optimiztion (RVO)
 
+================================================================================
+[2017.08.19]
+do_execve_common 분석중
 

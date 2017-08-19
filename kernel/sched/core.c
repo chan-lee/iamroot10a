@@ -2116,14 +2116,17 @@ void sched_exec(void)
 	int dest_cpu;
 
 	raw_spin_lock_irqsave(&p->pi_lock, flags);
+	//@@ idle cpu를 선택
 	dest_cpu = p->sched_class->select_task_rq(p, SD_BALANCE_EXEC, 0);
 	if (dest_cpu == smp_processor_id())
 		goto unlock;
 
+	//@@ 선택된 cpu가 active 상태인지 검사
 	if (likely(cpu_active(dest_cpu))) {
 		struct migration_arg arg = { p, dest_cpu };
 
 		raw_spin_unlock_irqrestore(&p->pi_lock, flags);
+		//@@ 선택된 cpu로 task를 migration 한다.
 		stop_one_cpu(task_cpu(p), migration_cpu_stop, &arg);
 		return;
 	}
