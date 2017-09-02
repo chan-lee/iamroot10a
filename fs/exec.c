@@ -469,10 +469,12 @@ static int copy_strings(int argc, struct user_arg_ptr argv,
 		unsigned long pos;
 
 		ret = -EFAULT;
+		//@@ 한개 argument를 얻는다.
 		str = get_user_arg_ptr(argv, argc);
 		if (IS_ERR(str))
 			goto out;
 
+		//@@ MAX_ARG_STRLEN = PAGE_SIZE * 32
 		len = strnlen_user(str, MAX_ARG_STRLEN);
 		if (!len)
 			goto out;
@@ -486,6 +488,7 @@ static int copy_strings(int argc, struct user_arg_ptr argv,
 		str += len;
 		bprm->p -= len;
 
+		//@@ argment가 32 페이지 만큼 될 수 있어, page 단위로 계산하며서 copy하는 것 같음.
 		while (len > 0) {
 			int offset, bytes_to_copy;
 
@@ -511,6 +514,7 @@ static int copy_strings(int argc, struct user_arg_ptr argv,
 			if (!kmapped_page || kpos != (pos & PAGE_MASK)) {
 				struct page *page;
 
+				//@@ bprm에 초기 할당된 page에서 pos에 해당하는 page를 할당받는다.
 				page = get_arg_page(bprm, pos, 1);
 				if (!page) {
 					ret = -E2BIG;
@@ -1382,6 +1386,7 @@ int search_binary_handler(struct linux_binprm *bprm)
 	struct linux_binfmt *fmt;
 	pid_t old_pid, old_vpid;
 
+	//@@ depth는 recursive 하고 호출된 경우를 5회까지 제한한다.
 	/* This allows 4 levels of binfmt rewrites before failing hard. */
 	if (depth > 5)
 		return -ELOOP;
@@ -1394,6 +1399,8 @@ int search_binary_handler(struct linux_binprm *bprm)
 	if (retval)
 		return retval;
 
+	//@@ 2017.09.02 end
+	
 	/* Need to fetch pid before load_binary changes it */
 	old_pid = current->pid;
 	rcu_read_lock();
@@ -1553,10 +1560,15 @@ static int do_execve_common(const char *filename,
 		goto out;
 	//@@ 2017.08.19 end
 
+	//@@ 2017.09.02 start
+	//@@ filename이 kernel space에 있기 때문에 copy_string_kernel를 사용함.
+	//@@ copy_string_kernel은 KERNEL_DS 설정후, copy_string 호출.
 	retval = copy_strings_kernel(1, &bprm->filename, bprm);
 	if (retval < 0)
 		goto out;
 
+	//@@ 이후, argv와 envp를 bprm에 저장하는 것으로 추정함.
+	//@@ user space의 stack영역에 argv와 envp를 복사한다.
 	bprm->exec = bprm->p;
 	retval = copy_strings(bprm->envc, envp, bprm);
 	if (retval < 0)
