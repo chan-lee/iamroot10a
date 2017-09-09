@@ -1029,7 +1029,7 @@ enum perf_event_task_context {
 
 struct task_struct {
 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
-	void *stack; //@@ task의 stack. 시작위치에 struct thread_info 가 있을것으로 추정
+	void *stack; //@@ task의 kernel stack. 시작위치에 struct thread_info 가 있음. 커널의 이해 Figure 3-2
 	atomic_t usage;
 	unsigned int flags;	/* per process flags, defined below */
 	unsigned int ptrace;

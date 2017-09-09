@@ -350,6 +350,7 @@ static void __call_usermodehelper(struct work_struct *work)
 		/* Worker thread stopped blocking khelper thread. */
 		kmod_thread_locker = NULL;
 	}
+  //@@ 2017.09.09 end.
 
 	switch (wait) {
 	case UMH_NO_WAIT:

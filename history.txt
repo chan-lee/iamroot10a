@@ -3497,3 +3497,30 @@ do_execve_common 분석중
 do_execve_common 분석중
  - copy_string_kernel, copy_string
  - search_binary_handler 분석중
+
+================================================================================
+[2017.09.09]
+IMA : *	internal Integrity Measurement Architecture (IMA) definitions
+
+- driver 와 kernel 내부에서 사용하는 module.
+struct module {
+};
+
+struct linux_binfmt {
+	struct list_head lh;
+	struct module *module;
+	int (*load_binary)(struct linux_binprm *); //< 실행 파일
+	int (*load_shlib)(struct file *); //< 라이브러리
+	int (*core_dump)(struct coredump_params *cprm); //< core dump
+	unsigned long min_coredump;	/* minimal dump size */
+};
+
+본곳:
+load_binary를 하고 파일들을 닫는다.
+____call_usermodehelper() 종료
+
+다음 시간에는:
+1. helper 위에 exec할 프로그램이 덮어써지는 것인지 다시 한번 확인
+2. fs/binfmt_elf.c 의 load_elf_binary를 볼지 말지 검토
+3. Understanding Linux Kernel p.828 전체적인 flow에 대한 설명이 있으므로
+리뷰하면서 정리해야함

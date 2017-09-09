@@ -144,7 +144,7 @@ SYSCALL_DEFINE1(uselib, const char __user *, library)
 			if (!try_module_get(fmt->module))
 				continue;
 			read_unlock(&binfmt_lock);
-			error = fmt->load_shlib(file);
+			error = fmt->load_shlib(file); //@@ shared library.
 			read_lock(&binfmt_lock);
 			put_binfmt(fmt);
 			if (error != -ENOEXEC)
@@ -1401,9 +1401,11 @@ int search_binary_handler(struct linux_binprm *bprm)
 
 	//@@ 2017.09.02 end
 	
+  //@@ 2017.09.09 start
 	/* Need to fetch pid before load_binary changes it */
 	old_pid = current->pid;
 	rcu_read_lock();
+  //@@ current task 의 pid 번호를 얻어옴.
 	old_vpid = task_pid_nr_ns(current, task_active_pid_ns(current->parent));
 	rcu_read_unlock();
 
@@ -1418,7 +1420,7 @@ int search_binary_handler(struct linux_binprm *bprm)
 				continue;
 			read_unlock(&binfmt_lock);
 			bprm->recursion_depth = depth + 1;
-			retval = fn(bprm);
+			retval = fn(bprm); //@@ load binary.
 			bprm->recursion_depth = depth;
 			if (retval >= 0) {
 				if (depth == 0) {
@@ -1426,12 +1428,12 @@ int search_binary_handler(struct linux_binprm *bprm)
 					ptrace_event(PTRACE_EVENT_EXEC, old_vpid);
 				}
 				put_binfmt(fmt);
-				allow_write_access(bprm->file);
+				allow_write_access(bprm->file); //@@ 실행 파일인데 왜 write access를??
 				if (bprm->file)
 					fput(bprm->file);
 				bprm->file = NULL;
 				current->did_exec = 1;
-				proc_exec_connector(current);
+				proc_exec_connector(current); //@@ proc fs 와 exec를 연결한다.
 				return retval;
 			}
 			read_lock(&binfmt_lock);
@@ -1578,17 +1580,17 @@ static int do_execve_common(const char *filename,
 	if (retval < 0)
 		goto out;
 
-	retval = search_binary_handler(bprm);
+	retval = search_binary_handler(bprm); //@@ load_binary.
 	if (retval < 0)
 		goto out;
 
 	/* execve succeeded */
 	current->fs->in_exec = 0;
 	current->in_execve = 0;
-	acct_update_integrals(current);
+	acct_update_integrals(current); //@@ task에 cpu 사용시간 기록
 	free_bprm(bprm);
 	if (displaced)
-		put_files_struct(displaced);
+		put_files_struct(displaced); //@@ 더이상 사용하지 않는다면 파일을 닫는다.
 	return retval;
 
 out:

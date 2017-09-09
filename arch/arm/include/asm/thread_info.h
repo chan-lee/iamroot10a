@@ -100,6 +100,7 @@ static inline struct thread_info *current_thread_info(void)
 	return (struct thread_info *)(sp & ~(THREAD_SIZE - 1)); // 현재 태스크를 나타내는 태스크 디스크립터 리턴 
 	// thread_info + stack 이 8k aligned 된 주소에 위치해 있기 때문에 sp 의 하위 13 bit 을 clear 하면
 	// thread_info 구조체 시작주소를 알 수 있다.
+  // kernel thread size는 8k 이다.
 	// @@ Todo : 8k aligned 되었다는것은 어떻게 알 수 있는지 ? 
 	// @@ Todo : kernel stack 과 thread info 구조체가 언제 초기화 되었는지? 
 }
