@@ -99,6 +99,7 @@ static int call_modprobe(char *module_name, int wait)
 	argv[3] = module_name;	/* check free_modprobe_argv() */
 	argv[4] = NULL;
 
+  //@@ 실행할 프로그램 정보를 subprocess_info에 저장.
 	info = call_usermodehelper_setup(modprobe_path, argv, envp, GFP_KERNEL,
 					 NULL, free_modprobe_argv, NULL);
 	if (!info)
@@ -357,14 +358,14 @@ static void __call_usermodehelper(struct work_struct *work)
 		call_usermodehelper_freeinfo(sub_info);
 		break;
 
-	case UMH_WAIT_PROC:
+	case UMH_WAIT_PROC: //@@ 실행 종료까지 기다림.
 		if (pid > 0)
 			break;
 		/* FALLTHROUGH */
-	case UMH_WAIT_EXEC:
+	case UMH_WAIT_EXEC: //@@ 실행까지만 기다림.
 		if (pid < 0)
 			sub_info->retval = pid;
-		umh_complete(sub_info);
+		umh_complete(sub_info); //@@ completion 등록해놓은 함수 호출.
 	}
 }
 
@@ -582,6 +583,9 @@ EXPORT_SYMBOL(call_usermodehelper_setup);
 int call_usermodehelper_exec(struct subprocess_info *sub_info, int wait)
 {
 	DECLARE_COMPLETION_ONSTACK(done);
+	//@@ stack 용. struct completion done = ({ init_completion(&done); done; }); 정확하지 않음.
+	//DECLARE_COMPLETION(done);
+	//@@ non stack용. struct completion done = { 0, unlock_init };
 	int retval = 0;
 
 	helper_lock();
@@ -603,12 +607,12 @@ int call_usermodehelper_exec(struct subprocess_info *sub_info, int wait)
 	sub_info->complete = &done;
 	sub_info->wait = wait;
 
-	queue_work(khelper_wq, &sub_info->work);
+	queue_work(khelper_wq, &sub_info->work); //@@ work: call_userusermodehelper.
 	if (wait == UMH_NO_WAIT)	/* task has freed sub_info */
 		goto unlock;
 
 	if (wait & UMH_KILLABLE) {
-		retval = wait_for_completion_killable(&done);
+		retval = wait_for_completion_killable(&done); //@@ MAX_SCHEDULE_TIMEOUT, TASK_KILLABLE
 		if (!retval)
 			goto wait_done;
 
@@ -618,7 +622,7 @@ int call_usermodehelper_exec(struct subprocess_info *sub_info, int wait)
 		/* fallthrough, umh_complete() was already called */
 	}
 
-	wait_for_completion(&done);
+	wait_for_completion(&done); //@@ MAX_SCHEDULE_TIMEOUT, TASK_UNINTERRUPTIBLE
 wait_done:
 	retval = sub_info->retval;
 out:

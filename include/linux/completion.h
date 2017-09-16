@@ -27,6 +27,9 @@ struct completion {
 	wait_queue_head_t wait;
 };
 
+//@@ completion 구조체 안의 spinlock_t 를 lockdep에서 사용하려면,
+//@@ init_completion() 함수를 호출해야 하기 때문에,
+//@@ stack에서와 나머지의 경우의 처리가 다르다.
 #define COMPLETION_INITIALIZER(work) \
 	{ 0, __WAIT_QUEUE_HEAD_INITIALIZER((work).wait) }
 

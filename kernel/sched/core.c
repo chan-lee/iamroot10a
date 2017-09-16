@@ -2788,9 +2788,13 @@ do_wait_for_common(struct completion *x,
 		   long (*action)(long), long timeout, int state)
 {
 	if (!x->done) {
-		DECLARE_WAITQUEUE(wait, current);
+		DECLARE_WAITQUEUE(wait, current); //@@ wait queue 생성.
 
-		__add_wait_queue_tail_exclusive(&x->wait, &wait);
+    //@@ umh_complete 에서 깨워주기 위해서는 x에 추가한다.
+		__add_wait_queue_tail_exclusive(&x->wait, &wait); //@@ x->wait에 wait 추가.
+
+    //@@ 2017.09.16 end
+
 		do {
 			if (signal_pending_state(state, current)) {
 				timeout = -ERESTARTSYS;

@@ -3524,3 +3524,21 @@ ____call_usermodehelper() 종료
 2. fs/binfmt_elf.c 의 load_elf_binary를 볼지 말지 검토
 3. Understanding Linux Kernel p.828 전체적인 flow에 대한 설명이 있으므로
 리뷰하면서 정리해야함
+
+================================================================================
+[2017.09.16]
+
+1. call_usermodehelper_setup() 종료함
+2. call_usermodehelper_exec() 시작함
+
+Understanding Linux Kernel p.214 - Completions
+Linux Kernel Development p.197 - Completion Variables
+
+semaphore : 내부 변수는 사용 가능한 자원의 갯수
+  그러므로 down() 은 lock과 같은 효과
+  up()은 unlock()과 같은 효과 
+  - http://celdee.tistory.com/180
+
+- 커널에서 사용자 공간 어플리케이션 실행시키기(setup()과 exec()의 상관관계)
+http://forum.falinux.com/zbxe/index.php?document_srl=532908&mid=lecture_tip
+
