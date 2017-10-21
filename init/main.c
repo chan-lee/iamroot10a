@@ -672,6 +672,8 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	security_init(); //@@ security default operations(dummy) 를 할당하고 각각 security module 들을 초기화를 한다.
 	dbg_late_init(); //@@ debug용 command 설정, break point 설정. 입력된 command 실행
 	vfs_caches_init(totalram_pages);
+	//@@ sigqueue kcache를 만든다.
+	//@@ sigqueue는 Process에 signal을 전송할 때 이용될 것으로 예상함.
 	signals_init();
 	/* rootfs populating might need page-writeback */
 	page_writeback_init();

@@ -2796,15 +2796,18 @@ do_wait_for_common(struct completion *x,
     //@@ 2017.09.16 end
 
 		do {
+    //@@ 2017.10.21 start
 			if (signal_pending_state(state, current)) {
 				timeout = -ERESTARTSYS;
 				break;
 			}
 			__set_current_state(state);
 			spin_unlock_irq(&x->wait.lock);
+			//@@ schedule 이 호출된다. 다음에 schedule되면 complete상태를 확인하게 된다.
 			timeout = action(timeout);
 			spin_lock_irq(&x->wait.lock);
 		} while (!x->done && timeout);
+		//@@ wait queue 제거
 		__remove_wait_queue(&x->wait, &wait);
 		if (!x->done)
 			return timeout;

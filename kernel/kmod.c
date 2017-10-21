@@ -105,6 +105,7 @@ static int call_modprobe(char *module_name, int wait)
 	if (!info)
 		goto free_module_name;
 
+	//@@ setup된 work(call_usermodehelper)를 실행하고 wait 한다.
 	return call_usermodehelper_exec(info, wait | UMH_KILLABLE);
 
 free_module_name:
@@ -626,6 +627,7 @@ int call_usermodehelper_exec(struct subprocess_info *sub_info, int wait)
 wait_done:
 	retval = sub_info->retval;
 out:
+	//@@ cleanup 함수를 호출함.
 	call_usermodehelper_freeinfo(sub_info);
 unlock:
 	helper_unlock();

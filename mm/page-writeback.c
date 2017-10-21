@@ -1612,6 +1612,7 @@ void writeback_set_ratelimit(void)
 {
 	unsigned long background_thresh;
 	unsigned long dirty_thresh;
+	//@@ dirty page 파라메터값들을 기준으로 dirty_thresh 값을 계산한다.
 	global_dirty_limits(&background_thresh, &dirty_thresh);
 	global_dirty_limit = dirty_thresh;
 	ratelimit_pages = dirty_thresh / (num_online_cpus() * 32);
@@ -1660,8 +1661,12 @@ static struct notifier_block ratelimit_nb = {
 void __init page_writeback_init(void)
 {
 	writeback_set_ratelimit();
+	//@@ CPU의 동작을 감지해서 ratelimit값을 재설정한다.
 	register_cpu_notifier(&ratelimit_nb);
 
+	//@@ writeout_completion : writeback complete에 대한 측정 정보를 가짐.
+	//@@ 최적의 write back 비율에 이용될 것으로 추정함.
+	//@@ 2017.10.21 end - 이후, 다시 볼것.
 	fprop_global_init(&writeout_completions);
 }
 

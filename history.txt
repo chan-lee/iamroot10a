@@ -3542,3 +3542,10 @@ semaphore : 내부 변수는 사용 가능한 자원의 갯수
 - 커널에서 사용자 공간 어플리케이션 실행시키기(setup()과 exec()의 상관관계)
 http://forum.falinux.com/zbxe/index.php?document_srl=532908&mid=lecture_tip
 
+================================================================================
+[2017.10.21]
+do_wait_for_common : http://jake.dothome.co.kr/wait_for_completion/
+request_mode->__request_module -> call_modeprobe 종료함
+NCQ(Native Command Queuing) : http://kangel77.egloos.com/v/2791685
+
+
