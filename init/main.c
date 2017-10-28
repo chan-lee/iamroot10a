@@ -678,6 +678,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 	/* rootfs populating might need page-writeback */
 	page_writeback_init();
 #ifdef CONFIG_PROC_FS
+	//@@ [2017.10.28] begin
 	proc_root_init();
 #endif
 	cgroup_init();

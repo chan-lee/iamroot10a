@@ -1666,7 +1666,7 @@ void __init page_writeback_init(void)
 
 	//@@ writeout_completion : writeback complete에 대한 측정 정보를 가짐.
 	//@@ 최적의 write back 비율에 이용될 것으로 추정함.
-	//@@ 2017.10.21 end - 이후, 다시 볼것.
+	//@@ 2017.10.21 end
 	fprop_global_init(&writeout_completions);
 }
 

@@ -72,13 +72,13 @@ int register_filesystem(struct file_system_type * fs)
 	struct file_system_type ** p;
 
 	BUG_ON(strchr(fs->name, '.'));
-	if (fs->next)
+	if (fs->next) //@@ fs->next가 있다면 이미 등록된 것으로 판단
 		return -EBUSY;
 	write_lock(&file_systems_lock);
 	p = find_filesystem(fs->name, strlen(fs->name));
-	if (*p)
+	if (*p) //@@ 파일시스템이 이미 등록되었음
 		res = -EBUSY;
-	else
+	else //@@ 파일시스템이 등록되어 있지 않아 마지막에 fs를 새로 추가
 		*p = fs;
 	write_unlock(&file_systems_lock);
 	return res;

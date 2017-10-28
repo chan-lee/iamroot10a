@@ -915,7 +915,7 @@ static void free_bitmap(struct ida *ida, struct ida_bitmap *bitmap)
 int ida_pre_get(struct ida *ida, gfp_t gfp_mask)
 {
 	/* allocate idr_layers */
-	if (!__idr_pre_get(&ida->idr, gfp_mask))
+	if (!__idr_pre_get(&ida->idr, gfp_mask)) //@@ 예비 idr_layer를 미리 확보
 		return 0;
 
 	/* allocate free_bitmap */
@@ -926,6 +926,7 @@ int ida_pre_get(struct ida *ida, gfp_t gfp_mask)
 		if (!bitmap)
 			return 0;
 
+		//@@ ida->free_bitmap에 bitmap 할당
 		free_bitmap(ida, bitmap);
 	}
 

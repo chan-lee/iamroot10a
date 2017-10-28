@@ -238,6 +238,7 @@ void __init proc_device_tree_init(void)
 		pr_debug("/proc/device-tree: can't find root\n");
 		return;
 	}
+	//@@ root의 모든 자식 device-node들을 device-tree로 구성
 	proc_device_tree_add_node(root, proc_device_tree);
-	of_node_put(root);
+	of_node_put(root); //@@ root device-node에 대한 refcount 감소
 }

@@ -100,6 +100,7 @@ static void init_once(void *foo)
 
 void __init proc_init_inodecache(void)
 {
+	//@@ proc_inode 구조체에 대한 메모리 할당
 	proc_inode_cachep = kmem_cache_create("proc_inode_cache",
 					     sizeof(struct proc_inode),
 					     0, (SLAB_RECLAIM_ACCOUNT|
