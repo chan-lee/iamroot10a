@@ -34,7 +34,9 @@ __setup("nodelayacct", delayacct_setup_disable);
 
 void delayacct_init(void)
 {
+	//@@ task_delay_info 구조체 할당
 	delayacct_cache = KMEM_CACHE(task_delay_info, SLAB_PANIC);
+	//@@ init_task에 대한 task_struct의 delay accounting 초기화
 	delayacct_tsk_init(&init_task);
 }
 

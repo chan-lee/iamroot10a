@@ -680,15 +680,18 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 #ifdef CONFIG_PROC_FS
 	//@@ [2017.10.28] begin
 	proc_root_init();
+	//@@ [2017.10.28] end
 #endif
-	cgroup_init();
-	cpuset_init();
-	taskstats_init_early();
-	delayacct_init();
+	//@@ [2017.11.04] begin
+	cgroup_init(); //@@ cgroup_init_early에서 초기화 되지 않은 sub-system 초기화
+	cpuset_init(); //@@ cgroup의 cpuset sub-system 초기화
+	taskstats_init_early(); //@@ struct taskstats 초기화
+	delayacct_init(); //@@ init_task의 delay accounting 초기화
 
-	check_bugs();
+	check_bugs(); //@@ writebuffer 테스팅
 
-	acpi_early_init(); /* before LAPIC and SMP init */
+	acpi_early_init(); /* before LAPIC and SMP init */ //@@ 패스
+	//@@ [2017.11.04] end
 	sfi_init_late();
 
 	if (efi_enabled(EFI_RUNTIME_SERVICES)) {
