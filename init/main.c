@@ -692,14 +692,17 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 
 	acpi_early_init(); /* before LAPIC and SMP init */ //@@ 패스
 	//@@ [2017.11.04] end
-	sfi_init_late();
+
+	//@@ [2017.11.18] begin
+	sfi_init_late(); //@@ x86에 적용
 
 	if (efi_enabled(EFI_RUNTIME_SERVICES)) {
 		efi_late_init();
 		efi_free_boot_services();
 	}
 
-	ftrace_init();
+	ftrace_init(); //@@ ftrace: Function Tracer, latency and performance 디버깅 또는 분석을 위해 사용
+	//@@ [2017.11.18] end
 
 	/* Do the rest non-__init'ed, we're now alive */
 	rest_init();

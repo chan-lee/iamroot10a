@@ -3581,3 +3581,17 @@ delayacct_init() [kernel/delayacct.c]
 
 delayacct_init() 완료
 
+
+
+================================================================================
+[2017.11.18]
+
+sfi_init_late()부터 시작, SFI(Simple Firmware Interface)는 BIOS에서 제공되는
+정보에 대한 access
+
+ftrace_init()
+ftrace: Function Tracer -> 커널의 latency, performance 디버깅 또는 분석을 위해 사용
+
+ftrace - Function Tracer (https://www.kernel.org/doc/Documentation/trace/ftrace.txt)
+Debugging the kernel using Ftrace - part 1 (https://lwn.net/Articles/365835/)
+
