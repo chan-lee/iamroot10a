@@ -103,12 +103,14 @@ int __cpu_up(unsigned int cpu, struct task_struct *idle)
 	secondary_data.pgdir = get_arch_pgd(idmap_pgd);
 	secondary_data.swapper_pg_dir = get_arch_pgd(swapper_pg_dir);
 #endif
+	//@@ dcache를 flush
 	__cpuc_flush_dcache_area(&secondary_data, sizeof(secondary_data));
 	outer_clean_range(__pa(&secondary_data), __pa(&secondary_data + 1));
 
 	/*
 	 * Now bring the CPU into our world.
 	 */
+	//@@ secondary cpu를 power enable 한다.
 	ret = boot_secondary(cpu, idle);
 	if (ret == 0) {
 		/*
@@ -436,6 +438,7 @@ void __init smp_prepare_cpus(unsigned int max_cpus)
 		 * Enable the local timer or broadcast device for the
 		 * boot CPU, but only if we have more than one CPU.
 		 */
+		//@@ http://everylwn.blogspot.kr/2015/11/the-tick-broadcast-framework.html 
 		percpu_timer_setup();
 
 		/*

@@ -366,6 +366,8 @@ static noinline void __init_refok rest_init(void)
 {
 	int pid;
 
+	//@@ [2017.12.02] start
+	//@@ 여기부터 grace period를 검사하게 한다. 이전에는 아마도 single thread로 볼수 있고, 이후부터는 다중 thread(root,init thread)가 있기 때문에...
 	rcu_scheduler_starting();
 	/*
 	 * We need to spawn init first so that it obtains pid 1, however
@@ -922,8 +924,10 @@ static noinline void __init kernel_init_freeable(void)
 	wait_for_completion(&kthreadd_done);
 
 	/* Now the scheduler is fully set up and can do blocking allocations */
+	//@@ GFP(Get Free Page)
 	gfp_allowed_mask = __GFP_BITS_MASK;
 
+	//@@ memmory와 cpu를 allow 해준다.
 	/*
 	 * init can allocate pages on any node
 	 */
@@ -933,11 +937,16 @@ static noinline void __init kernel_init_freeable(void)
 	 */
 	set_cpus_allowed_ptr(current, cpu_all_mask);
 
+	// cad(ctrl-alt-del)를 받아서 reboot 하는 pid를 설정한다.
 	cad_pid = task_pid(current);
 
+	//@@ CPUs topologn를 구성하고 각 cpu별 local timer, broadcast timer device 활성화. archeture별 smp_prepare_cpus 를 수행한다.
 	smp_prepare_cpus(setup_max_cpus);
 
+	//@@ initcall(early level) 함수를 호출한다.
+	//@@ early level initcall은 __initcall_start section에 등록된 함수들로 추정함.
 	do_pre_smp_initcalls();
+	//@@ lockup(soft/hard)를 감지하기 위해 period와 watchdog을 enable한다.
 	lockup_detector_init();
 
 	smp_init();

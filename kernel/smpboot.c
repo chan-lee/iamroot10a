@@ -177,12 +177,14 @@ __smpboot_create_thread(struct smp_hotplug_thread *ht, unsigned int cpu)
 	td->cpu = cpu;
 	td->ht = ht;
 
+	//@@ smpboot_thread_fn 를 parked 상태로 만든다.
 	tsk = kthread_create_on_cpu(smpboot_thread_fn, td, cpu,
 				    ht->thread_comm);
 	if (IS_ERR(tsk)) {
 		kfree(td);
 		return PTR_ERR(tsk);
 	}
+	//@@[2017.12.02] end
 	get_task_struct(tsk);
 	*per_cpu_ptr(ht->store, cpu) = tsk;
 	if (ht->create) {

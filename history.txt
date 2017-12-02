@@ -3595,3 +3595,16 @@ ftrace: Function Tracer -> 커널의 latency, performance 디버깅 또는 분�
 ftrace - Function Tracer (https://www.kernel.org/doc/Documentation/trace/ftrace.txt)
 Debugging the kernel using Ftrace - part 1 (https://lwn.net/Articles/365835/)
 
+================================================================================
+[2017.12.02]
+- initcall level
+  "early","core","postcore","arch","subsys","fs","device","late" 단계가 있다.
+  device driver module은 Level 6으로 설정된다.
+   참고 : [리눅스 3.16.6] Init call mechanism. 디바이스 드라이버 초기화 호출 ...
+          - http://dreamlog.tistory.com/336
+
+- lockup detector
+  커널은 softlockup 또는 hardlockup을 감지하기 위해 watchdog을 이용하여 일정기간(10 - 20초)간 자원을 점유할 경우 panic 처리를 할 수 있다.
+  - http://blog.dasomoli.org/445/
+
+- thread state 중 parked 상태가 무엇인지 모르겠음.waiting 상태와 유사할 것으로 예상함.

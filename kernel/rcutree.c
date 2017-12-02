@@ -3060,6 +3060,7 @@ void rcu_scheduler_starting(void)
 {
 	WARN_ON(num_online_cpus() != 1);
 	WARN_ON(nr_context_switches() > 0);
+	//@@ RCU의 grace period 를 검사해야 한다는 것을 표시함.
 	rcu_scheduler_active = 1;
 }
 
