@@ -547,6 +547,7 @@ void __init smp_init(void)
 
 	//@@ boot cpu를 제외한 cpu의 idle thread를 초기화 한다.
 	//@@ idle thread가 없으면, idle thread를 생성해서 percpu의 idle_threads에 추가한다.
+	//@@ idle thread는 cpu up할때 사용될 것으로 추정함.
 	idle_threads_init();
 
 	/* FIXME: This should be done in userspace --RR */

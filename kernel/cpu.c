@@ -373,6 +373,8 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen)
 	unsigned long mod = tasks_frozen ? CPU_TASKS_FROZEN : 0;
 	struct task_struct *idle;
 
+	//@@ cpu_hotplug.refcount가 0 이 될때, hotplug가 시작된다. 
+	//@@ 이때까지, wait한다.
 	cpu_hotplug_begin();
 
 	if (cpu_online(cpu) || !cpu_present(cpu)) {
@@ -380,16 +382,19 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen)
 		goto out;
 	}
 
+	//@@ percpu에 등록된 idle thread를 받아온다.
 	idle = idle_thread_get(cpu);
 	if (IS_ERR(idle)) {
 		ret = PTR_ERR(idle);
 		goto out;
 	}
 
+	//@@ hotplug thread들을 생성한다.
 	ret = smpboot_create_threads(cpu);
 	if (ret)
 		goto out;
 
+	//@@ CPU_UP_PREPARE됐음을 notify한다.
 	ret = __cpu_notify(CPU_UP_PREPARE | mod, hcpu, -1, &nr_calls);
 	if (ret) {
 		nr_calls--;
@@ -398,6 +403,7 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen)
 		goto out_notify;
 	}
 
+	//@@ H/W 적으로 cpu up를 수행한다...
 	/* Arch-specific enabling code. */
 	ret = __cpu_up(cpu, idle);
 	if (ret != 0)
@@ -428,6 +434,7 @@ int cpu_up(unsigned int cpu)
 	pg_data_t	*pgdat;
 #endif
 
+	//@@ cpu 사용가능을 확인한다.
 	if (!cpu_possible(cpu)) {
 		printk(KERN_ERR "can't online cpu %d because it is not "
 			"configured as may-hotadd at boot time\n", cpu);
@@ -439,6 +446,7 @@ int cpu_up(unsigned int cpu)
 	}
 
 #ifdef	CONFIG_MEMORY_HOTPLUG
+	//@@ memory가 있는 경우, online node 함.
 	nid = cpu_to_node(cpu);
 	if (!node_online(nid)) {
 		err = mem_online_node(nid);
@@ -460,7 +468,7 @@ int cpu_up(unsigned int cpu)
 	}
 #endif
 
-	cpu_maps_update_begin();
+	cpu_maps_update_begin();  // mutex_lock
 
 	if (cpu_hotplug_disabled) {
 		err = -EBUSY;
@@ -470,7 +478,7 @@ int cpu_up(unsigned int cpu)
 	err = _cpu_up(cpu, 0);
 
 out:
-	cpu_maps_update_done();
+	cpu_maps_update_done(); // mutex_unlock
 	return err;
 }
 EXPORT_SYMBOL_GPL(cpu_up);

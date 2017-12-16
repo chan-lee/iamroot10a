@@ -113,6 +113,8 @@ int __cpu_up(unsigned int cpu, struct task_struct *idle)
 	//@@ secondary cpu를 power enable 한다.
 	ret = boot_secondary(cpu, idle);
 	if (ret == 0) {
+		//@@ cpu_running complete 되기를 1000ms까지 기다린다.
+		//@@ secondary_start_kernel에서 cpu_running complete를 알린다.
 		/*
 		 * CPU was successfully started, wait for it
 		 * to come online or time out.

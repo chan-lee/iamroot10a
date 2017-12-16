@@ -949,6 +949,7 @@ static noinline void __init kernel_init_freeable(void)
 	//@@ lockup(soft/hard)를 감지하기 위해 period와 watchdog을 enable한다.
 	lockup_detector_init();
 
+	// cpu online, memory online, idle/hotplug thread 실행
 	smp_init();
 	sched_init_smp();
 

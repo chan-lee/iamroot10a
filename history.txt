@@ -3608,3 +3608,14 @@ Debugging the kernel using Ftrace - part 1 (https://lwn.net/Articles/365835/)
   - http://blog.dasomoli.org/445/
 
 - thread state 중 parked 상태가 무엇인지 모르겠음.waiting 상태와 유사할 것으로 예상함.
+
+- rest_init -> kernel_init -> kernel_init_freeable -> smp_init -> cpu_up -> _cpu_up -> smpboot_create_threads -> __smpboot_create_thread
+
+================================================================================
+[2017.12.16]
+- rest_init -> kernel_init -> kernel_init_freeable -> smp_init
+ smp cpu와 memory를 online 으로 만들고 idle / hotplug thread들을 생성한다.
+ 
+- rest_init -> kernel_init -> kernel_init_freeable -> sched_init_smp -> sched_init_numa
+ 시작해야함. 어려울것 같아 이전까지 진행함.
+

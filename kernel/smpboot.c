@@ -178,6 +178,7 @@ __smpboot_create_thread(struct smp_hotplug_thread *ht, unsigned int cpu)
 	td->ht = ht;
 
 	//@@ smpboot_thread_fn 를 parked 상태로 만든다.
+	//@@ kthread가 task가 되고 kthread에서 smpboot_thread_fn를 호출한다.
 	tsk = kthread_create_on_cpu(smpboot_thread_fn, td, cpu,
 				    ht->thread_comm);
 	if (IS_ERR(tsk)) {
@@ -185,8 +186,10 @@ __smpboot_create_thread(struct smp_hotplug_thread *ht, unsigned int cpu)
 		return PTR_ERR(tsk);
 	}
 	//@@[2017.12.02] end
+	//@@[2017.12.16] start
 	get_task_struct(tsk);
 	*per_cpu_ptr(ht->store, cpu) = tsk;
+	//@@ task가 parked 될때까지 대기하고, parked되면 hotflug create를 수행한다.
 	if (ht->create) {
 		/*
 		 * Make sure that the task has actually scheduled out
@@ -207,6 +210,8 @@ int smpboot_create_threads(unsigned int cpu)
 	struct smp_hotplug_thread *cur;
 	int ret = 0;
 
+	//@@ hotplug thread는 한개 cpu에 여러개가 있을 수 있다.
+	//@@ 예를 들면, softirq_threads, watchdog_threads, ...
 	mutex_lock(&smpboot_threads_lock);
 	list_for_each_entry(cur, &hotplug_threads, list) {
 		ret = __smpboot_create_thread(cur, cpu);
