@@ -5780,6 +5780,7 @@ static void sched_init_numa(void)
 	int level = 0;
 	int i, j, k;
 
+	//@@[2018.01.20] start
 	sched_domains_numa_distance = kzalloc(sizeof(int) * nr_node_ids, GFP_KERNEL);
 	if (!sched_domains_numa_distance)
 		return;
@@ -5791,6 +5792,8 @@ static void sched_init_numa(void)
 	 * Assumes node_distance(0,j) includes all distances in
 	 * node_distance(i,j) in order to avoid cubic time.
 	 */
+	//@@ 위에서 언급했듯이, memory 구조의 level과 level별 distance 값을 계산한다.
+	//@@ 현재 distance는 local 10과 remote 20으로 되어있어, level 0(distance 10) 과 level 1(distance 20) 이 존재하게 된다.
 	next_distance = curr_distance;
 	for (i = 0; i < nr_node_ids; i++) {
 		for (j = 0; j < nr_node_ids; j++) {
@@ -5849,6 +5852,7 @@ static void sched_init_numa(void)
 	if (!sched_domains_numa_masks)
 		return;
 
+	//@@ node별 cpu에 대한 mask 를 구성하고 mask를 설정하는 것으로 추정함.
 	/*
 	 * Now for each level, construct a mask per node which contains all
 	 * cpus of nodes that are that many hops away from us.
@@ -5880,6 +5884,7 @@ static void sched_init_numa(void)
 	if (!tl)
 		return;
 
+	//@@ 이후, default_topology에 각 field값을 설정해준다.
 	/*
 	 * Copy the default topology bits..
 	 */
@@ -6085,6 +6090,8 @@ static int build_sched_domains(const struct cpumask *cpu_map,
 		goto error;
 
 	/* Set up domains for cpus specified by the cpu_map. */
+	//@@ 각 cpu별로 sched_domain 계층 구조를 구성한다.
+	//@@ sched_domain level이 관련된다고 추정된다.
 	for_each_cpu(i, cpu_map) {
 		struct sched_domain_topology_level *tl;
 
@@ -6101,8 +6108,10 @@ static int build_sched_domains(const struct cpumask *cpu_map,
 	}
 
 	/* Build the groups for the domains */
+	//@@ 각 cpu별 domain을 다시 그룹화 한다.
 	for_each_cpu(i, cpu_map) {
 		for (sd = *per_cpu_ptr(d.sd, i); sd; sd = sd->parent) {
+			//@@[2018.01.20] end
 			sd->span_weight = cpumask_weight(sched_domain_span(sd));
 			if (sd->flags & SD_OVERLAP) {
 				if (build_overlap_sched_groups(sd, i))
@@ -6195,12 +6204,15 @@ static int init_sched_domains(const struct cpumask *cpu_map)
 {
 	int err;
 
+	//@@ architecture별 cpu topology를 업데이트 한다. 그러나 arm은 dummy 임.
 	arch_update_cpu_topology();
 	ndoms_cur = 1;
+	//@@ sched domain수 만큼 메모리 할당을 받음.
 	doms_cur = alloc_sched_domains(ndoms_cur);
 	if (!doms_cur)
 		doms_cur = &fallback_doms;
 	cpumask_andnot(doms_cur[0], cpu_map, cpu_isolated_map);
+	//@@ sched domain을 구성한다.
 	err = build_sched_domains(doms_cur[0], NULL);
 	register_sched_domain_sysctl();
 
@@ -6394,16 +6406,17 @@ void __init sched_init_smp(void)
 	alloc_cpumask_var(&non_isolated_cpus, GFP_KERNEL);
 	alloc_cpumask_var(&fallback_doms, GFP_KERNEL);
 
+	//@@ NUMA구조에 대한 구조 level, distance, mask를 설정한다.
 	sched_init_numa();
 
-	get_online_cpus();
+	get_online_cpus(); //@@ cpu_hotplug.refcount++
 	mutex_lock(&sched_domains_mutex);
 	init_sched_domains(cpu_active_mask);
 	cpumask_andnot(non_isolated_cpus, cpu_possible_mask, cpu_isolated_map);
 	if (cpumask_empty(non_isolated_cpus))
 		cpumask_set_cpu(smp_processor_id(), non_isolated_cpus);
 	mutex_unlock(&sched_domains_mutex);
-	put_online_cpus();
+	put_online_cpus(); //@@ cpu_hotplug.refcount--
 
 	hotcpu_notifier(sched_domains_numa_masks_update, CPU_PRI_SCHED_ACTIVE);
 	hotcpu_notifier(cpuset_cpu_active, CPU_PRI_CPUSET_ACTIVE);

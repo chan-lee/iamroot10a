@@ -3619,3 +3619,8 @@ Debugging the kernel using Ftrace - part 1 (https://lwn.net/Articles/365835/)
 - rest_init -> kernel_init -> kernel_init_freeable -> sched_init_smp -> sched_init_numa
  시작해야함. 어려울것 같아 이전까지 진행함.
 
+================================================================================
+[2018.01.20]
+- rest_init -> kernel_init -> kernel_init_freeable -> sched_init_smp -> init_sched_domains -> build_sched_domains 진행중
+
+
