@@ -837,9 +837,13 @@ static void __init do_initcalls(void)
  */
 static void __init do_basic_setup(void)
 {
+	//@@ top cpuset 구성을 마무리한다.(Finish top cpuset after cpu, node maps are initialized)
 	cpuset_init_smp();
+	//@@ helper용 workqueue를 생성한다.
 	usermodehelper_init();
+	//@@ 공유메모리용 filesystem 등록하고 마운트한다.(tmpfs가 해당 파일시스템이다)
 	shmem_init();
+	//@@ [2017.02.03] End
 	driver_init();
 	init_irq_proc();
 	do_ctors();
@@ -949,8 +953,9 @@ static noinline void __init kernel_init_freeable(void)
 	//@@ lockup(soft/hard)를 감지하기 위해 period와 watchdog을 enable한다.
 	lockup_detector_init();
 
-	// cpu online, memory online, idle/hotplug thread 실행
+	//@@ cpu online, memory online, idle/hotplug thread 실행
 	smp_init();
+	//@@ sched_domain을 구성, sysctl_xxx granularity 값들을 설정한다.
 	sched_init_smp();
 
 	do_basic_setup();

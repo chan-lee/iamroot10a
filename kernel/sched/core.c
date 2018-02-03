@@ -6085,6 +6085,10 @@ static int build_sched_domains(const struct cpumask *cpu_map,
 	struct s_data d;
 	int i, ret = -ENOMEM;
 
+	//@@ 이 함수는 문C 블로그을 보기 바람.
+	//@@ Scheduler -11- (Scheduling Domain)
+	//@@ http://jake.dothome.co.kr/sched-domain/
+
 	alloc_state = __visit_domain_allocation_hell(&d, cpu_map);
 	if (alloc_state != sa_rootdomain)
 		goto error;
@@ -6112,6 +6116,7 @@ static int build_sched_domains(const struct cpumask *cpu_map,
 	for_each_cpu(i, cpu_map) {
 		for (sd = *per_cpu_ptr(d.sd, i); sd; sd = sd->parent) {
 			//@@[2018.01.20] end
+			//@@[2018.02.03] start
 			sd->span_weight = cpumask_weight(sched_domain_span(sd));
 			if (sd->flags & SD_OVERLAP) {
 				if (build_overlap_sched_groups(sd, i))
@@ -6411,25 +6416,34 @@ void __init sched_init_smp(void)
 
 	get_online_cpus(); //@@ cpu_hotplug.refcount++
 	mutex_lock(&sched_domains_mutex);
+	//@@ sched_domain을 구성하고 초기화한다.
+	//@@ http://jake.dothome.co.kr/sched-domain/ 을 참조할 것.
 	init_sched_domains(cpu_active_mask);
+	//@@ isolated cpu를 cpu_possible에서 뺀다.=> non_isolated_cpus 를 구한다.
 	cpumask_andnot(non_isolated_cpus, cpu_possible_mask, cpu_isolated_map);
 	if (cpumask_empty(non_isolated_cpus))
 		cpumask_set_cpu(smp_processor_id(), non_isolated_cpus);
 	mutex_unlock(&sched_domains_mutex);
 	put_online_cpus(); //@@ cpu_hotplug.refcount--
 
+	//@@ 각 이벤트를 notification 한다.
 	hotcpu_notifier(sched_domains_numa_masks_update, CPU_PRI_SCHED_ACTIVE);
 	hotcpu_notifier(cpuset_cpu_active, CPU_PRI_CPUSET_ACTIVE);
 	hotcpu_notifier(cpuset_cpu_inactive, CPU_PRI_CPUSET_INACTIVE);
 
+	//@@ 해당 cpu의 hrtick을 clear한다.
+	//@@ hotcpu_notifier(hotplug_hrtick, 0);
 	init_hrtick();
 
 	/* Move init over to a non-isolated CPU */
+	//@@ 적당한 cpu로 current를 migration 한다.
 	if (set_cpus_allowed_ptr(current, non_isolated_cpus) < 0)
 		BUG();
+	//@@ sysctl granularity 관련 값들(sysctl_sched_min_granularity)을 update한다.
 	sched_init_granularity();
 	free_cpumask_var(non_isolated_cpus);
 
+	//@@ RT 관련 초기화 같은데, local_cpu_mask에 cpu_mask를 할당 받고 초기화한다.
 	init_sched_rt_class();
 }
 #else

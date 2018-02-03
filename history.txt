@@ -3623,4 +3623,9 @@ Debugging the kernel using Ftrace - part 1 (https://lwn.net/Articles/365835/)
 [2018.01.20]
 - rest_init -> kernel_init -> kernel_init_freeable -> sched_init_smp -> init_sched_domains -> build_sched_domains 진행중
 
+================================================================================
+[2018.02.03]
+- rest_init -> kernel_init -> kernel_init_freeable -> sched_init_smp
+  http://jake.dothome.co.kr/2017/07/ 문C 블로그 참고
+- rest_init -> kernel_init -> kernel_init_freeable -> do_basic_setup 진행
 
