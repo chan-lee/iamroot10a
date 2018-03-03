@@ -1440,12 +1440,15 @@ struct device *device_find_child(struct device *parent, void *data,
 
 int __init devices_init(void)
 {
+	//@@ kset은 kobject group 이다..
 	devices_kset = kset_create_and_add("devices", &device_uevent_ops, NULL);
 	if (!devices_kset)
 		return -ENOMEM;
+	//@@ kobject롤 생성한다.
 	dev_kobj = kobject_create_and_add("dev", NULL);
 	if (!dev_kobj)
 		goto dev_kobj_err;
+	//@@ dev 밑으로 block과 char 를 생성한다.
 	sysfs_dev_block_kobj = kobject_create_and_add("block", dev_kobj);
 	if (!sysfs_dev_block_kobj)
 		goto block_kobj_err;

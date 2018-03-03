@@ -3629,3 +3629,10 @@ Debugging the kernel using Ftrace - part 1 (https://lwn.net/Articles/365835/)
   http://jake.dothome.co.kr/2017/07/ 문C 블로그 참고
 - rest_init -> kernel_init -> kernel_init_freeable -> do_basic_setup 진행
 
+================================================================================
+[2018.03.03]
+- devtmpfs와 udev 
+  https://lunatine.net/2015/12/23/devtmpfs-udev/
+- rest_init -> kernel_init -> kernel_init_freeable -> do_basic_setup -> driver_init 완료함. device_add와 bus_register 등은 좀 더 분석이 필요함.
+
+

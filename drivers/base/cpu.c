@@ -367,8 +367,11 @@ static void __init cpu_dev_register_generic(void)
 
 void __init cpu_dev_init(void)
 {
+	//@@ subsystem은 /sys/devices/system 에 등록된다.
+	//@@ cpu sybsystem device를 /sys/devices/system/cpu에 등록한다.
 	if (subsys_system_register(&cpu_subsys, cpu_root_attr_groups))
 		panic("Failed to register CPU subsystem");
 
+	//@@ 각 cpu별로 cpu driver를 등록한다.
 	cpu_dev_register_generic();
 }
