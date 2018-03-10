@@ -3635,4 +3635,40 @@ Debugging the kernel using Ftrace - part 1 (https://lwn.net/Articles/365835/)
   https://lunatine.net/2015/12/23/devtmpfs-udev/
 - rest_init -> kernel_init -> kernel_init_freeable -> do_basic_setup -> driver_init 완료함. device_add와 bus_register 등은 좀 더 분석이 필요함.
 
+================================================================================
+[2018.03.10]
+- linux SCSI model : host, channel, id, lun
+- linux USB model : bus-port[(.subport)+][:configuration-interface]
+  * USB 1.1 : ohci-hdc(intel 전용 uhci-hdc), speed : 12
+  * USB 2.0 : ehci-hdc, speed : 400
+  * USB 3.0 : xhci-hdc, speed : 5000
+
+- device_add(struct device *dev)
+struct class_interface {
+};
+
+struct class {
+};
+
+- uevent : netlink 소켓을 통해 user 에게 전달
+  * http://decdream.tistory.com/406
+  * uevent 종류
+    enum kobject_action {
+      KOBJ_ADD,
+      KOBJ_REMOVE,
+      KOBJ_CHANGE,
+      KOBJ_MOVE,
+      KOBJ_ONLINE,
+      KOBJ_OFFLINE,
+      KOBJ_MAX
+    };
+
+bus_probe_device 에서 subsytem_interface 와 bus 의 차이점을 구분하려다가 끝남.
+
+  1  1 driver_init       847  init/main.c
+  2  1 platform_bus_init    43  drivers/base/init.c
+  3  1 device_register   909  drivers/base/platform.c
+  4  1 device_add       1213  drivers/base/core.c
+  5  1 bus_probe_device  1142  drivers/base/core.c
+> 6  1 subsys_interface   532  struct subsys_interface *sif;
 

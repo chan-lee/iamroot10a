@@ -1137,6 +1137,7 @@ int device_add(struct device *dev)
 		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
 					     BUS_NOTIFY_ADD_DEVICE, dev);
 
+  //@@ user space 에 uevent 보내고, hotplug 프로그램 실행시킴.
 	kobject_uevent(&dev->kobj, KOBJ_ADD);
 	bus_probe_device(dev);
 	if (parent)

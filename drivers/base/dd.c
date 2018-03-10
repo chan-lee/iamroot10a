@@ -196,7 +196,9 @@ static void driver_bound(struct device *dev)
 	 * Make sure the device is no longer in one of the deferred lists and
 	 * kick off retrying all pending devices
 	 */
+  //@@ 탐지 지연된 driver 목록에서 device를 제거한다.
 	driver_deferred_probe_del(dev);
+  //@@ 탐지 지연된 device를을 active list로 옮기고 재탐지함.
 	driver_deferred_probe_trigger();
 
 	if (dev->bus)
@@ -252,9 +254,10 @@ int device_bind_driver(struct device *dev)
 {
 	int ret;
 
+  //@@ sysfs driver 에 device 에 대한 링크파일 만듬. 
 	ret = driver_sysfs_add(dev);
 	if (!ret)
-		driver_bound(dev);
+		driver_bound(dev); //@@ 목록에 넣고 지연된 device 다시 재탐지함.
 	return ret;
 }
 EXPORT_SYMBOL_GPL(device_bind_driver);

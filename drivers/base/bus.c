@@ -536,10 +536,12 @@ void bus_probe_device(struct device *dev)
 		return;
 
 	if (bus->p->drivers_autoprobe) {
+    //@@ device를 driver 에 bound 시킨다. 이때 driver는 맞는 device인지 probe 한다.
 		ret = device_attach(dev);
 		WARN_ON(ret < 0);
 	}
 
+  //@@ 2018.03.10 end.
 	mutex_lock(&bus->p->mutex);
 	list_for_each_entry(sif, &bus->p->interfaces, node)
 		if (sif->add_dev)

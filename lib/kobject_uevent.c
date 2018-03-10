@@ -294,6 +294,7 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
 	mutex_unlock(&uevent_sock_mutex);
 
 	/* call uevent_helper, usually only enabled during early boot */
+  // @@ 보통 /sbin/hotplug 이며 hotplug 인식 프로그램을 실행시킴.
 	if (uevent_helper[0] && !kobj_usermode_filter(kobj)) {
 		char *argv [3];
 
