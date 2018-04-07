@@ -3672,3 +3672,14 @@ bus_probe_device 에서 subsytem_interface 와 bus 의 차이점을 구분하려
   5  1 bus_probe_device  1142  drivers/base/core.c
 > 6  1 subsys_interface   532  struct subsys_interface *sif;
 
+================================================================================
+[2018.04.07]
+subsystem : sub-의 의미가 아래 이외에 대리/대행의 의미를 가질수있다.
+struct bus_type {
+    ...
+    struct subsys_private *p;  // subsystem 정보를 가지고 있고 중요해보인다.
+};
+rest_init -> kernel_init -> kernel_init_freeable -> do_basic_setup -> driver_init 종료
+
+/proc/irq/default_smp_affinity - cpu bit mask
+

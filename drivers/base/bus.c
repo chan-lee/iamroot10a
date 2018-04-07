@@ -542,6 +542,8 @@ void bus_probe_device(struct device *dev)
 	}
 
   //@@ 2018.03.10 end.
+  //@@ 2018.04.07 start
+  //@@ 각 subsystem에 디바이스 드라이버를 추가한다.
 	mutex_lock(&bus->p->mutex);
 	list_for_each_entry(sif, &bus->p->interfaces, node)
 		if (sif->add_dev)
@@ -913,6 +915,7 @@ int bus_register(struct bus_type *bus)
 	struct subsys_private *priv;
 	struct lock_class_key *key = &bus->lock_key;
 
+	//@@ subsystem private 할당
 	priv = kzalloc(sizeof(struct subsys_private), GFP_KERNEL);
 	if (!priv)
 		return -ENOMEM;
@@ -934,6 +937,8 @@ int bus_register(struct bus_type *bus)
 	if (retval)
 		goto out;
 
+	//@@ bus에 device/drivers를 sysfs/bus에 생성한다.
+	//@@ uevent file생성
 	retval = bus_create_file(bus, &bus_attr_uevent);
 	if (retval)
 		goto bus_uevent_fail;
@@ -957,10 +962,12 @@ int bus_register(struct bus_type *bus)
 	klist_init(&priv->klist_devices, klist_devices_get, klist_devices_put);
 	klist_init(&priv->klist_drivers, NULL, NULL);
 
+	//@@ drivers_autoprobe  drivers_probe file생성
 	retval = add_probe_files(bus);
 	if (retval)
 		goto bus_probe_files_fail;
 
+	//@@ 각 attribute file을 생성한다.
 	retval = bus_add_attrs(bus);
 	if (retval)
 		goto bus_attrs_fail;

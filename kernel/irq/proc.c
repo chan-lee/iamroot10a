@@ -387,6 +387,7 @@ void init_irq_proc(void)
 	if (!root_irq_dir)
 		return;
 
+	//@@ default_smp_affinity 생성
 	register_default_affinity_proc();
 
 	/*
