@@ -3683,3 +3683,10 @@ rest_init -> kernel_init -> kernel_init_freeable -> do_basic_setup -> driver_ini
 
 /proc/irq/default_smp_affinity - cpu bit mask
 
+================================================================================
+[2018.04.28]
+rest_init -> kernel_init -> kernel_init_freeable -> do_basic_setup 종료
+
+rest_init -> kernel_init -> kernel_init_freeable -> prepare_namespace -> initrd_load 진행중
+
+

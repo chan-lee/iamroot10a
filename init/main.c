@@ -711,6 +711,8 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 }
 
 /* Call all constructor functions linked into the kernel. */
+//@@ section에 등록된 함수들을 호출한다.
+//@@ __ctors_start 시작주소와 __ctors_end 마지막주소
 static void __init do_ctors(void)
 {
 #ifdef CONFIG_CONSTRUCTORS
@@ -809,6 +811,7 @@ static void __init do_initcall_level(int level)
 	extern const struct kernel_param __start___param[], __stop___param[];
 	initcall_t *fn;
 
+	//@@ saved_command_line는 boot_command_line을 받아온다.
 	strcpy(static_command_line, saved_command_line);
 	parse_args(initcall_level_names[level],
 		   static_command_line, __start___param,
@@ -824,6 +827,7 @@ static void __init do_initcalls(void)
 {
 	int level;
 
+	//@@ early, core, ... 등 initcall 함수들을 호출한다.
 	for (level = 0; level < ARRAY_SIZE(initcall_levels) - 1; level++)
 		do_initcall_level(level);
 }
@@ -960,10 +964,12 @@ static noinline void __init kernel_init_freeable(void)
 
 	do_basic_setup();
 
+	//@@ 0 번 표준 입력으로 open 되는 것으로 추정
 	/* Open the /dev/console on the rootfs, this should never fail */
 	if (sys_open((const char __user *) "/dev/console", O_RDWR, 0) < 0)
 		pr_err("Warning: unable to open an initial console.\n");
 
+	//@@ 표준출력과 에러로 보인다.
 	(void) sys_dup(0);
 	(void) sys_dup(0);
 	/*
@@ -971,6 +977,7 @@ static noinline void __init kernel_init_freeable(void)
 	 * the work
 	 */
 
+	//@@ ramdisk command 설정
 	if (!ramdisk_execute_command)
 		ramdisk_execute_command = "/init";
 

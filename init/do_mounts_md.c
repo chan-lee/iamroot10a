@@ -308,5 +308,6 @@ void __init md_run_setup(void)
 		printk(KERN_INFO "md: Skipping autodetection of RAID arrays. (raid=autodetect will force)\n");
 	else
 		autodetect_raid();
+	//@@ RAID 디바이스를 설정한다.
 	md_setup_drive();
 }

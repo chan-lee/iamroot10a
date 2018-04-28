@@ -120,6 +120,7 @@ int __init initrd_load(void)
 {
 	if (mount_initrd) {
 		create_dev("/dev/ram", Root_RAM0);
+		//[2018.04.28] - end
 		/*
 		 * Load the initrd data into /dev/ram0. Execute it as initrd
 		 * unless /dev/ram0 is supposed to be our actual root device,

@@ -390,9 +390,11 @@ void init_irq_proc(void)
 	//@@ default_smp_affinity 생성
 	register_default_affinity_proc();
 
+	//@@ 2018.04.28 start
 	/*
 	 * Create entries for all existing IRQs.
 	 */
+	//@@ /proc/irq에 irq 번호로 directory와 속성들을 생성한다.
 	for_each_irq_desc(irq, desc) {
 		if (!desc)
 			continue;

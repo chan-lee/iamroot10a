@@ -44,6 +44,7 @@ struct irq_desc {
 #ifdef CONFIG_IRQ_PREFLOW_FASTEOI
 	irq_preflow_handler_t	preflow_handler;
 #endif
+        //@@ irq에 대한 action handler를 리스트로 가지고 있다.
 	struct irqaction	*action;	/* IRQ action list */
 	unsigned int		status_use_accessors;
 	unsigned int		core_internal_state__do_not_mess_with_it;

@@ -548,17 +548,21 @@ void __init prepare_namespace(void)
 	 * For example, it is not atypical to wait 5 seconds here
 	 * for the touchpad of a laptop to initialize.
 	 */
+	//@@ 다음 코드부터 디바이스관련 작업이 있어 여기서 probing 될때까지 대기하는 것 같음.
 	wait_for_device_probe();
 
 	md_run_setup();
 
+	//@@ rootfs 를 설정하는 것으로 보인다.
 	if (saved_root_name[0]) {
 		root_device_name = saved_root_name;
+		//@@ NAND 디바이스 mount
 		if (!strncmp(root_device_name, "mtd", 3) ||
 		    !strncmp(root_device_name, "ubi", 3)) {
 			mount_block_root(root_device_name, root_mountflags);
 			goto out;
 		}
+		//@@ 일반 디스크
 		ROOT_DEV = name_to_dev_t(root_device_name);
 		if (strncmp(root_device_name, "/dev/", 5) == 0)
 			root_device_name += 5;
