@@ -3689,4 +3689,19 @@ rest_init -> kernel_init -> kernel_init_freeable -> do_basic_setup 종료
 
 rest_init -> kernel_init -> kernel_init_freeable -> prepare_namespace -> initrd_load 진행중
 
+================================================================================
+[2018.05.19]
+- I/O 스케줄러 : http://www.mimul.com/pebble/default/2012/05/12/1336793032150.html
+- I/O Elevator
+  * noop
+  * anticipatory(as)
+  * deadline
+  * cfq(completely fair queuing)
+
+mount_root() 하다가 initrd_load() 에서 handle_initrd()  빼먹어서 다시하는 중
+  1  1 prepare_namespace   986  init/main.c
+  2  2 initrd_load       571  init/do_mounts.c
+  3  1 handle_initrd     139  handle_initrd();
+> 4  1 load_default_modules    71  load_default_modules();
+  5  1 load_default_elevator_module   874  init/main.c
 

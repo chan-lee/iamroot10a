@@ -585,7 +585,7 @@ void __init prepare_namespace(void)
 
 	if (is_floppy && rd_doload && rd_load_disk(0))
 		ROOT_DEV = Root_RAM0;
-
+  //@@ [2018.05.19] 여기까지 하다가 되돌아감.
 	mount_root();
 out:
 	devtmpfs_mount("dev");

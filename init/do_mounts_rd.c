@@ -198,11 +198,13 @@ int __init rd_load_image(char *from)
 	if (in_fd < 0)
 		goto noclose_input;
 
+  //@@ 각 포맷에 맞게 읽어야할 block 사이즈를 알아옴.
+  //@@ 0일 경우 압축되어 있는 경우.
 	nblocks = identify_ramdisk_image(in_fd, rd_image_start, &decompressor);
 	if (nblocks < 0)
 		goto done;
 
-	if (nblocks == 0) {
+	if (nblocks == 0) { //@@ 압축 해제.
 		if (crd_load(in_fd, out_fd, decompressor) == 0)
 			goto successful_load;
 		goto done;
@@ -219,6 +221,7 @@ int __init rd_load_image(char *from)
 	 * silly to use anything else, so make sure to use 1KiB
 	 * blocksize while generating ext2fs ramdisk-images.
 	 */
+  //@@ ramddisk 이미지(nblocks)가 실제 ram 크기 보다 작은지 체크.
 	if (sys_ioctl(out_fd, BLKGETSIZE, (unsigned long)&rd_blocks) < 0)
 		rd_blocks = 0;
 	else

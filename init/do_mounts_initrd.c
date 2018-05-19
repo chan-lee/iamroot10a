@@ -55,15 +55,21 @@ static void __init handle_initrd(void)
 	extern char *envp_init[];
 	int error;
 
+  //@@ ramdisk 안에 /root 용 장치인 /dev/root.old 를
+  //@@ 만들어 임시로 /root 와 마운트함.
+  //@@ 추후 저장 장치로 부터 읽은 root 로 /root 가 교체될 것으로 예측됨.
+  //@@ 추정 : / => /old, /dev/root => /dev/root.old
 	real_root_dev = new_encode_dev(ROOT_DEV);
-	create_dev("/dev/root.old", Root_RAM0);
+	create_dev("/dev/root.old", Root_RAM0);.
 	/* mount initrd on rootfs' /root */
 	mount_block_root("/dev/root.old", root_mountflags & ~MS_RDONLY);
 	sys_mkdir("/old", 0700);
 	sys_chdir("/old");
 
 	/* try loading default modules from initrd */
+  //@@ i/o elevator module 이 설정되어 있으면 모듈을 올린다.
 	load_default_modules();
+  //@@ 2018.05.19 end
 
 	/*
 	 * In case that a resume from disk is carried out by linuxrc or one of
@@ -120,7 +126,8 @@ int __init initrd_load(void)
 {
 	if (mount_initrd) {
 		create_dev("/dev/ram", Root_RAM0);
-		//[2018.04.28] - end
+		//@@[2018.04.28] - end
+    //@@[2018.05.19] - start
 		/*
 		 * Load the initrd data into /dev/ram0. Execute it as initrd
 		 * unless /dev/ram0 is supposed to be our actual root device,
