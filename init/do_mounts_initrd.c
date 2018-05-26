@@ -77,10 +77,13 @@ static void __init handle_initrd(void)
 	 */
 	current->flags |= PF_FREEZER_SKIP;
 
+	//@@ subprocess_info 구조체를 할당하고, 내부에 path, argument,
+	//@@ 환경변수, init 함수, cleanup 함수 등을 설정하여 리턴
 	info = call_usermodehelper_setup("/linuxrc", argv, envp_init,
 					 GFP_KERNEL, init_linuxrc, NULL, NULL);
 	if (!info)
 		return;
+	//@@ 해당 user process를 실행하고 종료까지 기다린 후 리턴
 	call_usermodehelper_exec(info, UMH_WAIT_PROC);
 
 	current->flags &= ~PF_FREEZER_SKIP;
@@ -90,6 +93,8 @@ static void __init handle_initrd(void)
 	/* switch root and cwd back to / of rootfs */
 	sys_chroot("..");
 
+	//@@ new_decode_dev(): 디바이스 파일의 major 및 minor 넘버 디코딩
+	//@@ new_decode_dev() 결과가 Root_RAM0와 같을 때.. -> 정확히 어떤 의미???
 	if (new_decode_dev(real_root_dev) == Root_RAM0) {
 		sys_chdir("/old");
 		return;
@@ -97,6 +102,8 @@ static void __init handle_initrd(void)
 
 	sys_chdir("/");
 	ROOT_DEV = new_decode_dev(real_root_dev);
+
+	//@@ ROOT_DEV가 NFS 또는 FD 인지 확인 후 마운트
 	mount_root();
 
 	printk(KERN_NOTICE "Trying to move old root to /initrd ... ");
@@ -137,6 +144,7 @@ int __init initrd_load(void)
 		if (rd_load_image("/initrd.image") && ROOT_DEV != Root_RAM0) {
 			sys_unlink("/initrd.image");
 			handle_initrd();
+			//@@ [2018.05.26] end
 			return 1;
 		}
 	}

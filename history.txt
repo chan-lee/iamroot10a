@@ -3705,3 +3705,24 @@ mount_root() 하다가 initrd_load() 에서 handle_initrd()  빼먹어서 다시
 > 4  1 load_default_modules    71  load_default_modules();
   5  1 load_default_elevator_module   874  init/main.c
 
+
+================================================================================
+[2018.05.26]
+start_kernel() [init/main.c]
+	rest_init()
+		kernel_init()
+			kernel_init_freeable()
+				prepare_namespace() [init/do_mounts.c]
+					initrd_load() [init/do_mounts_initrd.c]
+						handle_initrd()
+							
+handle_initrd() [init/do_mounts_initrd.c]
+	call_usermodehelper_setup()
+	call_usermodehelper_exec()
+	...
+
+handle_initrd() 완료
+
+[리눅스 initrd]
+- http://croky.tistory.com/entry/초기-RAM-디스크-사용하기-initrd
+
