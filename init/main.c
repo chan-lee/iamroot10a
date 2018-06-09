@@ -382,11 +382,14 @@ static noinline void __init_refok rest_init(void)
 	rcu_read_unlock();
 	complete(&kthreadd_done);
 
+  //@@ [2018.06.09] start.
 	/*
 	 * The boot idle thread must execute schedule()
 	 * at least once to get things moving:
 	 */
+  //@@ 0번 cpu idle 로변경. 나머지는 smp_init()에서 idle로 이미 할당됨.
 	init_idle_bootup_task(current);
+  //@@ preemtible로 변환후 다른 schedule 수행후 다시 non-preemtible 로 변환.
 	schedule_preempt_disabled();
 	/* Call into cpu_idle with preempt disabled */
 	cpu_startup_entry(CPUHP_ONLINE);
@@ -890,7 +893,7 @@ static int __ref kernel_init(void *unused)
 	/* need to finish all async __init code before freeing the memory */
 	//@@ async workqueue 있는 async 가 완료될 때까지 대기한다.
 	async_synchronize_full();
-	//@@ init section(__init)와 TMC를 free한다.
+	//@@ init section(__init)와 TCM(Tightly-Coupled Memory)를 free한다.
 	free_initmem();
 	mark_rodata_ro();
 	system_state = SYSTEM_RUNNING;

@@ -2216,7 +2216,7 @@ hardirq => hardirq handler(top half) => raise_softirq 세팅 후 리턴
   => 리턴 후 do_softirq() => 0번 softirq부터 pending되어 있는것을 차례로 실행 
   => softirq handler(bottom half)
 
-system call (software interrupt) 와 softirq의 차이
+system call (software interrupt) 와 softirq의 차이 ( 리눅스 커널의 이해(1) )
 http://www.hanbit.co.kr/network/view.html?bi_id=1058
 system call -> kernel mode 진입 -> device에 요청 -> 자신은 wait queue(yield) -> scheduling()
   -> running 되는 타이밍을 기약할수 없음?
@@ -3728,10 +3728,21 @@ handle_initrd() 완료
 
 ================================================================================
 [2018.06.02]
-prepare_namespacn() 완료
-kernel_init_freeabln() 완료
+prepare_namespace() 완료
+kernel_init_freeable() 완료
 kernel_init() 완료
 
 - context switching을 누가 해주나?
 
+================================================================================
+[2018.06.09]
+- context switching을 누가 해주나?
+  추측1: timer interrupt 가 발생하고 종료될때(ISR이 끝날때) 스케줄 함수 호출?
+  추측2: timer interrupt 가 발생하고 need resched 만 설정하고,
+         누군가의 system call 호출 복귀시 검사하여 스케줄 함수 호출?
+  https://unix.stackexchange.com/questions/84107/are-time-interrupts-always-followed-by-a-scheduler-call?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+  
+- 나머지 cpu는 idle loop를 누가 시키는가?
+  - void secondary_start_kernel(void) => reset vector 와 연관이 있을지도?
+    -	cpu_startup_entry(CPUHP_ONLINE);
 

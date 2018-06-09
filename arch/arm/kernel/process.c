@@ -144,7 +144,7 @@ static void default_idle(void)
 
 void arch_cpu_idle_prepare(void)
 {
-	local_fiq_enable();
+	local_fiq_enable(); //@@ fast irq
 }
 
 void arch_cpu_idle_enter(void)

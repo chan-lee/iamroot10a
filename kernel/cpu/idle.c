@@ -68,7 +68,8 @@ void __weak arch_cpu_idle(void)
 static void cpu_idle_loop(void)
 {
 	while (1) {
-		tick_nohz_idle_enter();
+		tick_nohz_idle_enter(); //< idle tick 을 멈춤.
+    //@@ [2018.06.09] end
 
 		while (!need_resched()) {
 			check_pgt_cache();
