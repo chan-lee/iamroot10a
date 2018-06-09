@@ -443,6 +443,7 @@ int kthread_stop(struct task_struct *k)
 }
 EXPORT_SYMBOL(kthread_stop);
 
+//@@ kernel thread 생성을 대행해주는 daemon thread
 int kthreadd(void *unused)
 {
 	struct task_struct *tsk = current;

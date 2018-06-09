@@ -3726,3 +3726,12 @@ handle_initrd() 완료
 [리눅스 initrd]
 - http://croky.tistory.com/entry/초기-RAM-디스크-사용하기-initrd
 
+================================================================================
+[2018.06.02]
+prepare_namespacn() 완료
+kernel_init_freeabln() 완료
+kernel_init() 완료
+
+- context switching을 누가 해주나?
+
+

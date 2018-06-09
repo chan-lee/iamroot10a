@@ -523,7 +523,9 @@ void __init mount_root(void)
 	}
 #endif
 #ifdef CONFIG_BLOCK
+	//@@ root filesystem을 mount하기 위해 /dev/root device를 생성한다.
 	create_dev("/dev/root", ROOT_DEV);
+	//@@ root filesystem을 mount 한다.
 	mount_block_root("/dev/root", root_mountflags);
 #endif
 }
@@ -586,8 +588,12 @@ void __init prepare_namespace(void)
 	if (is_floppy && rd_doload && rd_load_disk(0))
 		ROOT_DEV = Root_RAM0;
   //@@ [2018.05.19] 여기까지 하다가 되돌아감.
+  //@@ [2018.06.02] start
+  //@@ root filesystem 을 mount한다.
 	mount_root();
 out:
+	//@@ devtmpfs filesystem을 mount한다.
+	//@@ devtmpfs는 https://lunatine.net/2015/12/23/devtmpfs-udev/ 참조..
 	devtmpfs_mount("dev");
 	sys_mount(".", "/", NULL, MS_MOVE, NULL);
 	sys_chroot(".");

@@ -888,14 +888,20 @@ static int __ref kernel_init(void *unused)
 {
 	kernel_init_freeable();
 	/* need to finish all async __init code before freeing the memory */
+	//@@ async workqueue 있는 async 가 완료될 때까지 대기한다.
 	async_synchronize_full();
+	//@@ init section(__init)와 TMC를 free한다.
 	free_initmem();
 	mark_rodata_ro();
 	system_state = SYSTEM_RUNNING;
+	//@@ NUMA memory policy를 디폴트로 설정한다.
 	numa_default_policy();
 
+	//@@ 지연된 file close를 수행하는 것으로 보임.
 	flush_delayed_fput();
 
+	//@@ init process를 수행해준다.
+	//@@ execute_command -> /sbin/init -> /etc/init -> /bin/init -> /bin/sh 순서로 실행해본다. 성공하는 proccess가 init process가 된다.
 	if (ramdisk_execute_command) {
 		if (!run_init_process(ramdisk_execute_command))
 			return 0;
@@ -983,6 +989,7 @@ static noinline void __init kernel_init_freeable(void)
 
 	if (sys_access((const char __user *) ramdisk_execute_command, 0) != 0) {
 		ramdisk_execute_command = NULL;
+		//@@ 램디스크 로드, 마운트한다.
 		prepare_namespace();
 	}
 
