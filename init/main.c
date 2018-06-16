@@ -393,6 +393,7 @@ static noinline void __init_refok rest_init(void)
 	schedule_preempt_disabled();
 	/* Call into cpu_idle with preempt disabled */
 	cpu_startup_entry(CPUHP_ONLINE);
+  //@@ [2018.06.16] end.
 }
 
 /* Check for early params. */
@@ -504,7 +505,7 @@ static void __init mm_init(void)
 //@@ ARM 은 함수의 인자를 전달받는 특수한 레지스터가 있기 때문에 고려할 필요가 없다.
 //@@ __init: 코드 데이터를 특정 section 에 두고 부팅시만 쓰고 부팅이 끝나면 사라진다.
 //@@ http://venkateshabbarapu.blogspot.kr/2012/09/init-call-mechanism-in-linux-kernel.html 참고
-asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
+asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START] ~ [2018.06.16] [END].
 {
 	char * command_line; //@@ 부트로더에서 콘솔 설정등이 ATAGS 를 통해 전달
 	extern const struct kernel_param __start___param[], __stop___param[];
@@ -711,6 +712,7 @@ asmlinkage void __init start_kernel(void)	//@@ [2013.11.30] [START]
 
 	/* Do the rest non-__init'ed, we're now alive */
 	rest_init();
+  //@@ [2018.06.16] end.
 }
 
 /* Call all constructor functions linked into the kernel. */

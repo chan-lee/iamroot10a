@@ -3746,3 +3746,19 @@ kernel_init() 완료
   - void secondary_start_kernel(void) => reset vector 와 연관이 있을지도?
     -	cpu_startup_entry(CPUHP_ONLINE);
 
+================================================================================
+[2018.06.16]
+- 리눅스 커널의 이해(1 ~ 8) - 서민우 : Embedded World
+- Stack Pointer vs Frame Pointer
+  - SP : 현재 stack frame 의 최하 위치(함수 안에서 유동적으로 변함)
+  - FP : 현재 stack frame 의 최상 위치(함수 안에서 로컬 변수 시작 위치로 고정됨)
+    * compilr 가 좋으면 없어도 무방
+  - https://community.arm.com/processors/f/discussions/4553/what-is-fp-r11-used-for
+
+- cpu_idle_loop 종료
+- cpu_startup_entry 종료
+- rest_init 종료
+- start_kernel 종료
+
+기본 스터디 종료
+

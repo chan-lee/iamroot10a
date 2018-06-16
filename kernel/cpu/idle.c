@@ -68,15 +68,16 @@ void __weak arch_cpu_idle(void)
 static void cpu_idle_loop(void)
 {
 	while (1) {
-		tick_nohz_idle_enter(); //< idle tick 을 멈춤.
+		tick_nohz_idle_enter(); //@@ sched tick 을 멈춤. 생략.
     //@@ [2018.06.09] end
 
-		while (!need_resched()) {
+    //@@ [2018.06.16] start
+		while (!need_resched()) { //@@ 실제 idle 상태일때의 루프.
 			check_pgt_cache();
 			rmb();
 
 			if (cpu_is_offline(smp_processor_id()))
-				arch_cpu_idle_dead();
+				arch_cpu_idle_dead(); //@@ 전원이 내려가지 않는다면 secondary_start_kernel 로 jump 함.
 
 			local_irq_disable();
 			arch_cpu_idle_enter();
@@ -91,13 +92,13 @@ static void cpu_idle_loop(void)
 			 * away
 			 */
 			if (cpu_idle_force_poll || tick_check_broadcast_expired()) {
-				cpu_idle_poll();
+				cpu_idle_poll(); //@@ interrupt 로 벗어나길 기다리며 루프.
 			} else {
-				current_clr_polling();
+				current_clr_polling(); //@@ polling option 사용안함.
 				if (!need_resched()) {
-					stop_critical_timings();
+					stop_critical_timings(); //@@ irq trace 기능 끔.
 					rcu_idle_enter();
-					arch_cpu_idle();
+					arch_cpu_idle(); //@@ cpu를 idle 상태로.
 					WARN_ON_ONCE(irqs_disabled());
 					rcu_idle_exit();
 					start_critical_timings();
@@ -108,7 +109,7 @@ static void cpu_idle_loop(void)
 			}
 			arch_cpu_idle_exit();
 		}
-		tick_nohz_idle_exit();
+		tick_nohz_idle_exit(); //@@ 생략.
 		schedule_preempt_disabled();
 	}
 }

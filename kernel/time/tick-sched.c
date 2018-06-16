@@ -544,6 +544,8 @@ static ktime_t tick_nohz_stop_sched_tick(struct tick_sched *ts,
 	struct clock_event_device *dev = __get_cpu_var(tick_cpu_device).evtdev;
 	u64 time_delta;
 
+  //@@ 계속 돌면서 멈춰 있는 것인지,
+  //@@ 일반 sched가 끝날때까지 기다리는 것인지 잘모르겠음.
 	/* Read jiffies and the time when jiffies were updated last */
 	do {
 		seq = read_seqbegin(&jiffies_lock);
